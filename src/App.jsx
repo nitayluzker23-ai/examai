@@ -7,6 +7,9 @@ import { createClient } from "@supabase/supabase-js";
 import ExamBuilder from "./ExamBuilder";
 import StudentExamView from "./StudentExamView";
 import InsightsView from "./InsightsView";
+import ExamsList from "./ExamsList";
+import ContentUploader from "./ContentUploader";
+import ExamQuestionsPage from "./ExamQuestionsPage";
 
 const SUPABASE_URL      = "https://npksscocijjmgzgrolnq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
@@ -208,21 +211,12 @@ function LoginPage() {
 
 function DashboardHome()    { return <InsightsView />; }
 function NewExamPage()      { return <ExamBuilder />; }
+function ExamsPage()        { return <ExamsList />; }
+function QuestionBankPage() { return <ContentUploader />; }
+
 function StudentEntryPage() {
   const { accessCode } = useParams();
   return <StudentExamView initialCode={accessCode} />;
-}
-
-import ExamsList from "./ExamsList";
-
-function ExamsPage() {
-  return <ExamsList />;
-}
-
-import ContentUploader from "./ContentUploader";
-
-function QuestionBankPage() {
-  return <ContentUploader />;
 }
 
 function SettingsPage() {
@@ -279,6 +273,9 @@ export default function App() {
           <Route path="/dashboard/settings" element={
             <ProtectedRoute><TeacherLayout><SettingsPage /></TeacherLayout></ProtectedRoute>
           } />
+          <Route path="/dashboard/exam/:examId/questions" element={
+            <ProtectedRoute><TeacherLayout><ExamQuestionsPage /></TeacherLayout></ProtectedRoute>
+          } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
@@ -301,14 +298,6 @@ function Row({ label, value }) {
     <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: `1px solid ${C.border}`, fontSize: 13 }}>
       <span style={{ color: C.muted }}>{label}</span>
       <span style={{ color: C.text, fontWeight: 500 }}>{value}</span>
-    </div>
-  );
-}
-
-function Placeholder({ label, color }) {
-  return (
-    <div style={{ border: `2px dashed ${color}40`, borderRadius: 16, padding: "40px 20px", textAlign: "center" }}>
-      <div style={{ fontSize: 13, color, fontWeight: 500 }}>{label}</div>
     </div>
   );
 }

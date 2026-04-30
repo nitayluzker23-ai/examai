@@ -122,6 +122,10 @@ export default function ExamsList() {
                 style={{ padding: "7px 14px", background: isPublished ? C.amberLight : C.tealLight, color: isPublished ? C.amber : C.teal, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
                 {isPublished ? "העבר לטיוטה" : "פרסם"}
               </button>
+              <button onClick={() => window.location.href=`/dashboard/exam/${exam.id}/questions`}
+                style={{ padding: "7px 14px", background: C.purpleLight, color: C.purple, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                ✏️ עריכת שאלות
+              </button>
               <button onClick={() => window.open(`/exam/${exam.access_code}`, "_blank")}
                 style={{ padding: "7px 14px", background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
                 תצוגת תלמיד
