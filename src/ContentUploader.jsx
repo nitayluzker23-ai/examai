@@ -1,9 +1,11 @@
 import { useState, useRef } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "./App";
 
-const SUPABASE_URL      = "https://npksscocijjmgzgrolnq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Defensive helper: ensures the apikey header is always present on
+// Edge Function calls, even if the SDK's auto-attach misbehaves.
+const fnHeaders = { apikey: SUPABASE_ANON_KEY };
 
 const C = {
   purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
@@ -149,6 +151,7 @@ export default function ContentUploader({ onDone }) {
         setProgress({ current: 1, total: 1 });
         const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
           body: { image: imageData.base64, image_type: imageData.type },
+          headers: fnHeaders,
         });
         if (fnErr) throw new Error(fnErr.message);
         if (data.error) throw new Error(data.error);
@@ -160,6 +163,7 @@ export default function ContentUploader({ onDone }) {
         if (chunks.length === 1) {
           const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
             body: { text: text.slice(0, 10000) },
+            headers: fnHeaders,
           });
           if (fnErr) throw new Error(fnErr.message);
           if (data.error) throw new Error(data.error);
@@ -170,6 +174,7 @@ export default function ContentUploader({ onDone }) {
             setProgress({ current: i + 1, total: chunks.length });
             const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
               body: { text: chunks[i], chunk_index: i },
+              headers: fnHeaders,
             });
             if (fnErr) throw new Error(fnErr.message);
             if (data.error) throw new Error(data.error);
