@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./App";
 import { printStudentReport } from "./printUtils";
+import { useAuth } from "./App";
 
 // ── Demo data (כשאין Supabase אמיתי) ────────────────────
 const DEMO_EXAMS = {
@@ -68,6 +69,7 @@ function shuffleAnswers(questions) {
 
 // ═══════════════════════════════════════════════════════════
 export default function StudentExamView() {
+  const { user } = useAuth() ?? {};
   const [phase, setPhase]         = useState("lobby");    // lobby | briefing | exam | break | done
   const [code, setCode]           = useState("");
   const [name, setName]           = useState("");
@@ -267,6 +269,7 @@ export default function StudentExamView() {
         answers: finalAnswers,
         score: scorePct,
         completed_at: new Date().toISOString(),
+        ...(user?.id ? { user_id: user.id } : {}),
       });
     } catch (_) { /* silent — demo mode */ }
 
