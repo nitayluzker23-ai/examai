@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "./App";
-import { printExam, printAnswerKey } from "./printUtils";
+import { printExam, printAnswerKey, printClassReport } from "./printUtils";
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
 const fnHeaders = { apikey: SUPABASE_ANON_KEY };
@@ -95,7 +95,7 @@ export default function ExamQuestionsPage() {
       ] = await Promise.all([
         supabase.from("exams").select("id,title,status,access_code,config").eq("id", examId).single(),
         supabase.from("questions").select("*").eq("exam_id", examId).order("sort_order"),
-        supabase.from("submissions").select("answers").eq("exam_id", examId),
+        supabase.from("submissions").select("id,student_name,score,answers,completed_at").eq("exam_id", examId).order("completed_at", { ascending: false }),
       ]);
       if (eErr) throw eErr;
       if (qErr) throw qErr;
@@ -255,7 +255,7 @@ export default function ExamQuestionsPage() {
               </div>
             </div>
             {questions.length > 0 && (
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button onClick={() => printExam(exam, questions)}
                   style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.border}`, background: C.white, color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>
                   🖨 הדפס שאלון
@@ -264,6 +264,12 @@ export default function ExamQuestionsPage() {
                   style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.purple}`, background: C.purpleLight, color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>
                   📋 מפתח תשובות
                 </button>
+                {submissions.length > 0 && (
+                  <button onClick={() => printClassReport(exam, questions, submissions)}
+                    style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.teal}`, background: C.tealLight, color: C.teal, cursor: "pointer", fontFamily: "inherit" }}>
+                    📊 דוח כיתתי
+                  </button>
+                )}
               </div>
             )}
           </div>

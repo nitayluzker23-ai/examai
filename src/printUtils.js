@@ -121,6 +121,154 @@ export function printAnswerKey(exam, questions) {
   openPrint(html);
 }
 
+// ── Export class report (teacher view) ────────────────────
+export function printClassReport(exam, questions, submissions) {
+  const now = new Date().toLocaleDateString("he-IL");
+  const total = questions.length;
+
+  // Calc score per submission
+  const rows = submissions.map(sub => {
+    const answers = sub.answers ?? [];
+    const correct = answers.filter(a => {
+      const q = questions.find(q => q.id === a.question_id);
+      return q && a.selected_index === q.content?.correct_answer_index;
+    }).length;
+    const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+    return { name: sub.student_name ?? "—", correct, pct, date: sub.completed_at, answers };
+  }).sort((a, b) => b.pct - a.pct);
+
+  const avg = rows.length > 0 ? Math.round(rows.reduce((s, r) => s + r.pct, 0) / rows.length) : 0;
+  const avgColor = avg >= 80 ? "#0F6E56" : avg >= 60 ? "#854F0B" : "#A32D2D";
+  const passing  = rows.filter(r => r.pct >= 60).length;
+
+  // Score distribution buckets: 0-59, 60-74, 75-89, 90-100
+  const buckets = [
+    { label: "0–59",  min: 0,  max: 59,  color: "#A32D2D", bg: "#FCEBEB" },
+    { label: "60–74", min: 60, max: 74,  color: "#854F0B", bg: "#FAEEDA" },
+    { label: "75–89", min: 75, max: 89,  color: "#0F6E56", bg: "#E1F5EE" },
+    { label: "90–100",min: 90, max: 100, color: "#534AB7", bg: "#EEEDFE" },
+  ];
+  const bucketCounts = buckets.map(b => ({
+    ...b,
+    count: rows.filter(r => r.pct >= b.min && r.pct <= b.max).length,
+  }));
+  const maxBucket = Math.max(...bucketCounts.map(b => b.count), 1);
+
+  const distHtml = bucketCounts.map(b => {
+    const barW = Math.round((b.count / maxBucket) * 100);
+    return `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+        <div style="width:48px;font-size:11px;color:#6b7280;flex-shrink:0;text-align:left">${b.label}</div>
+        <div style="flex:1;height:18px;background:#f3f4f6;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${barW}%;background:${b.color};border-radius:4px;transition:width 0.4s"></div>
+        </div>
+        <div style="width:28px;font-size:11px;font-weight:700;color:${b.color};text-align:right">${b.count}</div>
+      </div>`;
+  }).join("");
+
+  // Topic weakness across class
+  const topicStats = {};
+  questions.forEach(q => {
+    const tid = q.source_topic_id ?? "כללי";
+    const name = q.content?.topic_name ?? tid;
+    if (!topicStats[tid]) topicStats[tid] = { name, total: 0, wrong: 0 };
+  });
+  rows.forEach(row => {
+    row.answers.forEach(a => {
+      const q = questions.find(q => q.id === a.question_id);
+      if (!q) return;
+      const tid = q.source_topic_id ?? "כללי";
+      if (!topicStats[tid]) topicStats[tid] = { name: q.content?.topic_name ?? tid, total: 0, wrong: 0 };
+      topicStats[tid].total++;
+      if (a.selected_index !== q.content?.correct_answer_index) topicStats[tid].wrong++;
+    });
+  });
+  const topicList = Object.values(topicStats)
+    .filter(t => t.total > 0)
+    .map(t => ({ ...t, errPct: Math.round((t.wrong / t.total) * 100) }))
+    .sort((a, b) => b.errPct - a.errPct);
+
+  const topicsHtml = topicList.length > 1 ? `
+    <h2>נושאים חלשים ברמת הכיתה</h2>
+    ${topicList.map(t => {
+      const col = t.errPct >= 60 ? "#A32D2D" : t.errPct >= 40 ? "#854F0B" : "#0F6E56";
+      return `<div class="topic-row">
+        <div class="topic-label">
+          <span>${t.name}</span>
+          <span style="color:${col};font-weight:700">${t.errPct}% שגיאות</span>
+        </div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${t.errPct}%;background:${col}"></div></div>
+      </div>`;
+    }).join("")}
+    <hr class="divider">
+  ` : "";
+
+  // Student table
+  const tableRows = rows.map((r, i) => {
+    const col = r.pct >= 80 ? "#0F6E56" : r.pct >= 60 ? "#854F0B" : "#A32D2D";
+    const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`;
+    return `<tr style="border-bottom:1px solid #f3f4f6">
+      <td style="padding:7px 10px;font-size:12px">${medal}</td>
+      <td style="padding:7px 10px;font-size:13px;font-weight:500">${r.name}</td>
+      <td style="padding:7px 10px;text-align:center;font-size:13px;font-weight:700;color:${col}">${r.pct}%</td>
+      <td style="padding:7px 10px;text-align:center;font-size:12px;color:#6b7280">${r.correct}/${total}</td>
+      <td style="padding:7px 10px;text-align:center;font-size:11px;color:#9ca3af">${r.date ? new Date(r.date).toLocaleDateString("he-IL") : "—"}</td>
+    </tr>`;
+  }).join("");
+
+  const html = `
+    <h1>${exam.title ?? "מבחן"} — דוח כיתתי</h1>
+    <div class="meta">${exam.subject ?? ""} · ${rows.length} תלמידים · הודפס ${now}</div>
+    <hr class="divider">
+
+    <!-- Summary cards -->
+    <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+      <div style="flex:1;min-width:100px;border-radius:12px;padding:14px 16px;background:#EEEDFE;text-align:center">
+        <div style="font-size:32px;font-weight:800;color:${avgColor}">${avg}%</div>
+        <div style="font-size:11px;color:#534AB7;margin-top:2px">ממוצע כיתה</div>
+      </div>
+      <div style="flex:1;min-width:100px;border-radius:12px;padding:14px 16px;background:#E1F5EE;text-align:center">
+        <div style="font-size:32px;font-weight:800;color:#0F6E56">${passing}</div>
+        <div style="font-size:11px;color:#0F6E56;margin-top:2px">עוברים (60+)</div>
+      </div>
+      <div style="flex:1;min-width:100px;border-radius:12px;padding:14px 16px;background:#FCEBEB;text-align:center">
+        <div style="font-size:32px;font-weight:800;color:#A32D2D">${rows.length - passing}</div>
+        <div style="font-size:11px;color:#A32D2D;margin-top:2px">נכשלים</div>
+      </div>
+      <div style="flex:1;min-width:100px;border-radius:12px;padding:14px 16px;background:#f8f7ff;text-align:center">
+        <div style="font-size:32px;font-weight:800;color:#1a1a2e">${rows.length}</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">הגשות</div>
+      </div>
+    </div>
+
+    <!-- Distribution -->
+    <h2>התפלגות ציונים</h2>
+    <div style="margin-bottom:18px">${distHtml}</div>
+    <hr class="divider">
+
+    ${topicsHtml}
+
+    <!-- Student table -->
+    <h2>תוצאות תלמידים</h2>
+    <table style="width:100%;border-collapse:collapse;font-family:inherit">
+      <thead>
+        <tr style="background:#f8f7ff">
+          <th style="padding:7px 10px;text-align:right;font-size:11px;color:#6b7280;font-weight:600">#</th>
+          <th style="padding:7px 10px;text-align:right;font-size:11px;color:#6b7280;font-weight:600">שם תלמיד</th>
+          <th style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280;font-weight:600">ציון</th>
+          <th style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280;font-weight:600">נכון</th>
+          <th style="padding:7px 10px;text-align:center;font-size:11px;color:#6b7280;font-weight:600">תאריך</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+
+    <hr class="divider">
+    <div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px">הופק על ידי ExamAI</div>
+  `;
+  openPrint(html);
+}
+
 // ── Export student personal report ────────────────────────
 export function printStudentReport(exam, questions, answers, studentName) {
   const LETTERS = "אבגד";
