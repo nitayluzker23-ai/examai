@@ -80,6 +80,8 @@ export default function ExamQuestionsPage() {
   const [genCount,    setGenCount]    = useState(5);
   const [genError,    setGenError]    = useState("");
   const [newlyAdded,  setNewlyAdded]  = useState(new Set()); // highlight newly added q ids
+  const [uploading,   setUploading]   = useState(null);     // questionId being uploaded
+  const [uploadError, setUploadError] = useState("");
 
   useEffect(() => { load(); }, [examId]);
 
@@ -108,6 +110,44 @@ export default function ExamQuestionsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const uploadImage = async (question, file) => {
+    setUploading(question.id);
+    setUploadError("");
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${examId}/${question.id}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("question-images")
+        .upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("question-images")
+        .getPublicUrl(path);
+
+      const newContent = { ...question.content, image_url: publicUrl };
+      const { error: updateErr } = await supabase
+        .from("questions").update({ content: newContent }).eq("id", question.id);
+      if (updateErr) throw updateErr;
+
+      setQuestions(qs => qs.map(q => q.id === question.id ? { ...q, content: newContent } : q));
+    } catch (e) {
+      setUploadError(e.message);
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const removeImage = async (question) => {
+    if (!confirm("להסיר את התמונה מהשאלה?")) return;
+    const newContent = { ...question.content };
+    delete newContent.image_url;
+    const { error } = await supabase
+      .from("questions").update({ content: newContent }).eq("id", question.id);
+    if (error) { alert(error.message); return; }
+    setQuestions(qs => qs.map(q => q.id === question.id ? { ...q, content: newContent } : q));
   };
 
   const deleteQuestion = async (id) => {
@@ -360,6 +400,34 @@ export default function ExamQuestionsPage() {
 
               {isOpen && (
                 <div style={{ borderTop: `1px solid ${C.border}`, padding: "12px 16px 14px" }}>
+                  {/* Image section */}
+                  {c.image_url ? (
+                    <div style={{ marginBottom: 12 }}>
+                      <img src={c.image_url} alt="תמונת שאלה"
+                        style={{ maxWidth: "100%", maxHeight: 280, borderRadius: 10, border: `1px solid ${C.border}`, display: "block" }} />
+                      <button onClick={() => removeImage(q)}
+                        style={{ marginTop: 6, fontSize: 11, padding: "3px 10px", border: `1px solid #F09595`, background: C.redLight, color: C.red, borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>
+                        🗑 הסר תמונה
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, padding: "5px 12px", border: `1px dashed ${C.purpleMid}`, borderRadius: 8, cursor: "pointer", color: C.purple, background: C.purpleLight }}>
+                        {uploading === q.id ? (
+                          <>
+                            <span style={{ display: "inline-block", width: 12, height: 12, border: `2px solid ${C.purpleMid}`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                            מעלה...
+                          </>
+                        ) : "🖼 הוסף תמונה לשאלה"}
+                        <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: "none" }}
+                          disabled={!!uploading}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(q, f); e.target.value = ""; }} />
+                      </label>
+                      {uploadError && uploading === null && (
+                        <div style={{ fontSize: 11, color: C.red, marginTop: 4 }}>{uploadError}</div>
+                      )}
+                    </div>
+                  )}
                   {c.options?.map((opt, i) => (
                     <div key={i} style={{
                       display: "flex", alignItems: "flex-start", gap: 8, padding: "6px 10px", borderRadius: 8, marginBottom: 4,

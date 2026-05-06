@@ -415,9 +415,15 @@ export default function StudentExamView() {
 
             {/* Question card */}
             <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(83,74,183,0.06)" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: C.text, lineHeight: 1.6, marginBottom: 20 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.text, lineHeight: 1.6, marginBottom: questions[qIndex].content.image_url ? 14 : 20 }}>
                 {questions[qIndex].content.question_text}
               </div>
+              {questions[qIndex].content.image_url && (
+                <div style={{ marginBottom: 20, textAlign: "center" }}>
+                  <img src={questions[qIndex].content.image_url} alt="תמונת שאלה"
+                    style={{ maxWidth: "100%", maxHeight: 320, borderRadius: 10, border: `1px solid ${C.border}` }} />
+                </div>
+              )}
               {questions[qIndex].content.options.map((opt, i) => (
                 <OptionRow key={i} letter={"אבגד"[i]} text={opt} index={i} selected={selected} onSelect={setSelected} />
               ))}

@@ -10,6 +10,7 @@ const BASE_CSS = `
   .question { margin-bottom: 18px; page-break-inside: avoid; }
   .question-num { font-size: 11px; color: #6b7280; margin-bottom: 3px; }
   .question-text { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+  .question-img { max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid #e5e7eb; display: block; margin: 8px 0 12px; }
   .option { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 13px; }
   .letter { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #d1d5db; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
   .correct .letter { background: #0F6E56; border-color: #0F6E56; color: white; }
@@ -63,6 +64,7 @@ export function printExam(exam, questions) {
           ${c.topic_name ? `<span style="font-size:11px;color:#6b7280">${c.topic_name}</span>` : ""}
         </div>
         <div class="question-text">${c.question_text ?? ""}</div>
+        ${c.image_url ? `<img class="question-img" src="${c.image_url}" alt="תמונת שאלה">` : ""}
         ${opts}
       </div>`;
   }).join('<hr class="divider">');
@@ -104,6 +106,7 @@ export function printAnswerKey(exam, questions) {
           <span class="badge badge-${DIFF_CLS[diff]}">${DIFF_HE[diff] ?? diff}</span>
         </div>
         <div class="question-text">${c.question_text ?? ""}</div>
+        ${c.image_url ? `<img class="question-img" src="${c.image_url}" alt="תמונת שאלה">` : ""}
         ${opts}
         ${c.ai_explanation ? `<div class="explanation">${c.ai_explanation}</div>` : ""}
       </div>`;
@@ -163,6 +166,7 @@ export function printStudentReport(exam, questions, answers, studentName) {
         <div style="display:flex;justify-content:space-between;gap:8px">
           <div style="flex:1">
             <div style="font-size:13px;font-weight:600;margin-bottom:4px">${i + 1}. ${c.question_text ?? ""}</div>
+            ${c.image_url ? `<img class="question-img" src="${c.image_url}" alt="תמונת שאלה">` : ""}
             ${isSkip
               ? `<div style="font-size:12px;color:#6b7280">לא נענה</div>`
               : isCorrect
