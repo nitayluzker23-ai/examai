@@ -323,6 +323,11 @@ export default function ContentUploader({ onDone }) {
       setExamTitle(finalResult.course_metadata.title);
       setResult(finalResult);
       setPhase("review");
+
+      // Track feature usage (fire-and-forget)
+      const featureUsed = inputMode === "image" ? "ai_image"
+        : pastExams.length > 0 ? "past_exams" : "ai_text";
+      supabase.from("feature_events").insert({ workspace_id: user.id, feature: featureUsed }).then(() => {});
     } catch (e) {
       setError(e.message);
       setPhase("upload");

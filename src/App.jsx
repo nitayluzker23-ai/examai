@@ -11,6 +11,7 @@ import ExamsList from "./ExamsList";
 import ContentUploader from "./ContentUploader";
 import ExamQuestionsPage from "./ExamQuestionsPage";
 import StudentsPage from "./StudentsPage";
+import AdminPage from "./AdminPage";
 
 const SUPABASE_URL      = "https://npksscocijjmgzgrolnq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
@@ -48,7 +49,14 @@ export function AuthProvider({ children }) {
   };
 
   const signIn  = (email, password) => supabase.auth.signInWithPassword({ email, password });
-  const signUp  = (email, password, fullName) => supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+  const signUp  = async (email, password, fullName) => {
+    const res = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+    if (!res.error && res.data?.user) {
+      // store email in profiles (upsert so it works even if profile already exists)
+      await supabase.from("profiles").upsert({ id: res.data.user.id, full_name: fullName, email });
+    }
+    return res;
+  };
   const signOut = () => supabase.auth.signOut();
 
   return (
@@ -115,6 +123,13 @@ function TeacherLayout({ children }) {
             })}
           </nav>
           <div style={{ padding: 12, borderTop: `1px solid ${C.border}` }}>
+            {profile?.is_admin && (
+              <Link to="/admin" style={{ textDecoration: "none" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 10, marginBottom: 6, background: location.pathname === "/admin" ? "#3C348922" : "transparent", color: "#534AB7", fontSize: 13, fontWeight: 600 }}>
+                  🛡 לוח ניהול
+                </div>
+              </Link>
+            )}
             <button onClick={handleSignOut} style={{ width: "100%", padding: "9px 12px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 13, color: C.muted, cursor: "pointer", fontFamily: "inherit", textAlign: "right" }}>
               יציאה
             </button>
@@ -216,6 +231,7 @@ function NewExamPage()      { return <ExamBuilder />; }
 function ExamsPage()        { return <ExamsList />; }
 function QuestionBankPage() { return <ContentUploader />; }
 function StudentsManagePage() { return <StudentsPage />; }
+function AdminDashboardPage() { return <AdminPage />; }
 
 function StudentEntryPage() {
   const { accessCode } = useParams();
@@ -272,6 +288,9 @@ export default function App() {
           } />
           <Route path="/dashboard/bank" element={
             <ProtectedRoute><TeacherLayout><QuestionBankPage /></TeacherLayout></ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute><TeacherLayout><AdminDashboardPage /></TeacherLayout></ProtectedRoute>
           } />
           <Route path="/dashboard/students" element={
             <ProtectedRoute><TeacherLayout><StudentsManagePage /></TeacherLayout></ProtectedRoute>
