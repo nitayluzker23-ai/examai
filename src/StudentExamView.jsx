@@ -89,20 +89,16 @@ export default function StudentExamView() {
     if (phase !== "exam" || !exam) return;
     const cfg = exam.config;
     if (cfg.mode === "timed") startTimer(cfg.seconds_per_question);
-    if (cfg.mode === "flexible") startTimer(cfg.total_minutes * 60);
-    if (cfg.mode === "sessions") {
-      const sess = cfg.sessions[sessionIdx];
-      startTimer(sess.mins * 60);
-    }
+    else if (cfg.mode === "flexible") startTimer(cfg.total_minutes * 60);
+    else if (cfg.mode === "sessions") startTimer(cfg.sessions[sessionIdx]?.mins * 60 ?? 300);
     return () => clearInterval(timerRef.current);
-  }, [phase, qIndex, sessionIdx]);
+  }, [phase, qIndex, sessionIdx, exam, startTimer]);
 
   // auto-advance when timed runs out
   useEffect(() => {
-    if (timeLeft !== 0) return;
-    const cfg = exam?.config;
-    if (cfg?.mode === "timed") advanceQuestion(true);
-  }, [timeLeft]);
+    if (timeLeft !== 0 || !exam) return;
+    if (exam.config?.mode === "timed") advanceQuestion(true);
+  }, [timeLeft]); // advanceQuestion intentionally omitted — recreated each render with fresh state
 
   // ── Fetch exam by code ──────────────────────────────────
   const fetchExam = async () => {

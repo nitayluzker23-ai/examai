@@ -1,17 +1,26 @@
 import { useState } from "react";
-import { Clock, Timer, Layers, ChevronLeft, ChevronRight, Plus, Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Clock, Timer, Layers, ChevronLeft, ChevronRight, Plus, Check, Copy } from "lucide-react";
+import { supabase, useAuth } from "./App";
 
 const C = {
   purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
   teal: "#0F6E56", tealLight: "#E1F5EE",
   amber: "#854F0B", amberLight: "#FAEEDA",
+  red: "#A32D2D", redLight: "#FCEBEB",
   text: "#1a1a2e", muted: "#6b7280",
   border: "rgba(0,0,0,0.1)", bg: "#f8f7ff", white: "#ffffff",
 };
 
 const STEPS = ["פרטים", "מבנה", "שאלות", "שליחה"];
 
+function generateCode() {
+  return Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6).padEnd(6, "0");
+}
+
 export default function ExamBuilder() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ name: "", subject: "", group: "" });
   const [mode, setMode] = useState(null);
@@ -21,10 +30,50 @@ export default function ExamBuilder() {
   const [timedBack, setTimedBack] = useState(false);
   const [sessions, setSessions] = useState([{ mins: 20, questions: 10 }, { mins: 20, questions: 10 }]);
   const [breakMins, setBreakMins] = useState(5);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [savedExam, setSavedExam] = useState(null);
+  const [copied, setCopied] = useState(false);
 
-  const fmtSec = (s) => s < 60 ? `${s} שנ׳` : s % 60 ? `${Math.floor(s/60)}′${s%60}″` : `${Math.floor(s/60)} דק׳`;
+  const fmtSec = (s) => s < 60 ? `${s} שנ׳` : s % 60 ? `${Math.floor(s / 60)}′${s % 60}″` : `${Math.floor(s / 60)} דק׳`;
   const totalTime = sessions.reduce((a, s) => a + s.mins, 0) + breakMins * (sessions.length - 1);
   const canNext = step === 0 ? (form.name.trim() && form.subject.trim()) : step === 1 ? mode !== null : true;
+
+  const buildConfig = () => {
+    if (mode === "flexible") return { mode: "flexible", total_minutes: flexTime, can_go_back: canGoBack };
+    if (mode === "timed")    return { mode: "timed", seconds_per_question: perQSecs, can_go_back: timedBack };
+    return { mode: "sessions", break_minutes: breakMins, sessions };
+  };
+
+  const saveExam = async () => {
+    setSaving(true); setSaveError("");
+    try {
+      const code = generateCode();
+      const { data, error } = await supabase.from("exams").insert({
+        workspace_id: user.id,
+        title: form.name,
+        subject: form.subject,
+        group_name: form.group || null,
+        config: buildConfig(),
+        status: "draft",
+        access_code: code,
+      }).select().single();
+      if (error) throw error;
+      setSavedExam(data);
+      setStep(3);
+    } catch (e) {
+      setSaveError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const copyLink = () => {
+    if (!savedExam) return;
+    navigator.clipboard?.writeText(`${window.location.origin}/exam/${savedExam.access_code}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, display: "flex", justifyContent: "center", padding: "24px 16px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
@@ -32,7 +81,7 @@ export default function ExamBuilder() {
 
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: C.purple, marginBottom: 3 }}>בניית מבחן</div>
-          <div style={{ fontSize: 13, color: C.muted }}>בית ספר אורט תל אביב</div>
+          <div style={{ fontSize: 13, color: C.muted }}>{form.subject || "מבחן חדש"}</div>
         </div>
 
         {/* Step indicator */}
@@ -58,15 +107,17 @@ export default function ExamBuilder() {
 
         <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 16px rgba(83,74,183,0.07)", overflow: "hidden" }}>
 
+          {/* Step 0: Details */}
           {step === 0 && (
             <div style={{ padding: 24 }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 20 }}>פרטי המבחן</div>
               <Field label="שם המבחן" placeholder="למשל: מבחן סוף שנה, חזרה לפרק 3..." value={form.name} onChange={v => setForm({ ...form, name: v })} />
               <Field label="מקצוע / נושא" placeholder="ביולוגיה, בטיחות, שיווק..." value={form.subject} onChange={v => setForm({ ...form, subject: v })} />
-              <Field label="כיתה / קבוצה" placeholder="י׳2, מחזור 2025, קבוצת מתקדמים..." value={form.group} onChange={v => setForm({ ...form, group: v })} />
+              <Field label="כיתה / קבוצה (אופציונלי)" placeholder="י׳2, מחזור 2025, קבוצת מתקדמים..." value={form.group} onChange={v => setForm({ ...form, group: v })} />
             </div>
           )}
 
+          {/* Step 1: Structure */}
           {step === 1 && (
             <div style={{ padding: 24 }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 4 }}>מבנה המבחן</div>
@@ -92,7 +143,6 @@ export default function ExamBuilder() {
                   <Summary lines={[`${flexTime} דקות לכל המבחן`, `חזרה אחורה: ${canGoBack ? "מותרת" : "לא מותרת"}`]} />
                 </div>
               )}
-
               {mode === "timed" && (
                 <div style={{ marginTop: 16, padding: 14, background: C.bg, borderRadius: 14 }}>
                   <SliderRow label="זמן לכל שאלה" display={fmtSec(perQSecs)} value={perQSecs} min={15} max={300} step={15} onChange={setPerQSecs} />
@@ -100,7 +150,6 @@ export default function ExamBuilder() {
                   <Summary lines={[`${fmtSec(perQSecs)} לכל שאלה`, `חזרה אחורה: ${timedBack ? "מותרת" : "לא מותרת"}`]} />
                 </div>
               )}
-
               {mode === "sessions" && (
                 <div style={{ marginTop: 16, padding: 14, background: C.bg, borderRadius: 14 }}>
                   <SliderRow label="הפסקה בין פרקים" display={breakMins === 0 ? "ללא" : `${breakMins} דק׳`} value={breakMins} min={0} max={20} step={5} onChange={setBreakMins} />
@@ -136,65 +185,74 @@ export default function ExamBuilder() {
             </div>
           )}
 
+          {/* Step 2: Questions (redirect to ContentUploader) */}
           {step === 2 && (
             <div style={{ padding: 24 }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 6 }}>שאלות המבחן</div>
-              <div style={{ background: C.purpleLight, borderRadius: 12, padding: "10px 14px", marginBottom: 14, fontSize: 12, color: C.purple }}>
-                AI יצר 20 שאלות מהחומר. ניתן לערוך, למחוק או להוסיף ידנית.
+              <div style={{ background: C.purpleLight, borderRadius: 12, padding: "10px 14px", marginBottom: 16, fontSize: 12, color: C.purple }}>
+                שמור את המבחן ואז העלה חומר לימוד ליצירת שאלות אוטומטית, או הוסף שאלות ידנית לאחר השמירה.
               </div>
-              {[
-                { q: "מהי הפונקציה העיקרית של המיטוכונדריה בתא?", topic: "תא וביולוגיה", diff: "בינוני", dc: C.purple, db: C.purpleLight },
-                { q: "מהו עיקרון הדומיננטיות של מנדל?", topic: "גנטיקה", diff: "קל", dc: C.teal, db: C.tealLight },
-                { q: "מה מניע את תהליך הברירה הטבעית?", topic: "אבולוציה", diff: "קשה", dc: C.amber, db: C.amberLight },
-              ].map((q, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, padding: "10px 12px", border: `1px solid ${C.border}`, borderRadius: 12, marginBottom: 8 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5, marginBottom: 3 }}>{q.q}</div>
-                    <div style={{ fontSize: 11, color: C.muted }}>{q.topic}</div>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 5, flexShrink: 0 }}>
-                    <span style={{ background: q.db, color: q.dc, fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20 }}>{q.diff}</span>
-                    <span style={{ fontSize: 11, color: C.purple, cursor: "pointer" }}>עריכה</span>
-                  </div>
-                </div>
-              ))}
-              <div style={{ textAlign: "center", fontSize: 12, color: C.muted, padding: "4px 0" }}>+ עוד 17 שאלות</div>
+              <div style={{ background: C.bg, borderRadius: 12, padding: "12px 14px", fontSize: 13, color: C.muted, lineHeight: 1.7 }}>
+                <div style={{ fontWeight: 600, color: C.text, marginBottom: 4 }}>לאחר שמירת המבחן תוכל:</div>
+                <div>• להעלות PDF / טקסט — AI יבנה שאלות אוטומטית</div>
+                <div>• להוסיף מבחנים ישנים לניתוח סגנון המרצה</div>
+                <div>• לערוך, למחוק ולהוסיף שאלות ידנית</div>
+              </div>
+              {saveError && (
+                <div style={{ background: C.redLight, color: C.red, borderRadius: 10, padding: "10px 14px", fontSize: 12, marginTop: 12 }}>{saveError}</div>
+              )}
             </div>
           )}
 
-          {step === 3 && (
+          {/* Step 3: Share */}
+          {step === 3 && savedExam && (
             <div style={{ padding: 24 }}>
               <div style={{ textAlign: "center", padding: "16px 0 20px" }}>
                 <div style={{ width: 56, height: 56, background: C.tealLight, borderRadius: "50%", margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Check size={26} color={C.teal} />
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: C.text, marginBottom: 3 }}>{form.name || "מבחן חדש"}</div>
-                <div style={{ fontSize: 13, color: C.muted }}>{form.subject} · מוכן לשליחה</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: C.text, marginBottom: 3 }}>{savedExam.title}</div>
+                <div style={{ fontSize: 13, color: C.muted }}>{savedExam.subject} · נשמר בהצלחה</div>
               </div>
               <div style={{ height: 1, background: C.border, marginBottom: 16 }} />
-              <div style={{ fontSize: 12, color: C.muted, marginBottom: 8, fontWeight: 500 }}>שתף עם תלמידים</div>
-              <div style={{ background: C.bg, borderRadius: 12, padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, border: `1px solid ${C.border}` }}>
-                <span style={{ fontSize: 13, color: C.muted, fontFamily: "monospace" }}>examai.app/j/X7K2P</span>
-                <span style={{ fontSize: 12, color: C.purple, cursor: "pointer", fontWeight: 600 }}>העתק</span>
+
+              <div style={{ fontSize: 12, color: C.muted, marginBottom: 6, fontWeight: 500 }}>קוד גישה למבחן</div>
+              <div style={{ background: C.purpleLight, borderRadius: 12, padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, border: `1px solid ${C.purpleMid}` }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: C.purple, letterSpacing: 3, fontFamily: "monospace" }}>{savedExam.access_code}</span>
+                <button onClick={copyLink}
+                  style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: copied ? C.teal : C.purple, fontWeight: 600, cursor: "pointer", background: "none", border: "none", fontFamily: "inherit" }}>
+                  <Copy size={13} />{copied ? "הועתק!" : "העתק קישור"}
+                </button>
               </div>
-              <Btn primary>שלח בוואטסאפ ←</Btn>
-              <Btn>הצג QR לכיתה</Btn>
+
+              <button onClick={() => navigate("/dashboard/bank")}
+                style={{ width: "100%", padding: 12, background: C.purple, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>
+                העלה חומר לימוד ←
+              </button>
+              <button onClick={() => navigate("/dashboard/exams")}
+                style={{ width: "100%", padding: 10, background: "transparent", color: C.purple, border: `1px solid ${C.purple}`, borderRadius: 12, fontSize: 13, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>
+                למבחנים שלי
+              </button>
             </div>
           )}
 
-          <div style={{ padding: "0 24px 24px", display: "flex", gap: 10 }}>
-            {step > 0 && (
-              <button onClick={() => setStep(step - 1)} style={{ flex: 1, padding: 10, background: "transparent", color: C.purple, border: `1px solid ${C.purple}`, borderRadius: 12, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                <ChevronRight size={15} /> חזרה
+          {/* Navigation buttons */}
+          {step < 3 && (
+            <div style={{ padding: "0 24px 24px", display: "flex", gap: 10 }}>
+              {step > 0 && (
+                <button onClick={() => setStep(step - 1)} disabled={saving}
+                  style={{ flex: 1, padding: 10, background: "transparent", color: C.purple, border: `1px solid ${C.purple}`, borderRadius: 12, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                  <ChevronRight size={15} /> חזרה
+                </button>
+              )}
+              <button
+                onClick={step === 2 ? saveExam : () => canNext && setStep(step + 1)}
+                disabled={!canNext || saving}
+                style={{ flex: step > 0 ? 2 : 1, padding: 12, background: canNext && !saving ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: canNext && !saving ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, transition: "background 0.2s" }}>
+                {saving ? "שומר..." : step === 2 ? "שמור מבחן ←" : <>המשך <ChevronLeft size={15} /></>}
               </button>
-            )}
-            {step < 3 && (
-              <button onClick={() => canNext && setStep(step + 1)}
-                style={{ flex: step > 0 ? 2 : 1, padding: 12, background: canNext ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: canNext ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, transition: "background 0.2s" }}>
-                {step === 2 ? "שמור ושלח" : "המשך"} <ChevronLeft size={15} />
-              </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -256,13 +314,5 @@ function Summary({ lines }) {
     <div style={{ background: "#EEEDFE", borderRadius: 10, padding: "10px 12px", marginTop: 12 }}>
       {lines.map((l, i) => <div key={i} style={{ fontSize: 12, color: "#3C3489", lineHeight: 1.8 }}>{l}</div>)}
     </div>
-  );
-}
-
-function Btn({ children, primary, onClick }) {
-  return (
-    <button onClick={onClick} style={{ width: "100%", padding: primary ? 12 : 10, background: primary ? "#534AB7" : "transparent", color: primary ? "white" : "#534AB7", border: primary ? "none" : "1px solid #534AB7", borderRadius: 12, fontSize: primary ? 14 : 13, fontWeight: primary ? 600 : 400, cursor: "pointer", marginTop: 8, fontFamily: "inherit" }}>
-      {children}
-    </button>
   );
 }

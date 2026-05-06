@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { supabase } from "./App";
+import { supabase, useAuth } from "./App";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
@@ -97,19 +97,23 @@ function mergeResults(results) {
 
 // ════════════════════════════════════════════════════════
 export default function ContentUploader({ onDone }) {
-  const [phase,     setPhase]     = useState("upload");
-  const [inputMode, setInputMode] = useState("text");   // text | image
-  const [text,      setText]      = useState("");
-  const [fileName,  setFileName]  = useState("");
-  const [imageData, setImageData] = useState(null);     // { base64, type, preview }
-  const [result,    setResult]    = useState(null);
-  const [error,     setError]     = useState("");
-  const [selTopics, setSelTopics] = useState({});
-  const [examTitle, setExamTitle] = useState("");
-  const [progress,  setProgress]  = useState({ current: 0, total: 0 });
-  const [pageCount, setPageCount] = useState(0);
-  const fileRef  = useRef();
-  const imageRef = useRef();
+  const { user } = useAuth();
+  const [phase,      setPhase]      = useState("upload");
+  const [inputMode,  setInputMode]  = useState("text");   // text | image
+  const [text,       setText]       = useState("");
+  const [fileName,   setFileName]   = useState("");
+  const [imageData,  setImageData]  = useState(null);     // { base64, type, preview }
+  const [result,     setResult]     = useState(null);
+  const [error,      setError]      = useState("");
+  const [selTopics,  setSelTopics]  = useState({});
+  const [examTitle,  setExamTitle]  = useState("");
+  const [progress,   setProgress]   = useState({ current: 0, total: 0 });
+  const [pageCount,  setPageCount]  = useState(0);
+  const [pastExams,  setPastExams]  = useState([]);       // [{ name, text }]
+  const [pastLoading, setPastLoading] = useState(false);
+  const fileRef    = useRef();
+  const imageRef   = useRef();
+  const pastRef    = useRef();
 
   const handleFile = async (file) => {
     if (!file) return;
@@ -149,6 +153,41 @@ export default function ContentUploader({ onDone }) {
     else handleFile(file);
   };
 
+  const handlePastExams = async (files) => {
+    if (!files?.length) return;
+    setPastLoading(true);
+    const loaded = [];
+    for (const file of Array.from(files)) {
+      try {
+        let t;
+        if (file.type === "application/pdf") {
+          const { text: extracted } = await extractTextFromPDF(file);
+          t = extracted;
+        } else {
+          t = await file.text();
+        }
+        if (t.trim()) loaded.push({ name: file.name, text: t });
+      } catch (_) { /* skip unreadable file */ }
+    }
+    setPastExams(prev => [...prev, ...loaded]);
+    setPastLoading(false);
+  };
+
+  const buildCombinedText = () => {
+    if (pastExams.length === 0) return text;
+    const pastSection = pastExams
+      .map((e, i) => `=== מבחן קודם ${i + 1}: ${e.name} ===\n${e.text}`)
+      .join("\n\n");
+    return (
+      `[PAST EXAMS — ניתוח סגנון המרצה]\n` +
+      `השתמש במבחנים הבאים כדי להבין את סגנון השאלות, רמת הקושי וקו המחשבה של המרצה.\n` +
+      `בנה שאלות חדשות שמתאימות לסגנון זה על בסיס חומר הלימוד שיגיע אחר כך.\n\n` +
+      pastSection +
+      `\n\n[STUDY MATERIAL — חומר לימוד לבניית שאלות חדשות]\n` +
+      text
+    );
+  };
+
   const analyze = async () => {
     setPhase("analyzing");
     setError("");
@@ -166,8 +205,9 @@ export default function ContentUploader({ onDone }) {
         if (data.error) throw new Error(data.error);
         finalResult = data;
       } else {
-        // text mode with chunks
-        const chunks = splitIntoChunks(text, 10000, 1000);
+        // text mode with chunks (combined with past exams if provided)
+        const combined = buildCombinedText();
+        const chunks = splitIntoChunks(combined, 10000, 1000);
         setProgress({ current: 0, total: chunks.length });
         if (chunks.length === 1) {
           const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
@@ -212,7 +252,7 @@ export default function ContentUploader({ onDone }) {
       const { data: exam, error: examErr } = await supabase
         .from("exams")
         .insert({
-          workspace_id: "00000000-0000-0000-0000-000000000001",
+          workspace_id: user.id,
           title: examTitle,
           subject: examTitle,
           config: { mode: "flexible", total_minutes: 60, can_go_back: true },
@@ -302,6 +342,38 @@ export default function ContentUploader({ onDone }) {
                     {` · ${Math.ceil(text.length / 10000)} נתחים`}
                   </div>
                 )}
+
+                {/* Past exams section */}
+                <div style={{ marginTop: 16, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+                  <div style={{ padding: "10px 14px", background: C.amberLight, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: C.amber }}>📚 מבחנים משנים קודמות</div>
+                      <div style={{ fontSize: 11, color: "#6b5a2e", marginTop: 1 }}>אופציונלי — ה-AI ילמד את סגנון המרצה ויתאים את השאלות</div>
+                    </div>
+                    <button onClick={() => pastRef.current.click()} disabled={pastLoading}
+                      style={{ fontSize: 12, fontWeight: 600, color: C.amber, background: C.white, border: `1px solid ${C.amber}`, borderRadius: 8, padding: "5px 10px", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
+                      {pastLoading ? "טוען..." : "+ הוסף"}
+                    </button>
+                    <input ref={pastRef} type="file" accept=".pdf,.txt" multiple style={{ display: "none" }}
+                      onChange={e => handlePastExams(e.target.files)} />
+                  </div>
+                  {pastExams.length > 0 && (
+                    <div style={{ padding: "8px 14px", background: C.white }}>
+                      {pastExams.map((e, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0", borderBottom: i < pastExams.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                          <span style={{ fontSize: 12, color: C.text }}>📄 {e.name}</span>
+                          <button onClick={() => setPastExams(prev => prev.filter((_, j) => j !== i))}
+                            style={{ fontSize: 11, color: C.red, background: "none", border: "none", cursor: "pointer" }}>הסר</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {pastExams.length === 0 && !pastLoading && (
+                    <div style={{ padding: "10px 14px", background: C.white, fontSize: 12, color: C.muted, textAlign: "center" }}>
+                      לא הועלו מבחנים — השאלות יבנו על בסיס החומר בלבד
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -345,8 +417,13 @@ export default function ContentUploader({ onDone }) {
           <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, padding: 40, textAlign: "center" }}>
             <div style={{ width: 48, height: 48, border: `3px solid ${C.purpleLight}`, borderTopColor: C.purple, borderRadius: "50%", margin: "0 auto 16px", animation: "spin 0.9s linear infinite" }} />
             <div style={{ fontSize: 16, fontWeight: 600, color: C.text, marginBottom: 6 }}>
-              {inputMode === "image" ? "Claude Vision קורא את התמונה..." : "ה-AI מנתח את החומר..."}
+              {inputMode === "image" ? "Claude Vision קורא את התמונה..." : pastExams.length > 0 ? "ה-AI מנתח חומר + סגנון מרצה..." : "ה-AI מנתח את החומר..."}
             </div>
+            {pastExams.length > 0 && (
+              <div style={{ fontSize: 12, color: C.amber, background: C.amberLight, borderRadius: 8, padding: "6px 12px", marginBottom: 10 }}>
+                לומד מ-{pastExams.length} מבחן{pastExams.length > 1 ? "ות" : ""} קודמ{pastExams.length > 1 ? "ות" : ""} של המרצה
+              </div>
+            )}
             {progress.total > 1 && (
               <div>
                 <div style={{ fontSize: 13, color: C.muted, marginBottom: 12 }}>מעבד חלק {progress.current} מתוך {progress.total}</div>
