@@ -12,6 +12,7 @@ import ContentUploader from "./ContentUploader";
 import ExamQuestionsPage from "./ExamQuestionsPage";
 import StudentsPage from "./StudentsPage";
 import AdminPage from "./AdminPage";
+import { getPlan } from "./planConfig";
 
 const SUPABASE_URL      = "https://npksscocijjmgzgrolnq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
@@ -64,8 +65,13 @@ export function AuthProvider({ children }) {
   };
   const signOut = () => supabase.auth.signOut();
 
+  // ── Plan helpers ──────────────────────────────────────────
+  const planConfig = getPlan(profile?.plan ?? "free");
+  const canUse     = (feature) => planConfig.features?.[feature] ?? false;
+  const planLimit  = (key)     => planConfig[key] ?? 0;
+
   return (
-    <AuthContext.Provider value={{ user, profile, signIn, signUp, signOut, signInGoogle, signInMagicLink, loading: user === undefined }}>
+    <AuthContext.Provider value={{ user, profile, signIn, signUp, signOut, signInGoogle, signInMagicLink, loading: user === undefined, planConfig, canUse, planLimit }}>
       {children}
     </AuthContext.Provider>
   );
@@ -90,7 +96,7 @@ const NAV_ITEMS = [
 ];
 
 function TeacherLayout({ children }) {
-  const { signOut, profile } = useAuth();
+  const { signOut, profile, planConfig } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobile, setMobile] = useState(window.innerWidth < 640);
@@ -113,6 +119,11 @@ function TeacherLayout({ children }) {
           <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.border}` }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: C.purple }}>ExamAI</div>
             <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{profile?.full_name ?? "מורה"}</div>
+            {planConfig && (
+              <span style={{ display: "inline-block", marginTop: 5, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, background: planConfig.bg, color: planConfig.color }}>
+                {planConfig.label}
+              </span>
+            )}
           </div>
           <nav style={{ flex: 1, padding: "12px 10px" }}>
             {NAV_ITEMS.map(item => {

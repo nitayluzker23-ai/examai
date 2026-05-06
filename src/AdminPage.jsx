@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase, useAuth } from "./App";
 import { Navigate } from "react-router-dom";
+import { PLANS } from "./planConfig";
 
 const C = {
   purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
@@ -53,6 +54,11 @@ export default function AdminPage() {
   async function toggleAdmin(teacher) {
     await supabase.from("profiles").update({ is_admin: !teacher.is_admin }).eq("id", teacher.user_id);
     await load();
+  }
+
+  async function changePlan(teacher, plan) {
+    await supabase.from("profiles").update({ plan }).eq("id", teacher.user_id);
+    setTeachers(prev => prev.map(t => t.user_id === teacher.user_id ? { ...t, plan } : t));
   }
 
   if (authLoading) return <Spinner />;
@@ -139,7 +145,7 @@ export default function AdminPage() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ background: C.bg }}>
-                    {["שם", "אימייל", "מבחנים", "שאלות", "הגשות", "הצטרף", ""].map(h => (
+                    {["שם", "אימייל", "תוכנית", "מבחנים", "שאלות", "הגשות", "הצטרף", ""].map(h => (
                       <th key={h} style={{ padding: "9px 12px", textAlign: "right", fontWeight: 600, color: C.muted, fontSize: 11, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>{h}</th>
                     ))}
                   </tr>
@@ -156,6 +162,16 @@ export default function AdminPage() {
                         {t.is_admin && <span style={{ fontSize: 10, background: C.purple, color: "white", borderRadius: 4, padding: "1px 5px", marginRight: 6 }}>ADMIN</span>}
                       </td>
                       <td style={{ padding: "10px 12px", color: C.muted, fontSize: 12 }}>{t.email ?? "—"}</td>
+                      <td style={{ padding: "6px 12px" }}>
+                        <select
+                          value={t.plan ?? "free"}
+                          onChange={e => changePlan(t, e.target.value)}
+                          style={{ fontSize: 11, padding: "3px 7px", borderRadius: 8, border: `1px solid ${C.border}`, fontFamily: "inherit", background: PLANS[t.plan ?? "free"]?.bg, color: PLANS[t.plan ?? "free"]?.color, fontWeight: 600, cursor: "pointer" }}>
+                          {Object.entries(PLANS).map(([key, p]) => (
+                            <option key={key} value={key}>{p.label}</option>
+                          ))}
+                        </select>
+                      </td>
                       <Num v={t.exam_count} />
                       <Num v={t.question_count} />
                       <Num v={t.submission_count} />

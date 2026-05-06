@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase, useAuth } from "./App";
+import { charsToPages } from "./planConfig";
 
 const C = {
   purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
@@ -18,7 +19,7 @@ const btn = (extra = {}) => ({
 });
 
 export default function StudentsPage() {
-  const { user } = useAuth();
+  const { user, canUse, planLimit } = useAuth();
 
   const [classes,     setClasses]     = useState([]);
   const [students,    setStudents]    = useState([]);
@@ -73,6 +74,16 @@ export default function StudentsPage() {
         // sync assignments
         await supabase.from("class_students").delete().eq("student_id", id);
       } else {
+        // ── Plan limit check ──────────────────────────────────
+        if (!canUse("student_management")) {
+          setError("ניהול תלמידים זמין מתוכנית מורה ומעלה. שדרג כדי להוסיף תלמידים.");
+          return;
+        }
+        const maxStudents = planLimit("max_students");
+        if (maxStudents !== Infinity && students.length >= maxStudents) {
+          setError(`הגעת למגבלת ${maxStudents} תלמידים בתוכנית שלך. שדרג תוכנית כדי להוסיף עוד.`);
+          return;
+        }
         const { data, error: e } = await supabase.from("students")
           .insert({ workspace_id: user.id, name, notes }).select().single();
         if (e) throw e;
@@ -153,6 +164,20 @@ export default function StudentsPage() {
       </div>
 
       {error && <div style={{ background: C.redLight, color: C.red, borderRadius: 10, padding: "10px 14px", fontSize: 12, marginBottom: 12 }}>{error}</div>}
+
+      {/* Plan limit banner */}
+      {(() => {
+        const max = planLimit("max_students");
+        if (max === Infinity) return null;
+        const pct = Math.round((students.length / max) * 100);
+        const full = students.length >= max;
+        return (
+          <div style={{ background: full ? C.redLight : C.amberLight, border: `1px solid ${full ? "#F09595" : "#E8C878"}`, borderRadius: 10, padding: "8px 14px", fontSize: 12, color: full ? C.red : C.amber, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>{full ? "⚠ הגעת למגבלת התלמידים בתוכנית שלך." : `תלמידים: ${students.length} / ${max}`}</span>
+            <span style={{ fontWeight: 700 }}>{pct}%</span>
+          </div>
+        );
+      })()}
 
       <div style={{ display: "flex", gap: 14 }}>
 

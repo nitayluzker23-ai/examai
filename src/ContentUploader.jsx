@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { supabase, useAuth } from "./App";
+import { charsToPages } from "./planConfig";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
@@ -158,7 +159,7 @@ function mergeResults(results) {
 
 // ════════════════════════════════════════════════════════
 export default function ContentUploader({ onDone }) {
-  const { user } = useAuth();
+  const { user, canUse, planLimit } = useAuth();
   const [phase,      setPhase]      = useState("upload");
   const [inputMode,  setInputMode]  = useState("text");   // text | image
   const [text,       setText]       = useState("");
@@ -271,8 +272,35 @@ export default function ContentUploader({ onDone }) {
   };
 
   const analyze = async () => {
-    setPhase("analyzing");
     setError("");
+
+    // ── Plan checks ──────────────────────────────────────────
+    if (inputMode === "image" && !canUse("ai_image")) {
+      setError("ניתוח תמונות זמין בתוכנית פרו בלבד. שדרג כדי להשתמש בפיצ'ר זה.");
+      return;
+    }
+    if (inputMode === "text") {
+      const maxChars = planLimit("text_chars");
+      const combined = buildCombinedText();
+      if (combined.length > maxChars) {
+        setError(`הטקסט ארוך מדי לתוכנית שלך (${charsToPages(maxChars)} מקסימום). קצר את התוכן או שדרג תוכנית.`);
+        return;
+      }
+    }
+    // Exams per day check
+    const today = new Date().toISOString().slice(0, 10);
+    const { count } = await supabase
+      .from("exams")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", user.id)
+      .gte("created_at", `${today}T00:00:00Z`);
+    const maxPerDay = planLimit("exams_per_day");
+    if (maxPerDay !== Infinity && (count ?? 0) >= maxPerDay) {
+      setError(`הגעת למגבלת ${maxPerDay} מבחנים ליום בתוכנית שלך. נסה שוב מחר או שדרג תוכנית.`);
+      return;
+    }
+
+    setPhase("analyzing");
     try {
       let finalResult;
 
