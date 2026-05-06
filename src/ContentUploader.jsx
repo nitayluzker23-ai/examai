@@ -278,6 +278,9 @@ export default function ContentUploader({ onDone }) {
                 options: q.options,
                 correct_answer_index: q.correct_answer_index,
                 ai_explanation: q.ai_explanation,
+                topic_name: topic.topic_name,
+                sub_topic_name: sub.name,
+                sub_topic_summary: sub.summary,
               },
             });
           });
