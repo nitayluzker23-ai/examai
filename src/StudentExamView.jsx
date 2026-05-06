@@ -37,8 +37,33 @@ const C = {
   border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
 };
 
-// ── shuffle ───────────────────────────────────────────────
-const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+// ── shuffle array ─────────────────────────────────────────
+const shuffle = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+// ── shuffle answer options while tracking correct index ───
+function shuffleAnswers(questions) {
+  return questions.map(q => {
+    const opts = q.content.options;
+    const correctIdx = q.content.correct_answer_index;
+    const indexed = opts.map((opt, i) => ({ opt, isCorrect: i === correctIdx }));
+    const shuffled = shuffle(indexed);
+    return {
+      ...q,
+      content: {
+        ...q.content,
+        options: shuffled.map(item => item.opt),
+        correct_answer_index: shuffled.findIndex(item => item.isCorrect),
+      },
+    };
+  });
+}
 
 // ═══════════════════════════════════════════════════════════
 export default function StudentExamView() {
@@ -138,7 +163,7 @@ export default function StudentExamView() {
       let qs;
       if (DEMO_EXAMS[exam.access_code ?? Object.keys(DEMO_EXAMS).find(k => DEMO_EXAMS[k].id === exam.id)]) {
         await new Promise(r => setTimeout(r, 400));
-        qs = shuffle(DEMO_QUESTIONS);
+        qs = shuffleAnswers(shuffle(DEMO_QUESTIONS));
       } else {
         const { data, error: e } = await supabase
           .from("questions")
@@ -146,7 +171,7 @@ export default function StudentExamView() {
           .eq("exam_id", exam.id)
           .order("sort_order");
         if (e) throw e;
-        qs = shuffle(data);
+        qs = shuffleAnswers(shuffle(data));
       }
       setQuestions(qs);
       setQIndex(0);
