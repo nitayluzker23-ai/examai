@@ -1,5 +1,9 @@
 import { useState, useRef } from "react";
 import { supabase } from "./App";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
 
@@ -16,15 +20,18 @@ const C = {
   border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
 };
 
-// ── extract text from PDF ────────────────────────────────
+// ── extract text from PDF (page by page via pdfjs-dist) ──
 async function extractTextFromPDF(file) {
   const arrayBuffer = await file.arrayBuffer();
-  const { extractText } = await import("unpdf");
-  const result = await extractText(new Uint8Array(arrayBuffer));
-  const text = Array.isArray(result.text)
-    ? result.text.join(" ")
-    : String(result.text ?? result);
-  return text;
+  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+  const pageTexts = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const text = content.items.map(item => ("str" in item ? item.str : "")).join(" ");
+    if (text.trim()) pageTexts.push(text);
+  }
+  return { text: pageTexts.join("\n\n"), numPages: pdf.numPages };
 }
 
 // ── convert image to base64 ──────────────────────────────
@@ -100,6 +107,7 @@ export default function ContentUploader({ onDone }) {
   const [selTopics, setSelTopics] = useState({});
   const [examTitle, setExamTitle] = useState("");
   const [progress,  setProgress]  = useState({ current: 0, total: 0 });
+  const [pageCount, setPageCount] = useState(0);
   const fileRef  = useRef();
   const imageRef = useRef();
 
@@ -109,8 +117,9 @@ export default function ContentUploader({ onDone }) {
     setFileName(file.name);
     if (file.type === "application/pdf") {
       try {
-        const extracted = await extractTextFromPDF(file);
+        const { text: extracted, numPages } = await extractTextFromPDF(file);
         setText(extracted);
+        setPageCount(numPages);
         setInputMode("text");
       } catch (e) {
         setError("לא ניתן לקרוא את ה-PDF. נסה להדביק טקסט או להעלות תמונה.");
@@ -162,7 +171,7 @@ export default function ContentUploader({ onDone }) {
         setProgress({ current: 0, total: chunks.length });
         if (chunks.length === 1) {
           const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
-            body: { text: text.slice(0, 10000) },
+            body: { text: chunks[0] },
             headers: fnHeaders,
           });
           if (fnErr) throw new Error(fnErr.message);
@@ -286,7 +295,13 @@ export default function ContentUploader({ onDone }) {
                 <textarea value={text} onChange={e => setText(e.target.value)}
                   placeholder="הדבק את החומר הלימודי כאן..."
                   style={{ width: "100%", minHeight: 160, padding: "14px", border: `1px solid ${C.border}`, borderRadius: 14, fontSize: 13, background: C.white, color: C.text, fontFamily: "inherit", direction: "rtl", resize: "vertical", outline: "none", lineHeight: 1.7 }} />
-                {text && <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>{text.length.toLocaleString()} תווים · {Math.ceil(text.length / 10000)} נתחים</div>}
+                {text && (
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                    {text.length.toLocaleString()} תווים
+                    {pageCount > 0 && ` · ${pageCount} עמודים`}
+                    {` · ${Math.ceil(text.length / 10000)} נתחים`}
+                  </div>
+                )}
               </div>
             )}
 

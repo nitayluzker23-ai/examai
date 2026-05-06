@@ -1,10 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-// ── Supabase ─────────────────────────────────────────────
-const SUPABASE_URL     = "https://YOUR_PROJECT.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { supabase } from "./App";
 
 // ── Demo data (כשאין Supabase אמיתי) ────────────────────
 const DEMO_EXAMS = {
