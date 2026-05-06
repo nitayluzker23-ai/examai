@@ -79,6 +79,21 @@ function splitIntoChunks(text, chunkSize = 10000, overlap = 200) {
   return chunks;
 }
 
+// ── extract real error message from Supabase edge function ──
+async function extractFnError(fnErr) {
+  try {
+    const body = await fnErr.context?.json?.();
+    return body?.error ?? body?.message ?? fnErr.message;
+  } catch (_) {
+    try {
+      const text = await fnErr.context?.text?.();
+      return text || fnErr.message;
+    } catch (_) {
+      return fnErr.message;
+    }
+  }
+}
+
 // ── merge multiple JSON results ──────────────────────────
 function mergeResults(results) {
   if (results.length === 0) return null;
@@ -222,21 +237,22 @@ export default function ContentUploader({ onDone }) {
           body: { image: imageData.base64, image_type: imageData.type },
           headers: fnHeaders,
         });
-        if (fnErr) throw new Error(fnErr.message);
-        if (data.error) throw new Error(data.error);
+        if (fnErr) throw new Error(await extractFnError(fnErr));
+        if (data?.error) throw new Error(data.error);
         finalResult = data;
       } else {
         // text mode with chunks (combined with past exams if provided)
         const combined = buildCombinedText();
-        const chunks = splitIntoChunks(combined, 10000, 1000);
+        if (!combined.trim()) throw new Error("הטקסט ריק — לא ניתן לנתח");
+        const chunks = splitIntoChunks(combined, 10000, 200);
         setProgress({ current: 0, total: chunks.length });
         if (chunks.length === 1) {
           const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
             body: { text: chunks[0] },
             headers: fnHeaders,
           });
-          if (fnErr) throw new Error(fnErr.message);
-          if (data.error) throw new Error(data.error);
+          if (fnErr) throw new Error(await extractFnError(fnErr));
+          if (data?.error) throw new Error(data.error);
           finalResult = data;
         } else {
           const results = [];
@@ -246,8 +262,8 @@ export default function ContentUploader({ onDone }) {
               body: { text: chunks[i], chunk_index: i },
               headers: fnHeaders,
             });
-            if (fnErr) throw new Error(fnErr.message);
-            if (data.error) throw new Error(data.error);
+            if (fnErr) throw new Error(await extractFnError(fnErr));
+            if (data?.error) throw new Error(data.error);
             results.push(data);
             if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 500));
           }

@@ -127,7 +127,11 @@ export default function ExamQuestionsPage() {
         body: { text: prompt, topic_reinforcement: true },
         headers: fnHeaders,
       });
-      if (fnErr) throw new Error(fnErr.message);
+      if (fnErr) {
+        let msg = fnErr.message;
+        try { const b = await fnErr.context?.json?.(); msg = b?.error ?? b?.message ?? msg; } catch (_) {}
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
 
       // Collect all questions from the AI response
