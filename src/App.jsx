@@ -10,6 +10,7 @@ import InsightsView from "./InsightsView";
 import ExamsList from "./ExamsList";
 import ContentUploader from "./ContentUploader";
 import ExamQuestionsPage from "./ExamQuestionsPage";
+import StudentsPage from "./StudentsPage";
 
 const SUPABASE_URL      = "https://npksscocijjmgzgrolnq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
@@ -67,11 +68,12 @@ function ProtectedRoute({ children }) {
 }
 
 const NAV_ITEMS = [
-  { path: "/dashboard",          label: "לוח בקרה",    icon: <GridIcon /> },
-  { path: "/dashboard/exams",    label: "המבחנים שלי", icon: <ListIcon /> },
-  { path: "/dashboard/new",      label: "מבחן חדש",    icon: <PlusIcon /> },
-  { path: "/dashboard/bank",     label: "בנק שאלות",   icon: <BankIcon /> },
-  { path: "/dashboard/settings", label: "הגדרות",      icon: <GearIcon /> },
+  { path: "/dashboard",            label: "לוח בקרה",    icon: <GridIcon /> },
+  { path: "/dashboard/exams",      label: "המבחנים שלי", icon: <ListIcon /> },
+  { path: "/dashboard/new",        label: "מבחן חדש",    icon: <PlusIcon /> },
+  { path: "/dashboard/bank",       label: "בנק שאלות",   icon: <BankIcon /> },
+  { path: "/dashboard/students",   label: "תלמידים",     icon: <StudentsIcon /> },
+  { path: "/dashboard/settings",   label: "הגדרות",      icon: <GearIcon /> },
 ];
 
 function TeacherLayout({ children }) {
@@ -213,6 +215,7 @@ function DashboardHome()    { return <InsightsView />; }
 function NewExamPage()      { return <ExamBuilder />; }
 function ExamsPage()        { return <ExamsList />; }
 function QuestionBankPage() { return <ContentUploader />; }
+function StudentsManagePage() { return <StudentsPage />; }
 
 function StudentEntryPage() {
   const { accessCode } = useParams();
@@ -270,6 +273,9 @@ export default function App() {
           <Route path="/dashboard/bank" element={
             <ProtectedRoute><TeacherLayout><QuestionBankPage /></TeacherLayout></ProtectedRoute>
           } />
+          <Route path="/dashboard/students" element={
+            <ProtectedRoute><TeacherLayout><StudentsManagePage /></TeacherLayout></ProtectedRoute>
+          } />
           <Route path="/dashboard/settings" element={
             <ProtectedRoute><TeacherLayout><SettingsPage /></TeacherLayout></ProtectedRoute>
           } />
@@ -316,3 +322,4 @@ function ListIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fil
 function PlusIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>; }
 function BankIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="5" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M5 5V4a3 3 0 016 0v1" stroke="currentColor" strokeWidth="1.5"/><circle cx="8" cy="9.5" r="1.5" fill="currentColor"/></svg>; }
 function GearIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>; }
+function StudentsIcon() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5"/><path d="M1 13c0-2.761 2.239-4 5-4s5 1.239 5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M12 7l1.5 1.5L16 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>; }
