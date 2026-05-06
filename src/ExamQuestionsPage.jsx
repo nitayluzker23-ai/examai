@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "./App";
+import { printExam, printAnswerKey } from "./printUtils";
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
 const fnHeaders = { apikey: SUPABASE_ANON_KEY };
@@ -201,14 +202,30 @@ export default function ExamQuestionsPage() {
 
       {exam && (
         <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>{exam.title}</div>
-          <div style={{ fontSize: 13, color: C.muted, marginTop: 4, display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <span>{questions.length} שאלות</span>
-            <span>{submissions.length} הגשות</span>
-            {exam.access_code && <span>קוד: <code style={{ background: C.purpleLight, padding: "1px 6px", borderRadius: 4 }}>{exam.access_code}</code></span>}
-            <span style={{ color: exam.status === "published" ? C.teal : C.amber }}>
-              {exam.status === "published" ? "✓ פורסם" : "⏸ טיוטה"}
-            </span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
+            <div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: C.text }}>{exam.title}</div>
+              <div style={{ fontSize: 13, color: C.muted, marginTop: 4, display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <span>{questions.length} שאלות</span>
+                <span>{submissions.length} הגשות</span>
+                {exam.access_code && <span>קוד: <code style={{ background: C.purpleLight, padding: "1px 6px", borderRadius: 4 }}>{exam.access_code}</code></span>}
+                <span style={{ color: exam.status === "published" ? C.teal : C.amber }}>
+                  {exam.status === "published" ? "✓ פורסם" : "⏸ טיוטה"}
+                </span>
+              </div>
+            </div>
+            {questions.length > 0 && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={() => printExam(exam, questions)}
+                  style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.border}`, background: C.white, color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>
+                  🖨 הדפס שאלון
+                </button>
+                <button onClick={() => printAnswerKey(exam, questions)}
+                  style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.purple}`, background: C.purpleLight, color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>
+                  📋 מפתח תשובות
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

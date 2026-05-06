@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./App";
+import { printStudentReport } from "./printUtils";
 
 // ── Demo data (כשאין Supabase אמיתי) ────────────────────
 const DEMO_EXAMS = {
@@ -439,6 +440,12 @@ export default function StudentExamView() {
         {phase === "done" && (
           <div>
             <ResultHeader answers={answers} questions={questions} name={name} />
+            <div style={{ textAlign: "center", marginTop: 10 }}>
+              <button onClick={() => printStudentReport(exam, questions, answers, name)}
+                style={{ fontSize: 13, fontWeight: 600, padding: "8px 18px", borderRadius: 10, border: "none", background: "#534AB7", color: "white", cursor: "pointer", fontFamily: "inherit" }}>
+                🖨 הורד דוח אישי PDF
+              </button>
+            </div>
             <TopicBreakdown answers={answers} questions={questions} />
             <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(83,74,183,0.06)", marginTop: 12 }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 14 }}>סקירת שאלות</div>
