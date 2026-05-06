@@ -20,6 +20,33 @@ const C = {
   border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
 };
 
+// ── extract text from PPTX (jszip parses the ZIP, grabs <a:t> tags) ──
+async function extractTextFromPPTX(file) {
+  const JSZip = (await import("jszip")).default;
+  const zip = await JSZip.loadAsync(await file.arrayBuffer());
+  const slideFiles = Object.keys(zip.files)
+    .filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n))
+    .sort((a, b) => {
+      const num = s => parseInt(s.match(/\d+/)[0]);
+      return num(a) - num(b);
+    });
+  const texts = [];
+  for (const path of slideFiles) {
+    const xml = await zip.files[path].async("string");
+    const matches = xml.match(/<a:t[^>]*>([^<]*)<\/a:t>/g) ?? [];
+    const slideText = matches.map(m => m.replace(/<[^>]+>/g, "")).join(" ");
+    if (slideText.trim()) texts.push(slideText);
+  }
+  return cleanText(texts.join("\n\n"));
+}
+
+// ── extract text from DOCX (mammoth does the heavy lifting) ──
+async function extractTextFromDOCX(file) {
+  const mammoth = await import("mammoth");
+  const result = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+  return cleanText(result.value);
+}
+
 // ── extract text from PDF (page by page via pdfjs-dist) ──
 async function extractTextFromPDF(file) {
   const arrayBuffer = await file.arrayBuffer();
@@ -153,19 +180,32 @@ export default function ContentUploader({ onDone }) {
     if (!file) return;
     setError("");
     setFileName(file.name);
-    if (file.type === "application/pdf") {
-      try {
+    const isPPTX = file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation" || file.name.endsWith(".pptx");
+    const isPPT  = file.name.endsWith(".ppt") && !isPPTX;
+    const isDOCX = file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.name.endsWith(".docx");
+
+    if (isPPT) {
+      setError("קובץ PPT (פורמט ישן) אינו נתמך בדפדפן. פתח ב-PowerPoint ושמור כ-PPTX, ואז העלה שוב.");
+      return;
+    }
+
+    try {
+      if (file.type === "application/pdf") {
         const { text: extracted, numPages } = await extractTextFromPDF(file);
         setText(extracted);
         setPageCount(numPages);
-        setInputMode("text");
-      } catch (e) {
-        setError("לא ניתן לקרוא את ה-PDF. נסה להדביק טקסט או להעלות תמונה.");
+      } else if (isPPTX) {
+        const extracted = await extractTextFromPPTX(file);
+        setText(extracted);
+      } else if (isDOCX) {
+        const extracted = await extractTextFromDOCX(file);
+        setText(extracted);
+      } else {
+        setText(cleanText(await file.text()));
       }
-    } else {
-      const raw = await file.text();
-      setText(cleanText(raw));
       setInputMode("text");
+    } catch (e) {
+      setError(`לא ניתן לקרוא את הקובץ: ${e.message}`);
     }
   };
 
@@ -194,9 +234,15 @@ export default function ContentUploader({ onDone }) {
     for (const file of Array.from(files)) {
       try {
         let t;
+        const isPPTX = file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation" || file.name.endsWith(".pptx");
+        const isDOCX = file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.name.endsWith(".docx");
         if (file.type === "application/pdf") {
           const { text: extracted } = await extractTextFromPDF(file);
           t = extracted;
+        } else if (isPPTX) {
+          t = await extractTextFromPPTX(file);
+        } else if (isDOCX) {
+          t = await extractTextFromDOCX(file);
         } else {
           t = await file.text();
         }
@@ -346,7 +392,7 @@ export default function ContentUploader({ onDone }) {
 
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontSize: 22, fontWeight: 800, color: C.purple, marginBottom: 3 }}>העלאת חומר לימוד</div>
-          <div style={{ fontSize: 13, color: C.muted }}>טקסט, PDF או תמונה — ה-AI יבנה שאלות אוטומטית</div>
+          <div style={{ fontSize: 13, color: C.muted }}>טקסט, PDF, PPTX, PPT, DOCX או תמונה — ה-AI יבנה שאלות אוטומטית</div>
         </div>
 
         {/* UPLOAD */}
@@ -368,9 +414,9 @@ export default function ContentUploader({ onDone }) {
                 <div onDrop={handleDrop} onDragOver={e => e.preventDefault()} onClick={() => fileRef.current.click()}
                   style={{ border: `2px dashed ${C.purpleMid}`, borderRadius: 16, padding: "24px 20px", textAlign: "center", cursor: "pointer", background: C.white, marginBottom: 12 }}>
                   <div style={{ fontSize: 28, marginBottom: 6 }}>📄</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: C.purple, marginBottom: 2 }}>{fileName || "לחץ או גרור קובץ PDF/TXT"}</div>
-                  <div style={{ fontSize: 11, color: C.muted }}>או הדבק טקסט למטה</div>
-                  <input ref={fileRef} type="file" accept=".pdf,.txt,.doc,.docx" style={{ display: "none" }} onChange={e => handleFile(e.target.files[0])} />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.purple, marginBottom: 2 }}>{fileName || "לחץ או גרור קובץ"}</div>
+                  <div style={{ fontSize: 11, color: C.muted }}>PDF · PPTX · PPT · DOCX · TXT · או הדבק טקסט למטה</div>
+                  <input ref={fileRef} type="file" accept=".pdf,.txt,.doc,.docx,.pptx,.ppt" style={{ display: "none" }} onChange={e => handleFile(e.target.files[0])} />
                 </div>
                 <textarea value={text} onChange={e => setText(e.target.value)}
                   placeholder="הדבק את החומר הלימודי כאן..."
@@ -389,12 +435,13 @@ export default function ContentUploader({ onDone }) {
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: C.amber }}>📚 מבחנים משנים קודמות</div>
                       <div style={{ fontSize: 11, color: "#6b5a2e", marginTop: 1 }}>אופציונלי — ה-AI ילמד את סגנון המרצה ויתאים את השאלות</div>
+                      <div style={{ fontSize: 10, color: "#9a8060", marginTop: 2 }}>PDF · PPTX · PPT · DOCX · TXT</div>
                     </div>
                     <button onClick={() => pastRef.current.click()} disabled={pastLoading}
                       style={{ fontSize: 12, fontWeight: 600, color: C.amber, background: C.white, border: `1px solid ${C.amber}`, borderRadius: 8, padding: "5px 10px", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
                       {pastLoading ? "טוען..." : "+ הוסף"}
                     </button>
-                    <input ref={pastRef} type="file" accept=".pdf,.txt" multiple style={{ display: "none" }}
+                    <input ref={pastRef} type="file" accept=".pdf,.txt,.doc,.docx,.pptx,.ppt" multiple style={{ display: "none" }}
                       onChange={e => handlePastExams(e.target.files)} />
                   </div>
                   {pastExams.length > 0 && (
