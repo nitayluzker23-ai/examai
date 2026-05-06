@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { supabase } from "./App";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { supabase, useAuth } from "./App";
 import { printExam, printAnswerKey, printClassReport } from "./printUtils";
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
@@ -67,6 +67,8 @@ function buildTopicPrompt(topic, count) {
 
 export default function ExamQuestionsPage() {
   const { examId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [exam,        setExam]        = useState(null);
   const [questions,   setQuestions]   = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -82,6 +84,8 @@ export default function ExamQuestionsPage() {
   const [newlyAdded,  setNewlyAdded]  = useState(new Set()); // highlight newly added q ids
   const [uploading,   setUploading]   = useState(null);     // questionId being uploaded
   const [uploadError, setUploadError] = useState("");
+  const [retryCount,  setRetryCount]  = useState(8);
+  const [creatingRetry, setCreatingRetry] = useState(false);
 
   useEffect(() => { load(); }, [examId]);
 
@@ -109,6 +113,62 @@ export default function ExamQuestionsPage() {
       setError(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createRetryExam = async () => {
+    if (!user || submissions.length === 0) return;
+    setCreatingRetry(true);
+    try {
+      // Rank questions by error rate across all submissions
+      const errorMap = {}; // question_id -> { wrong, total }
+      for (const sub of submissions) {
+        for (const a of (sub.answers ?? [])) {
+          if (!errorMap[a.question_id]) errorMap[a.question_id] = { wrong: 0, total: 0 };
+          errorMap[a.question_id].total++;
+          const q = questions.find(q => q.id === a.question_id);
+          if (q && a.selected_index !== q.content?.correct_answer_index) {
+            errorMap[a.question_id].wrong++;
+          }
+        }
+      }
+
+      const ranked = questions
+        .filter(q => errorMap[q.id]?.total > 0)
+        .map(q => ({ ...q, errRate: errorMap[q.id].wrong / errorMap[q.id].total }))
+        .sort((a, b) => b.errRate - a.errRate)
+        .slice(0, retryCount);
+
+      if (ranked.length === 0) {
+        alert("אין מספיק נתוני שגיאות ליצירת מבחן חזרה.");
+        setCreatingRetry(false);
+        return;
+      }
+
+      // Create new exam
+      const retryTitle = `חזרה — ${exam.title}`;
+      const { data: newExam, error: eErr } = await supabase
+        .from("exams")
+        .insert({ workspace_id: user.id, title: retryTitle, subject: exam.subject, status: "draft", config: exam.config ?? {} })
+        .select().single();
+      if (eErr) throw eErr;
+
+      // Copy ranked questions to new exam
+      const newQs = ranked.map((q, i) => ({
+        exam_id:         newExam.id,
+        source_topic_id: q.source_topic_id,
+        difficulty:      q.difficulty,
+        sort_order:      i,
+        content:         { ...q.content, auto_generated_reinforcement: true },
+      }));
+      const { error: qErr } = await supabase.from("questions").insert(newQs);
+      if (qErr) throw qErr;
+
+      navigate(`/dashboard/exams/${newExam.id}/questions`);
+    } catch (e) {
+      alert(`שגיאה ביצירת מבחן חזרה: ${e.message}`);
+    } finally {
+      setCreatingRetry(false);
     }
   };
 
@@ -290,12 +350,24 @@ export default function ExamQuestionsPage() {
                 מבוסס על {submissions.length} הגשות — לחץ "צור עוד שאלות" לחיזוק הנושא
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <span style={{ fontSize: 12, color: C.muted }}>כמות שאלות לייצור:</span>
               <select value={genCount} onChange={e => setGenCount(Number(e.target.value))}
                 style={{ fontSize: 12, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, fontFamily: "inherit", background: C.white }}>
                 {[3, 5, 8, 10].map(n => <option key={n} value={n}>{n}</option>)}
               </select>
+              <span style={{ fontSize: 12, color: C.muted, marginRight: 4 }}>|</span>
+              <span style={{ fontSize: 12, color: C.muted }}>מבחן חזרה:</span>
+              <select value={retryCount} onChange={e => setRetryCount(Number(e.target.value))}
+                style={{ fontSize: 12, padding: "4px 8px", borderRadius: 6, border: `1px solid ${C.border}`, fontFamily: "inherit", background: C.white }}>
+                {[5, 8, 10, 15].map(n => <option key={n} value={n}>{n} שאלות</option>)}
+              </select>
+              <button onClick={createRetryExam} disabled={creatingRetry}
+                style={{ fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 8, border: `1px solid ${C.teal}`, background: C.tealLight, color: C.teal, cursor: creatingRetry ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}>
+                {creatingRetry ? (
+                  <><span style={{ display: "inline-block", width: 11, height: 11, border: `2px solid #9FD9C7`, borderTopColor: C.teal, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />יוצר...</>
+                ) : "🔁 צור מבחן חזרה"}
+              </button>
             </div>
           </div>
 
