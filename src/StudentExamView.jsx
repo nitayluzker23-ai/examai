@@ -427,6 +427,7 @@ export default function StudentExamView() {
         {phase === "done" && (
           <div>
             <ResultHeader answers={answers} questions={questions} name={name} />
+            <TopicBreakdown answers={answers} questions={questions} />
             <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(83,74,183,0.06)", marginTop: 12 }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 14 }}>סקירת שאלות</div>
               {questions.map((q, i) => {
@@ -493,6 +494,66 @@ function OptionRow({ letter, text, index, selected, onSelect }) {
         {letter}
       </div>
       <span style={{ fontSize: 14, color: C.text, lineHeight: 1.5 }}>{text}</span>
+    </div>
+  );
+}
+
+// ── TopicBreakdown ────────────────────────────────────────
+function TopicBreakdown({ answers, questions }) {
+  // Build per-topic stats
+  const statsMap = {};
+  questions.forEach((q, i) => {
+    const a = answers[i];
+    const topicId   = q.content?.source_topic_id ?? q.source_topic_id ?? "כללי";
+    const topicName = q.content?.topic_name ?? topicId;
+    if (!statsMap[topicId]) statsMap[topicId] = { name: topicName, total: 0, correct: 0 };
+    statsMap[topicId].total++;
+    if (a?.selected_index === q.content.correct_answer_index) statsMap[topicId].correct++;
+  });
+
+  const topics = Object.values(statsMap).sort((a, b) => (a.correct / a.total) - (b.correct / b.total));
+  if (topics.length <= 1) return null; // no breakdown if only one topic
+
+  const topWeak   = topics[0];
+  const topStrong = topics[topics.length - 1];
+
+  return (
+    <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(83,74,183,0.06)", marginTop: 12 }}>
+      <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 4 }}>ביצועים לפי נושא</div>
+      <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>סדר מהחלש לחזק</div>
+
+      {topics.map(t => {
+        const pct   = Math.round((t.correct / t.total) * 100);
+        const color = pct >= 80 ? C.teal : pct >= 50 ? C.amber : C.red;
+        const bg    = pct >= 80 ? C.tealLight : pct >= 50 ? C.amberLight : C.redLight;
+        return (
+          <div key={t.name} style={{ marginBottom: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <span style={{ fontSize: 13, color: C.text, fontWeight: 500 }}>{t.name}</span>
+              <span style={{ fontSize: 12, color, fontWeight: 600 }}>{t.correct}/{t.total} ({pct}%)</span>
+            </div>
+            <div style={{ height: 7, background: "#f0f0f8", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 4, transition: "width 0.6s ease" }} />
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Summary tip */}
+      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+        {topWeak.correct / topWeak.total < 0.8 && (
+          <div style={{ flex: 1, background: C.redLight, borderRadius: 10, padding: "10px 12px" }}>
+            <div style={{ fontSize: 11, color: C.red, fontWeight: 600, marginBottom: 2 }}>📌 לחזור על</div>
+            <div style={{ fontSize: 12, color: C.red }}>{topWeak.name}</div>
+          </div>
+        )}
+        {topStrong.correct / topStrong.total >= 0.8 && (
+          <div style={{ flex: 1, background: C.tealLight, borderRadius: 10, padding: "10px 12px" }}>
+            <div style={{ fontSize: 11, color: C.teal, fontWeight: 600, marginBottom: 2 }}>⭐ חזק ב</div>
+            <div style={{ fontSize: 12, color: C.teal }}>{topStrong.name}</div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
