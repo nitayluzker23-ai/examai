@@ -53,14 +53,14 @@ function calcWeakTopics(questions, submissions) {
 
 // ── Build prompt for topic-focused generation ────────────
 function buildTopicPrompt(topic, count) {
+  // Truncate each question title to 80 chars — enough for dedup, not wasteful
   const existing = topic.questions
-    .map((q, i) => `${i + 1}. ${q.content?.question_text ?? ""}`)
+    .map((q, i) => `${i + 1}. ${(q.content?.question_text ?? "").slice(0, 80)}`)
     .join("\n");
   return (
-    `צור ${count} שאלות רב-ברירה חדשות על הנושא: "${topic.name}".\n\n` +
-    `שיעור שגיאות התלמידים בנושא זה: ${Math.round(topic.errorRate * 100)}%.\n` +
-    `כוון את השאלות לחיזוק ההבנה — שאלות שמבהירות את הנקודות שבהן תלמידים נוטים לטעות.\n\n` +
-    `שאלות קיימות בנושא זה (אל תחזור עליהן):\n${existing}`
+    `צור ${count} שאלות רב-ברירה על: "${topic.name}" (${Math.round(topic.errorRate * 100)}% שגיאות).\n` +
+    `התמקד בנקודות שתלמידים נוטים לטעות בהן.\n` +
+    `קיימות כבר:\n${existing}`
   );
 }
 

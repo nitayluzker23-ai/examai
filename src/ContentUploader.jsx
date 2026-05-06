@@ -31,24 +31,43 @@ async function extractTextFromPDF(file) {
     const text = content.items.map(item => ("str" in item ? item.str : "")).join(" ");
     if (text.trim()) pageTexts.push(text);
   }
-  return { text: pageTexts.join("\n\n"), numPages: pdf.numPages };
+  return { text: cleanText(pageTexts.join("\n\n")), numPages: pdf.numPages };
 }
 
-// ── convert image to base64 ──────────────────────────────
-async function fileToBase64(file) {
+// ── clean noisy PDF text before sending ─────────────────
+function cleanText(raw) {
+  return raw
+    .replace(/[ \t]+/g, " ")           // collapse whitespace runs
+    .replace(/^\s*\d{1,4}\s*$/gm, "")  // lone page numbers on their own line
+    .replace(/[^\S\n]+\n/g, "\n")       // trailing spaces before newline
+    .replace(/\n{3,}/g, "\n\n")         // max 2 consecutive blank lines
+    .trim();
+}
+
+// ── resize + compress image before base64 (saves 70-90%) ─
+async function fileToBase64(file, maxPx = 1024) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result.split(",")[1];
-      resolve(base64);
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width  * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+      resolve(dataUrl.split(",")[1]);
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    img.onerror = reject;
+    img.src = url;
   });
 }
 
 // ── split text into overlapping chunks ──────────────────
-function splitIntoChunks(text, chunkSize = 10000, overlap = 1000) {
+// overlap=200 is enough to avoid mid-sentence cuts (was 1000 — wasteful)
+function splitIntoChunks(text, chunkSize = 10000, overlap = 200) {
   const chunks = [];
   let start = 0;
   while (start < text.length) {
@@ -130,7 +149,7 @@ export default function ContentUploader({ onDone }) {
       }
     } else {
       const raw = await file.text();
-      setText(raw);
+      setText(cleanText(raw));
       setInputMode("text");
     }
   };
@@ -175,8 +194,10 @@ export default function ContentUploader({ onDone }) {
 
   const buildCombinedText = () => {
     if (pastExams.length === 0) return text;
+    // Truncate each past exam: style patterns are clear from the first ~4000 chars
+    const PAST_EXAM_LIMIT = 4000;
     const pastSection = pastExams
-      .map((e, i) => `=== מבחן קודם ${i + 1}: ${e.name} ===\n${e.text}`)
+      .map((e, i) => `=== מבחן קודם ${i + 1}: ${e.name} ===\n${e.text.slice(0, PAST_EXAM_LIMIT)}`)
       .join("\n\n");
     return (
       `[PAST EXAMS — ניתוח סגנון המרצה]\n` +
