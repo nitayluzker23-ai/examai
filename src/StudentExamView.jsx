@@ -147,6 +147,18 @@ export default function StudentExamView() {
         .eq("status", "published")
         .single();
       if (e || !data) throw new Error("קוד לא נמצא או המבחן לא פורסם");
+
+      // Check schedule window
+      const now = new Date();
+      if (data.opens_at && new Date(data.opens_at) > now) {
+        const when = new Date(data.opens_at).toLocaleString("he-IL");
+        throw new Error(`המבחן ייפתח ב-${when}`);
+      }
+      if (data.closes_at && new Date(data.closes_at) < now) {
+        const when = new Date(data.closes_at).toLocaleString("he-IL");
+        throw new Error(`המבחן נסגר ב-${when}`);
+      }
+
       setExam(data);
       setPhase("briefing");
     } catch (err) {
@@ -465,6 +477,10 @@ function BriefingRules({ exam }) {
     rules.push({ icon: "📋", text: `${cfg.sessions.length} פרקים עם הפסקות` });
     rules.push({ icon: "☕", text: `הפסקה בין פרקים: ${cfg.break_minutes} דקות` });
     cfg.sessions.forEach((s, i) => rules.push({ icon: `${i+1}.`, text: `פרק ${i+1}: ${s.questions} שאלות · ${s.mins} דקות` }));
+  }
+  if (exam.closes_at) {
+    const when = new Date(exam.closes_at).toLocaleString("he-IL");
+    rules.push({ icon: "⏰", text: `המבחן נסגר אוטומטית ב-${when}`, ok: false });
   }
   rules.push({ icon: "👁", text: "יציאה מהמסך נרשמת ומדווחת למורה", ok: false });
 

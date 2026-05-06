@@ -30,6 +30,8 @@ export default function ExamBuilder() {
   const [timedBack, setTimedBack] = useState(false);
   const [sessions, setSessions] = useState([{ mins: 20, questions: 10 }, { mins: 20, questions: 10 }]);
   const [breakMins, setBreakMins] = useState(5);
+  const [opensAt,   setOpensAt]   = useState("");   // datetime-local string
+  const [closesAt,  setClosesAt]  = useState("");   // datetime-local string
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [savedExam, setSavedExam] = useState(null);
@@ -57,6 +59,8 @@ export default function ExamBuilder() {
         config: buildConfig(),
         status: "draft",
         access_code: code,
+        opens_at:  opensAt  ? new Date(opensAt).toISOString()  : null,
+        closes_at: closesAt ? new Date(closesAt).toISOString() : null,
       }).select().single();
       if (error) throw error;
       setSavedExam(data);
@@ -114,6 +118,32 @@ export default function ExamBuilder() {
               <Field label="שם המבחן" placeholder="למשל: מבחן סוף שנה, חזרה לפרק 3..." value={form.name} onChange={v => setForm({ ...form, name: v })} />
               <Field label="מקצוע / נושא" placeholder="ביולוגיה, בטיחות, שיווק..." value={form.subject} onChange={v => setForm({ ...form, subject: v })} />
               <Field label="כיתה / קבוצה (אופציונלי)" placeholder="י׳2, מחזור 2025, קבוצת מתקדמים..." value={form.group} onChange={v => setForm({ ...form, group: v })} />
+
+              {/* Schedule */}
+              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16, marginTop: 4 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 12 }}>
+                  🗓 חלון זמן (אופציונלי)
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>פתיחה</div>
+                    <input type="datetime-local" value={opensAt} onChange={e => setOpensAt(e.target.value)}
+                      style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, background: C.bg, color: C.text, fontFamily: "inherit", outline: "none" }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>סגירה</div>
+                    <input type="datetime-local" value={closesAt} onChange={e => setClosesAt(e.target.value)}
+                      style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, background: C.bg, color: C.text, fontFamily: "inherit", outline: "none" }} />
+                  </div>
+                </div>
+                {(opensAt || closesAt) && (
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 8, background: C.purpleLight, borderRadius: 8, padding: "7px 10px" }}>
+                    {opensAt && !closesAt && `המבחן נפתח ${new Date(opensAt).toLocaleString("he-IL")}`}
+                    {!opensAt && closesAt && `המבחן נסגר ${new Date(closesAt).toLocaleString("he-IL")}`}
+                    {opensAt && closesAt && `פתוח ${new Date(opensAt).toLocaleString("he-IL")} — ${new Date(closesAt).toLocaleString("he-IL")}`}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
