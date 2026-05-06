@@ -68,10 +68,10 @@ function shuffleAnswers(questions) {
 }
 
 // ═══════════════════════════════════════════════════════════
-export default function StudentExamView() {
+export default function StudentExamView({ initialCode } = {}) {
   const { user } = useAuth() ?? {};
   const [phase, setPhase]         = useState("lobby");    // lobby | briefing | exam | break | done
-  const [code, setCode]           = useState("");
+  const [code, setCode]           = useState(initialCode ?? "");
   const [name, setName]           = useState("");
   const [exam, setExam]           = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -323,32 +323,41 @@ export default function StudentExamView() {
               <div style={{ fontSize: 22, fontWeight: 700, color: "#EEEDFE" }}>כניסה למבחן</div>
             </div>
             <div style={{ padding: 24 }}>
-              <div style={{ fontSize: 12, color: C.muted, marginBottom: 5, fontWeight: 500 }}>קוד המבחן</div>
-              <input
-                value={code}
-                onChange={e => { setCode(e.target.value.toUpperCase().slice(0,6)); setError(""); }}
-                onKeyDown={e => e.key === "Enter" && code.length === 6 && name.trim() && fetchExam()}
-                placeholder="למשל: AB3K7P"
-                maxLength={6}
-                style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${error ? C.red : code.length === 6 ? C.purple : C.border}`, borderRadius: 12, fontSize: 20, fontWeight: 700, letterSpacing: 6, textAlign: "center", background: C.bg, color: C.text, fontFamily: "monospace", outline: "none", marginBottom: 14, transition: "border-color 0.2s" }}
-              />
+              {/* Code field — hidden when arriving via direct link */}
+              {!initialCode && (
+                <>
+                  <div style={{ fontSize: 12, color: C.muted, marginBottom: 5, fontWeight: 500 }}>קוד המבחן</div>
+                  <input
+                    value={code}
+                    onChange={e => { setCode(e.target.value.toUpperCase().slice(0,6)); setError(""); }}
+                    onKeyDown={e => e.key === "Enter" && code.length === 6 && name.trim() && fetchExam()}
+                    placeholder="למשל: AB3K7P"
+                    maxLength={6}
+                    style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${error ? C.red : code.length === 6 ? C.purple : C.border}`, borderRadius: 12, fontSize: 20, fontWeight: 700, letterSpacing: 6, textAlign: "center", background: C.bg, color: C.text, fontFamily: "monospace", outline: "none", marginBottom: 14, transition: "border-color 0.2s" }}
+                  />
+                </>
+              )}
               <div style={{ fontSize: 12, color: C.muted, marginBottom: 5, fontWeight: 500 }}>שם מלא</div>
               <input
                 value={name}
                 onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && name.trim() && code.length === 6 && fetchExam()}
                 placeholder="שם פרטי ושם משפחה"
+                autoFocus={!!initialCode}
                 style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${C.border}`, borderRadius: 12, fontSize: 14, background: C.bg, color: C.text, fontFamily: "inherit", direction: "rtl", outline: "none", marginBottom: 6 }}
               />
               {error && <div style={{ fontSize: 12, color: C.red, marginBottom: 10, marginTop: 4 }}>{error}</div>}
 
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 16, marginTop: 6 }}>
-                לדמו: נסה קוד <strong style={{ fontFamily: "monospace", color: C.purple }}>AB3K7P</strong> (גמיש) · <strong style={{ fontFamily: "monospace", color: C.purple }}>X9QM2R</strong> (מתוזמן) · <strong style={{ fontFamily: "monospace", color: C.purple }}>SESS01</strong> (סשנים)
-              </div>
+              {!initialCode && (
+                <div style={{ fontSize: 11, color: C.muted, marginBottom: 16, marginTop: 6 }}>
+                  לדמו: נסה קוד <strong style={{ fontFamily: "monospace", color: C.purple }}>AB3K7P</strong> (גמיש) · <strong style={{ fontFamily: "monospace", color: C.purple }}>X9QM2R</strong> (מתוזמן) · <strong style={{ fontFamily: "monospace", color: C.purple }}>SESS01</strong> (סשנים)
+                </div>
+              )}
 
               <button
                 onClick={fetchExam}
                 disabled={loading || code.length < 6 || !name.trim()}
-                style={{ width: "100%", padding: 13, background: (code.length === 6 && name.trim()) ? C.purple : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: (code.length === 6 && name.trim()) ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s" }}>
+                style={{ width: "100%", padding: 13, background: (code.length === 6 && name.trim()) ? C.purple : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: (code.length === 6 && name.trim()) ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s", marginTop: initialCode ? 10 : 0 }}>
                 {loading ? "מחפש..." : "כניסה ←"}
               </button>
             </div>

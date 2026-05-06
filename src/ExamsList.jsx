@@ -27,10 +27,18 @@ export default function ExamsList() {
     setLoading(false);
   };
 
+  const examUrl = (code) => `${window.location.origin}/exam/${code}`;
+
   const copyLink = (code) => {
-    navigator.clipboard?.writeText(`${window.location.origin}/exam/${code}`);
+    navigator.clipboard?.writeText(examUrl(code));
     setCopied(code);
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  const shareWhatsApp = (exam) => {
+    const url = examUrl(exam.access_code);
+    const msg = `שלום! הנה לינק למבחן "${exam.title}" 📝\n${url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   const toggleStatus = async (exam) => {
@@ -109,10 +117,16 @@ export default function ExamsList() {
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {exam.access_code && (
-                <button onClick={() => copyLink(exam.access_code)}
-                  style={{ padding: "7px 14px", background: copied === exam.access_code ? C.tealLight : C.purpleLight, color: copied === exam.access_code ? C.teal : C.purple, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
-                  {copied === exam.access_code ? "✓ הועתק!" : "העתק לינק"}
-                </button>
+                <>
+                  <button onClick={() => copyLink(exam.access_code)}
+                    style={{ padding: "7px 14px", background: copied === exam.access_code ? C.tealLight : C.purpleLight, color: copied === exam.access_code ? C.teal : C.purple, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                    {copied === exam.access_code ? "✓ הועתק!" : "🔗 העתק לינק"}
+                  </button>
+                  <button onClick={() => shareWhatsApp(exam)}
+                    style={{ padding: "7px 14px", background: "#E7F9EF", color: "#128C7E", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                    📲 שלח בוואטסאפ
+                  </button>
+                </>
               )}
               <button onClick={() => toggleStatus(exam)}
                 style={{ padding: "7px 14px", background: isPublished ? C.amberLight : C.tealLight, color: isPublished ? C.amber : C.teal, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
