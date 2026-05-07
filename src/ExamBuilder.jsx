@@ -10,13 +10,33 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 
 async function extractTextFromPDF(arrayBuffer) {
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let text = "";
+  const pages = [];
   for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map(item => item.str).join(" ") + "\n";
+    try {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      let pageText = "";
+      let prev = null;
+      for (const item of content.items) {
+        if (!item.str) continue;
+        if (prev) {
+          const sameY = Math.abs(item.transform[5] - prev.transform[5]) < 3;
+          const gap   = item.transform[4] - (prev.transform[4] + (prev.width || 0));
+          if (!sameY) {
+            pageText += "\n";
+          } else if (gap > 1.5) {
+            pageText += " ";
+          }
+        }
+        pageText += item.str;
+        prev = item;
+      }
+      if (pageText.trim()) pages.push(pageText.trim());
+    } catch (e) {
+      console.warn(`PDF page ${i} extraction error:`, e);
+    }
   }
-  return text.trim();
+  return pages.join("\n\n").trim();
 }
 
 const C = {
