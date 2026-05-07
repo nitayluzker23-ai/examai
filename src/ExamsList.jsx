@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "./App";
+import QRCode from "qrcode";
 
 const C = {
   purple: "#534AB7", purpleLight: "#EEEDFE",
@@ -14,6 +15,7 @@ export default function ExamsList() {
   const [exams,   setExams]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied,  setCopied]  = useState(null);
+  const [qrExam,  setQrExam]  = useState(null); // exam for QR modal
 
   useEffect(() => { fetchExams(); }, []);
 
@@ -126,6 +128,10 @@ export default function ExamsList() {
                     style={{ padding: "7px 14px", background: "#E7F9EF", color: "#128C7E", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
                     📲 שלח בוואטסאפ
                   </button>
+                  <button onClick={() => setQrExam(exam)}
+                    style={{ padding: "7px 14px", background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                    📱 QR
+                  </button>
                 </>
               )}
               <button onClick={() => toggleStatus(exam)}
@@ -148,6 +154,72 @@ export default function ExamsList() {
           </div>
         );
       })}
+
+      {qrExam && <QRModal exam={qrExam} onClose={() => setQrExam(null)} examUrl={examUrl} />}
+    </div>
+  );
+}
+
+// ── QR Code Modal ──────────────────────────────────────────
+function QRModal({ exam, onClose, examUrl }) {
+  const canvasRef = useRef(null);
+  const url = examUrl(exam.access_code);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    QRCode.toCanvas(canvasRef.current, url, {
+      width: 220, margin: 2,
+      color: { dark: "#534AB7", light: "#FFFFFF" },
+    });
+  }, [url]);
+
+  const download = () => {
+    const canvas = canvasRef.current;
+    const link = document.createElement("a");
+    link.download = `qr-${exam.access_code}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+  };
+
+  const print = () => {
+    const canvas = canvasRef.current;
+    const dataUrl = canvas.toDataURL();
+    const win = window.open("", "_blank");
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+      body{font-family:'Segoe UI',sans-serif;direction:rtl;text-align:center;padding:40px;background:#fff}
+      h2{color:#534AB7;margin-bottom:4px}
+      p{color:#6b7280;font-size:14px;margin-bottom:20px}
+      img{border-radius:12px;border:2px solid #EEEDFE}
+      .code{font-family:monospace;font-size:22px;font-weight:700;color:#534AB7;background:#EEEDFE;padding:6px 18px;border-radius:8px;display:inline-block;margin-top:16px}
+      @media print{body{padding:20px}}
+    </style></head><body>
+      <h2>${exam.title}</h2>
+      <p>סרקו את הקוד כדי להיכנס למבחן</p>
+      <img src="${dataUrl}" width="220" height="220">
+      <div class="code">${exam.access_code}</div>
+    </body></html>`);
+    win.document.close();
+    setTimeout(() => { win.focus(); win.print(); }, 300);
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: "#fff", borderRadius: 20, padding: 28, maxWidth: 320, width: "100%", textAlign: "center", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: C.purple, marginBottom: 4 }}>{exam.title}</div>
+        <div style={{ fontSize: 12, color: C.muted, marginBottom: 20 }}>סרקו כדי להיכנס למבחן</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
+          <canvas ref={canvasRef} style={{ borderRadius: 12, border: `2px solid ${C.purpleLight}` }} />
+        </div>
+        <div style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 700, color: C.purple, background: C.purpleLight, borderRadius: 8, padding: "6px 16px", display: "inline-block", marginBottom: 20 }}>
+          {exam.access_code}
+        </div>
+        <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+          <button onClick={print} style={{ padding: "8px 16px", background: C.purpleLight, color: C.purple, border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>🖨 הדפס</button>
+          <button onClick={download} style={{ padding: "8px 16px", background: C.purple, color: "white", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>⬇ הורד PNG</button>
+          <button onClick={onClose} style={{ padding: "8px 14px", background: "transparent", color: C.muted, border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>סגור</button>
+        </div>
+      </div>
     </div>
   );
 }
