@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import {
   BrowserRouter, Routes, Route, Navigate,
   useNavigate, useLocation, useParams, Link,
@@ -14,6 +14,7 @@ import StudentsPage from "./StudentsPage";
 import AdminPage from "./AdminPage";
 import LiveDashboard from "./LiveDashboard";
 import { getPlan } from "./planConfig";
+import { extractDominantColor, buildBrandTheme, lightenColor } from "./brandUtils";
 
 const SUPABASE_URL      = "https://npksscocijjmgzgrolnq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
@@ -72,7 +73,7 @@ export function AuthProvider({ children }) {
   const planLimit  = (key)     => planConfig[key] ?? 0;
 
   return (
-    <AuthContext.Provider value={{ user, profile, signIn, signUp, signOut, signInGoogle, signInMagicLink, loading: user === undefined, planConfig, canUse, planLimit }}>
+    <AuthContext.Provider value={{ user, profile, signIn, signUp, signOut, signInGoogle, signInMagicLink, loading: user === undefined, planConfig, canUse, planLimit, fetchProfile }}>
       {children}
     </AuthContext.Provider>
   );
@@ -263,20 +264,155 @@ function StudentEntryPage() {
 }
 
 function SettingsPage() {
-  const { profile, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user, profile, signOut, fetchProfile } = useAuth();
+  const navigate  = useNavigate();
+  const logoRef   = useRef(null);
+
+  const [brandName,    setBrandName]    = useState(profile?.brand_name    ?? "");
+  const [brandPrimary, setBrandPrimary] = useState(profile?.brand_primary ?? "");
+  const [logoUrl,      setLogoUrl]      = useState(profile?.brand_logo_url ?? "");
+  const [logoPreview,  setLogoPreview]  = useState(profile?.brand_logo_url ?? "");
+  const [uploading,    setUploading]    = useState(false);
+  const [saving,       setSaving]       = useState(false);
+  const [saved,        setSaved]        = useState(false);
+  const [error,        setError]        = useState("");
+
+  const theme = brandPrimary ? buildBrandTheme(brandPrimary) : null;
+
+  const handleLogoUpload = async (file) => {
+    if (!file || !user) return;
+    setUploading(true); setError("");
+    try {
+      const ext  = file.name.split(".").pop();
+      const path = `${user.id}/logo.${ext}`;
+      const { error: upErr } = await supabase.storage.from("brand-logos").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: { publicUrl } } = supabase.storage.from("brand-logos").getPublicUrl(path);
+      setLogoUrl(publicUrl);
+      setLogoPreview(publicUrl);
+
+      // Auto-extract color
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const color = extractDominantColor(img);
+        if (color) setBrandPrimary(color);
+      };
+      img.src = publicUrl + "?t=" + Date.now();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true); setError(""); setSaved(false);
+    try {
+      const { error: e } = await supabase.from("profiles").update({
+        brand_name:    brandName    || null,
+        brand_logo_url: logoUrl     || null,
+        brand_primary: brandPrimary || null,
+      }).eq("id", user.id);
+      if (e) throw e;
+      await fetchProfile(user.id);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeLogo = async () => {
+    setLogoUrl(""); setLogoPreview(""); setBrandPrimary("");
+  };
+
   return (
-    <div style={{ padding: 20, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ padding: 20, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl", maxWidth: 520 }}>
       <div style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 20 }}>הגדרות</div>
-      <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, maxWidth: 400 }}>
-        <Row label="שם" value={profile?.full_name ?? "—"} />
+
+      {/* Account info */}
+      <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, marginBottom: 16 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 12 }}>פרטי חשבון</div>
+        <Row label="שם"    value={profile?.full_name ?? "—"} />
+        <Row label="אימייל" value={profile?.email     ?? "—"} />
         <Row label="תפקיד" value="מורה / מדריך" />
         <div style={{ marginTop: 16 }}>
           <button onClick={async () => { await signOut(); navigate("/login"); }}
-            style={{ padding: "10px 20px", background: "#FCEBEB", color: "#A32D2D", border: "1px solid #F09595", borderRadius: 10, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+            style={{ padding: "9px 18px", background: "#FCEBEB", color: "#A32D2D", border: "1px solid #F09595", borderRadius: 10, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
             יציאה מהמערכת
           </button>
         </div>
+      </div>
+
+      {/* Branding */}
+      <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 4 }}>🎨 מיתוג ארגוני</div>
+        <div style={{ fontSize: 12, color: C.muted, marginBottom: 16 }}>הלוגו והצבעים יופיעו בממשק המבחן של הנבחנים</div>
+
+        {/* Logo upload */}
+        <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 8 }}>לוגו</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+          {logoPreview ? (
+            <div style={{ position: "relative" }}>
+              <img src={logoPreview} alt="לוגו"
+                style={{ width: 72, height: 72, objectFit: "contain", borderRadius: 12, border: `1px solid ${C.border}`, background: C.bg, padding: 6 }} />
+              <button onClick={removeLogo}
+                style={{ position: "absolute", top: -6, left: -6, width: 20, height: 20, borderRadius: "50%", background: "#A32D2D", color: "white", border: "none", cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            </div>
+          ) : (
+            <div style={{ width: 72, height: 72, borderRadius: 12, border: `2px dashed ${C.purpleMid}`, background: C.purpleLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🏢</div>
+          )}
+          <div>
+            <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, padding: "8px 14px", border: `1px solid ${C.purple}`, borderRadius: 9, cursor: "pointer", color: C.purple, background: C.purpleLight, fontWeight: 600 }}>
+              {uploading ? "מעלה..." : logoPreview ? "החלף לוגו" : "העלה לוגו"}
+              <input ref={logoRef} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" style={{ display: "none" }}
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); e.target.value = ""; }} />
+            </label>
+            <div style={{ fontSize: 11, color: C.muted, marginTop: 5 }}>PNG, JPG, SVG עד 3MB</div>
+          </div>
+        </div>
+
+        {/* Org name */}
+        <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 6 }}>שם הארגון</div>
+        <input value={brandName} onChange={e => setBrandName(e.target.value)} placeholder='למשל: בית ספר ירושלים, Pizza Hut...'
+          style={{ width: "100%", padding: "10px 12px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 14, fontFamily: "inherit", direction: "rtl", background: C.bg, color: C.text, outline: "none", marginBottom: 16, boxSizing: "border-box" }} />
+
+        {/* Color */}
+        <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 8 }}>צבע ראשי</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+          <input type="color" value={brandPrimary || "#534AB7"} onChange={e => setBrandPrimary(e.target.value)}
+            style={{ width: 44, height: 44, padding: 2, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer", background: "none" }} />
+          <input value={brandPrimary} onChange={e => setBrandPrimary(e.target.value)} placeholder="#534AB7"
+            style={{ width: 110, padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontFamily: "monospace", outline: "none", color: C.text, background: C.bg }} />
+          {logoPreview && (
+            <span style={{ fontSize: 12, color: C.muted }}>← חולץ אוטומטית מהלוגו</span>
+          )}
+        </div>
+
+        {/* Preview */}
+        {theme && (
+          <div style={{ marginBottom: 16, borderRadius: 12, overflow: "hidden", border: `1px solid ${C.border}` }}>
+            <div style={{ background: theme.primary, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+              {logoPreview && <img src={logoPreview} alt="" style={{ height: 28, objectFit: "contain", borderRadius: 4 }} />}
+              <span style={{ color: "white", fontWeight: 700, fontSize: 14 }}>{brandName || "שם הארגון"}</span>
+            </div>
+            <div style={{ background: theme.primaryLight, padding: "10px 16px", display: "flex", gap: 8 }}>
+              <div style={{ background: theme.primary, color: "white", borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600 }}>כפתור ראשי</div>
+              <div style={{ background: "white", color: theme.primary, border: `1px solid ${theme.primary}`, borderRadius: 8, padding: "6px 14px", fontSize: 12, fontWeight: 600 }}>כפתור משני</div>
+            </div>
+          </div>
+        )}
+
+        {error  && <div style={{ fontSize: 12, color: "#A32D2D", marginBottom: 10 }}>{error}</div>}
+        {saved  && <div style={{ fontSize: 12, color: C.teal,   marginBottom: 10 }}>✓ נשמר בהצלחה!</div>}
+
+        <button onClick={handleSave} disabled={saving}
+          style={{ padding: "10px 22px", background: saving ? C.purpleLight : C.purple, color: "white", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+          {saving ? "שומר..." : "💾 שמור הגדרות מיתוג"}
+        </button>
       </div>
     </div>
   );

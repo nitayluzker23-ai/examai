@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./App";
 import { printStudentReport } from "./printUtils";
 import { useAuth } from "./App";
+import { buildBrandTheme } from "./brandUtils";
 
 // ── Demo data (כשאין Supabase אמיתי) ────────────────────
 const DEMO_EXAMS = {
@@ -86,6 +87,7 @@ export default function StudentExamView({ initialCode } = {}) {
   const [sessionIdx, setSessionIdx] = useState(0);       // for sessions mode
   const [onBreak, setOnBreak]     = useState(false);
   const [breakLeft, setBreakLeft] = useState(0);
+  const [brand,    setBrand]      = useState(null); // { primary, primaryLight, primaryMid, primaryDark, name, logoUrl }
   const qStartRef = useRef(Date.now());
   const timerRef  = useRef(null);
 
@@ -164,6 +166,22 @@ export default function StudentExamView({ initialCode } = {}) {
 
       setExam(data);
       setPhase("briefing");
+
+      // Load workspace branding
+      if (data.workspace_id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("brand_name, brand_logo_url, brand_primary")
+          .eq("id", data.workspace_id)
+          .single();
+        if (prof?.brand_primary) {
+          setBrand({
+            ...buildBrandTheme(prof.brand_primary),
+            name:    prof.brand_name    || null,
+            logoUrl: prof.brand_logo_url || null,
+          });
+        }
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -318,9 +336,10 @@ export default function StudentExamView({ initialCode } = {}) {
         {/* ── LOBBY ── */}
         {phase === "lobby" && (
           <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 20px rgba(83,74,183,0.08)", overflow: "hidden" }}>
-            <div style={{ background: C.purple, padding: "28px 24px 24px", textAlign: "center" }}>
-              <div style={{ fontSize: 13, color: "#CECBF6", marginBottom: 6 }}>ברוך הבא</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: "#EEEDFE" }}>כניסה למבחן</div>
+            <div style={{ background: brand?.primary ?? C.purple, padding: "28px 24px 24px", textAlign: "center" }}>
+              {brand?.logoUrl && <img src={brand.logoUrl} alt="לוגו" style={{ height: 40, objectFit: "contain", marginBottom: 10, borderRadius: 6 }} />}
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", marginBottom: 6 }}>ברוך הבא</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: "#fff" }}>{brand?.name ? `${brand.name}` : "כניסה למבחן"}</div>
             </div>
             <div style={{ padding: 24 }}>
               {/* Code field — hidden when arriving via direct link */}
@@ -367,17 +386,18 @@ export default function StudentExamView({ initialCode } = {}) {
         {/* ── BRIEFING ── */}
         {phase === "briefing" && exam && (
           <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 20px rgba(83,74,183,0.08)", overflow: "hidden" }}>
-            <div style={{ background: C.purple, padding: "24px 24px 20px" }}>
-              <div style={{ fontSize: 12, color: "#CECBF6", marginBottom: 4 }}>שלום, {name}! הוזמנת למבחן:</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#EEEDFE", marginBottom: 2 }}>{exam.title}</div>
-              <div style={{ fontSize: 13, color: "#AFA9EC" }}>{exam.subject}</div>
+            <div style={{ background: brand?.primary ?? C.purple, padding: "24px 24px 20px" }}>
+              {brand?.logoUrl && <img src={brand.logoUrl} alt="לוגו" style={{ height: 32, objectFit: "contain", marginBottom: 8, borderRadius: 4 }} />}
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginBottom: 4 }}>שלום, {name}! הוזמנת למבחן:</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#fff", marginBottom: 2 }}>{exam.title}</div>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>{exam.subject}</div>
             </div>
             <div style={{ padding: 24 }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 14 }}>חוקי המבחן</div>
               <BriefingRules exam={exam} />
               {error && <div style={{ fontSize: 12, color: C.red, margin: "10px 0" }}>{error}</div>}
               <button onClick={startExam} disabled={loading}
-                style={{ width: "100%", padding: 14, background: C.purple, color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>
+                style={{ width: "100%", padding: 14, background: brand?.primary ?? C.purple, color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>
                 {loading ? "טוען שאלות..." : "אני מוכן — התחל מבחן ←"}
               </button>
             </div>
@@ -411,8 +431,8 @@ export default function StudentExamView({ initialCode } = {}) {
                 )}
               </div>
               {/* Progress bar */}
-              <div style={{ height: 5, background: C.purpleLight, borderRadius: 3, overflow: "hidden", marginBottom: 6 }}>
-                <div style={{ height: "100%", background: C.purple, borderRadius: 3, width: `${Math.round(((qIndex + 1) / questions.length) * 100)}%`, transition: "width 0.4s" }} />
+              <div style={{ height: 5, background: brand?.primaryLight ?? C.purpleLight, borderRadius: 3, overflow: "hidden", marginBottom: 6 }}>
+                <div style={{ height: "100%", background: brand?.primary ?? C.purple, borderRadius: 3, width: `${Math.round(((qIndex + 1) / questions.length) * 100)}%`, transition: "width 0.4s" }} />
               </div>
               {/* Timer bar */}
               {timeLeft !== null && (
@@ -446,7 +466,7 @@ export default function StudentExamView({ initialCode } = {}) {
                 <button
                   onClick={() => advanceQuestion()}
                   disabled={selected === null}
-                  style={{ flex: exam.config.can_go_back && qIndex > 0 ? 2 : 1, padding: 12, background: selected !== null ? C.purple : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: selected !== null ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s" }}>
+                  style={{ flex: exam.config.can_go_back && qIndex > 0 ? 2 : 1, padding: 12, background: selected !== null ? (brand?.primary ?? C.purple) : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: selected !== null ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s" }}>
                   {qIndex + 1 === questions.length ? "סיום המבחן ←" : "שאלה הבאה ←"}
                 </button>
               </div>
