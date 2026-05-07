@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock, Timer, Layers, ChevronLeft, ChevronRight, Plus, Check, Copy } from "lucide-react";
 import { supabase, useAuth } from "./App";
@@ -32,14 +32,51 @@ export default function ExamBuilder() {
   const [breakMins, setBreakMins] = useState(5);
   const [opensAt,   setOpensAt]   = useState({ day: "", month: "", year: "", hour: 8,  min: 0 });
   const [closesAt,  setClosesAt]  = useState({ day: "", month: "", year: "", hour: 17, min: 0 });
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-  const [savedExam, setSavedExam] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [saving, setSaving]         = useState(false);
+  const [saveError, setSaveError]   = useState("");
+  const [savedExam, setSavedExam]   = useState(null);
+  const [copied, setCopied]         = useState(false);
+  // Step 2 — inline question builder
+  const [inlineTab,    setInlineTab]    = useState("ai");   // "ai" | "manual"
+  const [inlineText,   setInlineText]   = useState("");
+  const [inlineQCount, setInlineQCount] = useState(5);
+  const [generatingQ,  setGeneratingQ]  = useState(false);
+  const [addedQs,      setAddedQs]      = useState([]);     // questions added so far
+  const [inlineError,  setInlineError]  = useState("");
+  const savedExamRef = useRef(null);  // stable ref for useEffect
 
   const fmtSec = (s) => s < 60 ? `${s} שנ׳` : s % 60 ? `${Math.floor(s / 60)}′${s % 60}″` : `${Math.floor(s / 60)} דק׳`;
   const totalTime = sessions.reduce((a, s) => a + s.mins, 0) + breakMins * (sessions.length - 1);
   const canNext = step === 0 ? (form.name.trim() && form.subject.trim()) : step === 1 ? mode !== null : true;
+
+  // Auto-save exam when user reaches step 2
+  useEffect(() => {
+    if (step !== 2 || savedExamRef.current) return;
+    (async () => {
+      setSaving(true); setSaveError("");
+      try {
+        const code = generateCode();
+        const { data, error } = await supabase.from("exams").insert({
+          workspace_id: user.id,
+          title:        form.name,
+          subject:      form.subject,
+          group_name:   form.group || null,
+          config:       buildConfig(),
+          status:       "draft",
+          access_code:  code,
+          opens_at:     dtToISO(opensAt),
+          closes_at:    dtToISO(closesAt),
+        }).select().single();
+        if (error) throw error;
+        savedExamRef.current = data;
+        setSavedExam(data);
+      } catch (e) {
+        setSaveError(e.message);
+      } finally {
+        setSaving(false);
+      }
+    })();
+  }, [step]); // eslint-disable-line
 
   const buildConfig = () => {
     if (mode === "flexible") return { mode: "flexible", total_minutes: flexTime, can_go_back: canGoBack };
@@ -47,29 +84,60 @@ export default function ExamBuilder() {
     return { mode: "sessions", break_minutes: breakMins, sessions };
   };
 
-  const saveExam = async () => {
-    setSaving(true); setSaveError("");
+  // Generate questions inline via AI
+  const generateInline = async () => {
+    if (!savedExam || !inlineText.trim()) return;
+    setGeneratingQ(true); setInlineError("");
     try {
-      const code = generateCode();
-      const { data, error } = await supabase.from("exams").insert({
-        workspace_id: user.id,
-        title: form.name,
-        subject: form.subject,
-        group_name: form.group || null,
-        config: buildConfig(),
-        status: "draft",
-        access_code: code,
-        opens_at:  dtToISO(opensAt),
-        closes_at: dtToISO(closesAt),
-      }).select().single();
-      if (error) throw error;
-      setSavedExam(data);
-      setStep(3);
+      const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
+        body: { text: inlineText.trim(), num_questions: inlineQCount },
+        headers: { Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` },
+      });
+      if (fnErr) throw new Error(fnErr.message);
+      if (data?.error) throw new Error(data.error);
+
+      const newQs = [];
+      (data?.content_structure ?? []).forEach(topic => {
+        topic.sub_topics?.forEach(sub => {
+          sub.questions?.forEach(q => newQs.push(q));
+        });
+      });
+      if (!newQs.length) throw new Error("ה-AI לא החזיר שאלות, נסה טקסט ארוך יותר");
+
+      const rows = newQs.map((q, i) => ({
+        exam_id:    savedExam.id,
+        sort_order: addedQs.length + i,
+        difficulty: "Medium",
+        content: {
+          question_text:       q.question_text,
+          options:             q.options,
+          correct_answer_index: q.correct_answer_index,
+          ai_explanation:      q.ai_explanation,
+        },
+      }));
+      const { data: inserted, error: insErr } = await supabase.from("questions").insert(rows).select();
+      if (insErr) throw insErr;
+      setAddedQs(prev => [...prev, ...(inserted ?? [])]);
+      setInlineText("");
     } catch (e) {
-      setSaveError(e.message);
+      setInlineError(e.message);
+      setTimeout(() => setInlineError(""), 7000);
     } finally {
-      setSaving(false);
+      setGeneratingQ(false);
     }
+  };
+
+  // Add a single manual question
+  const addManualQ = async ({ questionText, options, correctIndex, difficulty }) => {
+    if (!savedExam) return;
+    const { data, error } = await supabase.from("questions").insert({
+      exam_id:    savedExam.id,
+      sort_order: addedQs.length,
+      difficulty: difficulty ?? "Medium",
+      content: { question_text: questionText, options, correct_answer_index: correctIndex },
+    }).select().single();
+    if (error) { setInlineError(error.message); return; }
+    setAddedQs(prev => [...prev, data]);
   };
 
   const copyLink = () => {
@@ -210,21 +278,77 @@ export default function ExamBuilder() {
             </div>
           )}
 
-          {/* Step 2: Questions (redirect to ContentUploader) */}
+          {/* Step 2: Questions — inline builder */}
           {step === 2 && (
             <div style={{ padding: 24 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 6 }}>שאלות המבחן</div>
-              <div style={{ background: C.purpleLight, borderRadius: 12, padding: "10px 14px", marginBottom: 16, fontSize: 12, color: C.purple }}>
-                שמור את המבחן ואז העלה חומר לימוד ליצירת שאלות אוטומטית, או הוסף שאלות ידנית לאחר השמירה.
-              </div>
-              <div style={{ background: C.bg, borderRadius: 12, padding: "12px 14px", fontSize: 13, color: C.muted, lineHeight: 1.7 }}>
-                <div style={{ fontWeight: 600, color: C.text, marginBottom: 4 }}>לאחר שמירת המבחן תוכל:</div>
-                <div>• להעלות PDF / טקסט — AI יבנה שאלות אוטומטית</div>
-                <div>• להוסיף מבחנים ישנים לניתוח סגנון המרצה</div>
-                <div>• לערוך, למחוק ולהוסיף שאלות ידנית</div>
-              </div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 12 }}>הוספת שאלות</div>
+
+              {/* Auto-save status */}
+              {saving && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.muted, marginBottom: 12 }}>
+                  <div style={{ width: 14, height: 14, border: `2px solid ${C.purpleLight}`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                  <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+                  יוצר את המבחן...
+                </div>
+              )}
               {saveError && (
-                <div style={{ background: C.redLight, color: C.red, borderRadius: 10, padding: "10px 14px", fontSize: 12, marginTop: 12 }}>{saveError}</div>
+                <div style={{ background: C.redLight, color: C.red, borderRadius: 10, padding: "10px 14px", fontSize: 12, marginBottom: 12 }}>{saveError}</div>
+              )}
+              {savedExam && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, background: C.tealLight, borderRadius: 10, padding: "8px 12px" }}>
+                  <Check size={14} color={C.teal} />
+                  <span style={{ fontSize: 12, color: C.teal, fontWeight: 600 }}>מבחן נוצר — קוד: <code style={{ letterSpacing: 2 }}>{savedExam.access_code}</code></span>
+                </div>
+              )}
+
+              {/* Added questions counter */}
+              {addedQs.length > 0 && (
+                <div style={{ background: C.purpleLight, borderRadius: 10, padding: "8px 14px", fontSize: 12, color: C.purple, marginBottom: 14, fontWeight: 600 }}>
+                  ✅ {addedQs.length} שאלות נוספו למבחן
+                </div>
+              )}
+
+              {/* Tabs */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+                {[["ai","🤖 AI מטקסט"],["manual","✍️ הוסף ידנית"]].map(([k, label]) => (
+                  <button key={k} onClick={() => setInlineTab(k)}
+                    style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: `1.5px solid ${inlineTab===k ? C.purple : C.border}`, background: inlineTab===k ? C.purpleLight : C.white, color: inlineTab===k ? C.purple : C.muted, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* AI Tab */}
+              {inlineTab === "ai" && (
+                <div>
+                  <textarea
+                    value={inlineText}
+                    onChange={e => setInlineText(e.target.value)}
+                    placeholder="הדבק כאן חומר לימוד — AI ייצור שאלות אוטומטית&#10;(טקסט, סיכום, פרק מספר לימוד...)"
+                    rows={6}
+                    style={{ width: "100%", padding: "10px 12px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", background: C.bg, color: C.text, boxSizing: "border-box", lineHeight: 1.6 }}
+                  />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, marginBottom: 10 }}>
+                    <span style={{ fontSize: 12, color: C.muted, whiteSpace: "nowrap" }}>מספר שאלות:</span>
+                    <select value={inlineQCount} onChange={e => setInlineQCount(Number(e.target.value))}
+                      style={{ fontSize: 12, padding: "5px 8px", borderRadius: 8, border: `1px solid ${C.border}`, fontFamily: "inherit", background: C.white }}>
+                      {[3,5,8,10,15].map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+                  {inlineError && <div style={{ fontSize: 12, color: C.red, marginBottom: 8 }}>{inlineError}</div>}
+                  <button onClick={generateInline} disabled={!savedExam || !inlineText.trim() || generatingQ}
+                    style={{ width: "100%", padding: 11, background: savedExam && inlineText.trim() && !generatingQ ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    {generatingQ ? "מייצר שאלות..." : "🤖 צור שאלות"}
+                  </button>
+                </div>
+              )}
+
+              {/* Manual Tab */}
+              {inlineTab === "manual" && savedExam && (
+                <InlineManualForm onSave={addManualQ} />
+              )}
+              {inlineTab === "manual" && !savedExam && (
+                <div style={{ fontSize: 12, color: C.muted, textAlign: "center", padding: 20 }}>ממתין ליצירת המבחן...</div>
               )}
             </div>
           )}
@@ -250,9 +374,9 @@ export default function ExamBuilder() {
                 </button>
               </div>
 
-              <button onClick={() => navigate("/dashboard/bank")}
+              <button onClick={() => navigate(`/dashboard/exam/${savedExam.id}/questions`)}
                 style={{ width: "100%", padding: 12, background: C.purple, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>
-                העלה חומר לימוד ←
+                ✏️ עבור לשאלות ←
               </button>
               <button onClick={() => navigate("/dashboard/exams")}
                 style={{ width: "100%", padding: 10, background: "transparent", color: C.purple, border: `1px solid ${C.purple}`, borderRadius: 12, fontSize: 13, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>
@@ -264,18 +388,29 @@ export default function ExamBuilder() {
           {/* Navigation buttons */}
           {step < 3 && (
             <div style={{ padding: "0 24px 24px", display: "flex", gap: 10 }}>
-              {step > 0 && (
+              {step > 0 && step < 2 && (
                 <button onClick={() => setStep(step - 1)} disabled={saving}
                   style={{ flex: 1, padding: 10, background: "transparent", color: C.purple, border: `1px solid ${C.purple}`, borderRadius: 12, fontSize: 13, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                   <ChevronRight size={15} /> חזרה
                 </button>
               )}
-              <button
-                onClick={step === 2 ? saveExam : () => canNext && setStep(step + 1)}
-                disabled={!canNext || saving}
-                style={{ flex: step > 0 ? 2 : 1, padding: 12, background: canNext && !saving ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: canNext && !saving ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, transition: "background 0.2s" }}>
-                {saving ? "שומר..." : step === 2 ? "שמור מבחן ←" : <>המשך <ChevronLeft size={15} /></>}
-              </button>
+              {step < 2 && (
+                <button
+                  onClick={() => canNext && setStep(step + 1)}
+                  disabled={!canNext}
+                  style={{ flex: step > 0 ? 2 : 1, padding: 12, background: canNext ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: canNext ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4, transition: "background 0.2s" }}>
+                  המשך <ChevronLeft size={15} />
+                </button>
+              )}
+              {step === 2 && (
+                <button
+                  onClick={() => setStep(3)}
+                  disabled={!savedExam}
+                  style={{ flex: 1, padding: 12, background: savedExam ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: savedExam ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                  {addedQs.length > 0 ? `סיום (${addedQs.length} שאלות)` : "דלג על שאלות →"}
+                  <ChevronLeft size={15} />
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -330,6 +465,42 @@ function ToggleRow({ label, value, onChange }) {
       <div onClick={() => onChange(!value)} style={{ width: 40, height: 22, borderRadius: 11, background: value ? "#534AB7" : "rgba(0,0,0,0.15)", cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
         <div style={{ width: 16, height: 16, borderRadius: "50%", background: "white", position: "absolute", top: 3, right: value ? 3 : 21, transition: "right 0.2s" }} />
       </div>
+    </div>
+  );
+}
+
+function InlineManualForm({ onSave }) {
+  const [qText,   setQText]   = useState("");
+  const [opts,    setOpts]    = useState(["","","",""]);
+  const [correct, setCorrect] = useState(null);
+  const [saving,  setSaving]  = useState(false);
+  const LETTERS = ["א","ב","ג","ד"];
+  const ready = qText.trim() && opts.every(o => o.trim()) && correct !== null;
+
+  const handleSave = async () => {
+    if (!ready) return;
+    setSaving(true);
+    await onSave({ questionText: qText.trim(), options: opts.map(o=>o.trim()), correctIndex: correct, difficulty: "Medium" });
+    setQText(""); setOpts(["","","",""]); setCorrect(null);
+    setSaving(false);
+  };
+
+  return (
+    <div>
+      <textarea value={qText} onChange={e=>setQText(e.target.value)} placeholder="טקסט השאלה" rows={2}
+        style={{ width:"100%", padding:"9px 12px", border:`1px solid rgba(0,0,0,0.1)`, borderRadius:10, fontSize:13, fontFamily:"inherit", resize:"vertical", outline:"none", background:"#f8f7ff", boxSizing:"border-box", marginBottom:8 }} />
+      {opts.map((o, i) => (
+        <div key={i} style={{ display:"flex", alignItems:"center", gap:7, marginBottom:6 }}>
+          <div onClick={()=>setCorrect(i)} style={{ width:26, height:26, borderRadius:"50%", background: correct===i ? "#534AB7" : "#EEEDFE", color: correct===i ? "white" : "#534AB7", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0 }}>{LETTERS[i]}</div>
+          <input value={o} onChange={e=>setOpts(opts.map((v,j)=>j===i?e.target.value:v))} placeholder={`תשובה ${LETTERS[i]}`}
+            style={{ flex:1, padding:"7px 10px", border:`1px solid rgba(0,0,0,0.1)`, borderRadius:8, fontSize:13, fontFamily:"inherit", outline:"none", background:"#f8f7ff" }} />
+        </div>
+      ))}
+      {correct === null && <div style={{fontSize:11,color:"#6b7280",marginBottom:8}}>לחץ על אות לסמן תשובה נכונה</div>}
+      <button onClick={handleSave} disabled={!ready||saving}
+        style={{ width:"100%", padding:10, background: ready&&!saving ? "#534AB7":"#AFA9EC", color:"white", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor: ready&&!saving?"pointer":"not-allowed", fontFamily:"inherit", marginTop:4 }}>
+        {saving ? "שומר..." : "+ הוסף שאלה"}
+      </button>
     </div>
   );
 }
