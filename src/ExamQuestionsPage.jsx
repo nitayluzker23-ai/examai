@@ -86,6 +86,7 @@ export default function ExamQuestionsPage() {
   const [uploadError, setUploadError] = useState("");
   const [retryCount,  setRetryCount]  = useState(8);
   const [creatingRetry, setCreatingRetry] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(false);
 
   useEffect(() => { load(); }, [examId]);
 
@@ -210,6 +211,24 @@ export default function ExamQuestionsPage() {
     setQuestions(qs => qs.map(q => q.id === question.id ? { ...q, content: newContent } : q));
   };
 
+  const saveManualQuestion = async ({ questionText, options, correctIndex, difficulty, topicName }) => {
+    const { data, error: e } = await supabase.from("questions").insert({
+      exam_id:    examId,
+      difficulty: difficulty ?? "Medium",
+      sort_order: questions.length,
+      content: {
+        question_text:        questionText,
+        options,
+        correct_answer_index: correctIndex,
+        topic_name:           topicName || undefined,
+      },
+    }).select().single();
+    if (e) throw e;
+    setQuestions(prev => [...prev, data]);
+    setNewlyAdded(prev => new Set([...prev, data.id]));
+    setShowManualForm(false);
+  };
+
   const deleteQuestion = async (id) => {
     if (!confirm("למחוק שאלה זו?")) return;
     setDeleting(id);
@@ -330,6 +349,10 @@ export default function ExamQuestionsPage() {
                     📊 דוח כיתתי
                   </button>
                 )}
+                <button onClick={() => setShowManualForm(v => !v)}
+                  style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.amber}`, background: C.amberLight, color: C.amber, cursor: "pointer", fontFamily: "inherit" }}>
+                  ✍️ הוסף שאלה
+                </button>
               </div>
             )}
           </div>
@@ -441,6 +464,14 @@ export default function ExamQuestionsPage() {
         </div>
       )}
 
+      {/* ── MANUAL QUESTION FORM ── */}
+      {showManualForm && (
+        <ManualQuestionForm
+          onSave={saveManualQuestion}
+          onCancel={() => setShowManualForm(false)}
+        />
+      )}
+
       {/* ── QUESTIONS LIST ── */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {questions.map((q, idx) => {
@@ -534,6 +565,95 @@ export default function ExamQuestionsPage() {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// ── Manual Question Form ───────────────────────────────────
+function ManualQuestionForm({ onSave, onCancel }) {
+  const [questionText, setQuestionText] = useState("");
+  const [options,      setOptions]      = useState(["", "", "", ""]);
+  const [correctIndex, setCorrectIndex] = useState(0);
+  const [difficulty,   setDifficulty]   = useState("Medium");
+  const [topicName,    setTopicName]    = useState("");
+  const [saving,       setSaving]       = useState(false);
+  const [error,        setError]        = useState("");
+
+  const setOption = (i, val) => setOptions(opts => opts.map((o, j) => j === i ? val : o));
+
+  const handleSave = async () => {
+    if (!questionText.trim()) { setError("יש להזין טקסט שאלה"); return; }
+    if (options.some(o => !o.trim())) { setError("יש למלא את כל 4 האפשרויות"); return; }
+    setSaving(true); setError("");
+    try {
+      await onSave({ questionText: questionText.trim(), options: options.map(o => o.trim()), correctIndex, difficulty, topicName });
+    } catch (e) {
+      setError(e.message);
+      setSaving(false);
+    }
+  };
+
+  const LETTERS = "אבגד";
+  const DIFF_OPTS = [{ v: "Easy", l: "קל" }, { v: "Medium", l: "בינוני" }, { v: "Hard", l: "קשה" }];
+
+  return (
+    <div style={{ background: C.white, border: `2px solid ${C.amber}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.amber }}>✍️ שאלה ידנית חדשה</div>
+        <button onClick={onCancel} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 18, color: C.muted }}>✕</button>
+      </div>
+
+      {/* Question text */}
+      <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 5 }}>טקסט השאלה</div>
+      <textarea value={questionText} onChange={e => setQuestionText(e.target.value)} placeholder="הכנס כאן את השאלה..."
+        style={{ width: "100%", padding: "10px 12px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 14, fontFamily: "inherit", direction: "rtl", resize: "vertical", minHeight: 70, background: C.bg, color: C.text, outline: "none", marginBottom: 14, boxSizing: "border-box" }} />
+
+      {/* Options */}
+      <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 8 }}>אפשרויות תשובה — לחץ על הנכונה</div>
+      {options.map((opt, i) => {
+        const isCorrect = i === correctIndex;
+        return (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <div onClick={() => setCorrectIndex(i)}
+              style={{ width: 28, height: 28, borderRadius: "50%", border: `2px solid ${isCorrect ? C.teal : C.border}`, background: isCorrect ? C.teal : "transparent", color: isCorrect ? "white" : C.muted, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0, transition: "all 0.15s" }}>
+              {LETTERS[i]}
+            </div>
+            <input value={opt} onChange={e => setOption(i, e.target.value)} placeholder={`אפשרות ${LETTERS[i]}`}
+              style={{ flex: 1, padding: "8px 12px", border: `1px solid ${isCorrect ? C.teal : C.border}`, borderRadius: 9, fontSize: 13, fontFamily: "inherit", direction: "rtl", background: isCorrect ? C.tealLight : C.bg, color: C.text, outline: "none", transition: "all 0.15s" }} />
+          </div>
+        );
+      })}
+      <div style={{ fontSize: 11, color: C.teal, marginBottom: 14 }}>✓ האות המסומנת בירוק היא התשובה הנכונה</div>
+
+      {/* Difficulty + Topic */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 5 }}>רמת קושי</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            {DIFF_OPTS.map(d => (
+              <button key={d.v} onClick={() => setDifficulty(d.v)}
+                style={{ padding: "5px 12px", borderRadius: 8, border: `1px solid ${difficulty === d.v ? C.purple : C.border}`, background: difficulty === d.v ? C.purpleLight : "transparent", color: difficulty === d.v ? C.purple : C.muted, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                {d.l}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 140 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 5 }}>נושא (אופציונלי)</div>
+          <input value={topicName} onChange={e => setTopicName(e.target.value)} placeholder="למשל: פוטוסינתזה"
+            style={{ width: "100%", padding: "6px 10px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontFamily: "inherit", direction: "rtl", background: C.bg, color: C.text, outline: "none", boxSizing: "border-box" }} />
+        </div>
+      </div>
+
+      {error && <div style={{ fontSize: 12, color: C.red, marginBottom: 10 }}>{error}</div>}
+
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+        <button onClick={onCancel} style={{ padding: "8px 16px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, cursor: "pointer", fontFamily: "inherit", color: C.muted }}>ביטול</button>
+        <button onClick={handleSave} disabled={saving}
+          style={{ padding: "8px 18px", background: saving ? C.amberLight : C.amber, color: "white", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+          {saving ? "שומר..." : "✓ הוסף שאלה"}
+        </button>
       </div>
     </div>
   );
