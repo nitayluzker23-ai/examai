@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 import { createClient } from "@supabase/supabase-js";
 import ExamBuilder from "./ExamBuilder";
+import LandingPage from "./LandingPage";
 import StudentExamView from "./StudentExamView";
 import InsightsView from "./InsightsView";
 import ExamsList from "./ExamsList";
@@ -433,7 +434,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/"     element={<Navigate to="/login" replace />} />
+          <Route path="/"     element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/exam"             element={<StudentEntryPage />} />
           <Route path="/exam/:accessCode" element={<StudentEntryPage />} />
