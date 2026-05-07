@@ -88,6 +88,8 @@ export default function StudentExamView({ initialCode } = {}) {
   const [onBreak, setOnBreak]     = useState(false);
   const [breakLeft, setBreakLeft] = useState(0);
   const [brand,    setBrand]      = useState(null); // { primary, primaryLight, primaryMid, primaryDark, name, logoUrl }
+  // Unique token per student session — required by DB NOT NULL constraint
+  const studentToken = useRef(`st-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const qStartRef = useRef(Date.now());
   const timerRef  = useRef(null);
 
@@ -282,11 +284,12 @@ export default function StudentExamView({ initialCode } = {}) {
 
     try {
       await supabase.from("submissions").insert({
-        exam_id: exam.id,
-        student_name: name,
-        answers: finalAnswers,
-        score: scorePct,
-        completed_at: new Date().toISOString(),
+        exam_id:       exam.id,
+        student_name:  name,
+        student_token: studentToken.current,
+        answers:       finalAnswers,
+        score:         scorePct,
+        completed_at:  new Date().toISOString(),
         ...(user?.id ? { user_id: user.id } : {}),
       });
     } catch (_) { /* silent — demo mode */ }
