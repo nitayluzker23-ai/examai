@@ -9,55 +9,181 @@ const C = {
   border: "rgba(0,0,0,0.1)", bg: "#f8f7ff", white: "#ffffff",
 };
 
-const SUBJECTS = [
-  "מתמטיקה", "אנגלית", "עברית", "מדעים", "ביולוגיה",
-  "פיזיקה", "כימיה", "היסטוריה", "גיאוגרפיה", "תנ״ך",
-  "אזרחות", "ספרות", "אחר",
+const USER_TYPES = [
+  { id: "school_teacher",   icon: "🏫", label: "מורה בבית ספר",     desc: "מלמד כיתה קבועה" },
+  { id: "private_tutor",    icon: "👤", label: "מורה פרטי",          desc: "שיעורים פרטיים לתלמידים" },
+  { id: "company",          icon: "🏢", label: "חברה / ארגון",        desc: "מבחנים לעובדים / הכשרות" },
+  { id: "parent",           icon: "👨‍👧", label: "הורה",                desc: "עוזר לילד שלי ללמוד" },
+  { id: "student",          icon: "🎓", label: "סטודנט / תלמיד",     desc: "בוחן את עצמי לפני מבחן" },
+  { id: "other",            icon: "✨", label: "אחר",                 desc: "" },
 ];
 
-const GRADES = [
-  { id: "elementary", label: "יסודי",          sub: "כיתות א׳–ו׳" },
-  { id: "middle",     label: "חטיבת ביניים",   sub: "כיתות ז׳–ט׳" },
-  { id: "high",       label: "תיכון",           sub: "כיתות י׳–י״ב" },
-  { id: "higher",     label: "השכלה גבוהה",    sub: "אקדמיה / מכללה" },
-];
+// Questions adapted per user type
+const CONTEXT_QUESTIONS = {
+  school_teacher: {
+    q2: {
+      title: "מה אתה מלמד?",
+      sub:   "נתאים את שפת השאלות למקצוע",
+      options: ["מתמטיקה","אנגלית","עברית","מדעים","ביולוגיה","פיזיקה","כימיה","היסטוריה","גיאוגרפיה","תנ״ך","אזרחות","ספרות","אחר"],
+      field: "subject",
+      grid: true,
+    },
+    q3: {
+      title: "באיזה שלב לימודי?",
+      sub:   "כיתות א׳–ו׳, חטיבה, תיכון...",
+      options: [
+        { id: "elementary", label: "יסודי",        sub: "כיתות א׳–ו׳" },
+        { id: "middle",     label: "חטיבת ביניים", sub: "כיתות ז׳–ט׳" },
+        { id: "high",       label: "תיכון",         sub: "כיתות י׳–י״ב" },
+      ],
+      field: "grade_level",
+      grid: false,
+    },
+  },
+  private_tutor: {
+    q2: {
+      title: "באיזה מקצוע אתה מתמחה?",
+      sub:   "ניצור שאלות ברמה המתאימה",
+      options: ["מתמטיקה","אנגלית","עברית","פיזיקה","כימיה","ביולוגיה","היסטוריה","תנ״ך","הכנה לפסיכומטרי","אחר"],
+      field: "subject",
+      grid: true,
+    },
+    q3: {
+      title: "עם איזה גיל עובדים?",
+      sub:   "",
+      options: [
+        { id: "elementary", label: "ילדים",       sub: "עד כיתה ו׳" },
+        { id: "middle",     label: "נוער",         sub: "חטיבה–תיכון" },
+        { id: "higher",     label: "מבוגרים",      sub: "סטודנטים / בגרויות" },
+      ],
+      field: "grade_level",
+      grid: false,
+    },
+  },
+  company: {
+    q2: {
+      title: "באיזה תחום החברה?",
+      sub:   "נתאים את טון השאלות",
+      options: ["הייטק / טכנולוגיה","בריאות / רפואה","משפטים","כספים / פיננסים","מכירות","לוגיסטיקה","בנייה","חינוך","אחר"],
+      field: "subject",
+      grid: true,
+    },
+    q3: {
+      title: "כמה עובדים בודקים בממוצע?",
+      sub:   "",
+      options: [
+        { id: "few",    label: "עד 20",       sub: "צוות קטן" },
+        { id: "medium", label: "20–100",       sub: "חברה בינונית" },
+        { id: "many",   label: "100+",         sub: "ארגון גדול" },
+      ],
+      field: "grade_level",
+      grid: false,
+    },
+  },
+  parent: {
+    q2: {
+      title: "באיזה מקצוע אתה עוזר?",
+      sub:   "",
+      options: ["מתמטיקה","אנגלית","עברית","מדעים","היסטוריה","תנ״ך","גיאוגרפיה","אחר"],
+      field: "subject",
+      grid: true,
+    },
+    q3: {
+      title: "באיזו כיתה הילד שלך?",
+      sub:   "",
+      options: [
+        { id: "elementary", label: "יסודי",        sub: "כיתות א׳–ו׳" },
+        { id: "middle",     label: "חטיבת ביניים", sub: "כיתות ז׳–ט׳" },
+        { id: "high",       label: "תיכון",         sub: "כיתות י׳–י״ב" },
+      ],
+      field: "grade_level",
+      grid: false,
+    },
+  },
+  student: {
+    q2: {
+      title: "מה אתה לומד?",
+      sub:   "נבנה שאלות שיעזרו לך להתכונן",
+      options: ["מתמטיקה","אנגלית","עברית","פיזיקה","כימיה","ביולוגיה","היסטוריה","כלכלה","מדעי המחשב","פסיכומטרי","אחר"],
+      field: "subject",
+      grid: true,
+    },
+    q3: {
+      title: "לאיזה מבחן אתה מתכונן?",
+      sub:   "",
+      options: [
+        { id: "bagrut",  label: "בגרות",           sub: "מבחני בגרות תיכון" },
+        { id: "psycho",  label: "פסיכומטרי",        sub: "מבחן קבלה לאקדמיה" },
+        { id: "uni",     label: "מבחן אוניברסיטה",  sub: "סמסטר / שנתי" },
+        { id: "other",   label: "אחר",              sub: "" },
+      ],
+      field: "grade_level",
+      grid: false,
+    },
+  },
+  other: {
+    q2: {
+      title: "על איזה נושא?",
+      sub:   "תאר בקצרה",
+      options: [],
+      field: "subject",
+      grid: false,
+      freeText: true,
+    },
+    q3: null, // skip step 3
+  },
+};
 
-const EXAMS_PER_YEAR = [
-  { id: "few",    label: "1–5 בחינות",   icon: "📝" },
-  { id: "medium", label: "6–20 בחינות",  icon: "📚" },
-  { id: "many",   label: "20+ בחינות",   icon: "🏆" },
-];
-
-const STEPS = ["ברוכים הבאים", "מה מלמדים?", "איזה שלב?", "כמה בחינות?"];
+function SelectCard({ selected, onClick, icon, label, desc }) {
+  return (
+    <button onClick={onClick}
+      style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 16px", borderRadius: 14, border: `2px solid ${selected ? C.purple : C.border}`, background: selected ? C.purpleLight : C.bg, cursor: "pointer", fontFamily: "inherit", textAlign: "right", transition: "all 0.15s", width: "100%" }}>
+      <span style={{ fontSize: 24, flexShrink: 0 }}>{icon}</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: selected ? C.purple : C.text }}>{label}</div>
+        {desc && <div style={{ fontSize: 12, color: C.muted, marginTop: 1 }}>{desc}</div>}
+      </div>
+      <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${selected ? C.purple : C.border}`, background: selected ? C.purple : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {selected && <div style={{ width: 7, height: 7, borderRadius: "50%", background: "white" }} />}
+      </div>
+    </button>
+  );
+}
 
 export default function OnboardingFlow() {
   const { user, profile, fetchProfile } = useAuth();
   const navigate = useNavigate();
 
-  const [step,          setStep]          = useState(0);
-  const [subject,       setSubject]       = useState("");
-  const [customSubject, setCustomSubject] = useState("");
-  const [gradeLevel,    setGradeLevel]    = useState("");
-  const [examsPerYear,  setExamsPerYear]  = useState("");
-  const [saving,        setSaving]        = useState(false);
+  const [step,        setStep]        = useState(0); // 0=welcome, 1=who, 2=context, 3=context2
+  const [userType,    setUserType]    = useState("");
+  const [answer2,     setAnswer2]     = useState(""); // subject / field
+  const [answer2free, setAnswer2free] = useState("");
+  const [answer3,     setAnswer3]     = useState(""); // grade / size / exam type
+  const [saving,      setSaving]      = useState(false);
 
-  const firstName = profile?.full_name?.split(" ")[0] || "מורה";
+  const firstName = profile?.full_name?.split(" ")[0] || "שלום";
+  const ctx = userType ? CONTEXT_QUESTIONS[userType] : null;
+  const hasStep3 = ctx?.q3 !== null && ctx?.q3 !== undefined;
+  const totalSteps = hasStep3 ? 4 : 3;
 
   const canNext = () => {
     if (step === 0) return true;
-    if (step === 1) return subject !== "" && (subject !== "אחר" || customSubject.trim());
-    if (step === 2) return gradeLevel !== "";
-    if (step === 3) return examsPerYear !== "";
+    if (step === 1) return userType !== "";
+    if (step === 2) {
+      if (ctx?.q2?.freeText) return answer2free.trim().length > 0;
+      return answer2 !== "" && (answer2 !== "אחר" || answer2free.trim());
+    }
+    if (step === 3) return answer3 !== "";
     return false;
   };
 
   const finish = async () => {
     setSaving(true);
-    const finalSubject = subject === "אחר" ? customSubject.trim() : subject;
+    const finalSubject = answer2 === "אחר" || !answer2 ? answer2free.trim() : answer2;
     await supabase.from("profiles").update({
-      subject:        finalSubject,
-      grade_level:    gradeLevel,
-      exams_per_year: examsPerYear,
+      school_type:     userType,
+      subject:         finalSubject || null,
+      grade_level:     answer3 || null,
       onboarding_done: true,
     }).eq("id", user.id);
     await fetchProfile(user.id);
@@ -65,8 +191,16 @@ export default function OnboardingFlow() {
   };
 
   const next = () => {
-    if (step < 3) setStep(s => s + 1);
-    else finish();
+    if (step === 1 && userType === "other") {
+      // skip to free-text step (step 2) then finish
+      setStep(2);
+    } else if (step === 2 && !hasStep3) {
+      finish();
+    } else if (step < 3) {
+      setStep(s => s + 1);
+    } else {
+      finish();
+    }
   };
 
   const skip = async () => {
@@ -78,12 +212,12 @@ export default function OnboardingFlow() {
 
   return (
     <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, #f0efff 0%, ${C.bg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
-      <div style={{ width: "100%", maxWidth: 480 }}>
+      <div style={{ width: "100%", maxWidth: 500 }}>
 
-        {/* Progress dots */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 32 }}>
-          {STEPS.map((_, i) => (
-            <div key={i} style={{ width: i === step ? 24 : 8, height: 8, borderRadius: 4, background: i <= step ? C.purple : C.purpleMid, transition: "all 0.3s" }} />
+        {/* Progress bar */}
+        <div style={{ display: "flex", gap: 6, marginBottom: 28, justifyContent: "center" }}>
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div key={i} style={{ height: 6, width: i === step ? 32 : 12, borderRadius: 3, background: i <= step ? C.purple : C.purpleMid, transition: "all 0.3s" }} />
           ))}
         </div>
 
@@ -93,19 +227,17 @@ export default function OnboardingFlow() {
           {step === 0 && (
             <div style={{ padding: "40px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 52, marginBottom: 16 }}>👋</div>
-              <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, margin: "0 0 12px" }}>
-                שלום, {firstName}!
-              </h1>
-              <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.7, margin: "0 0 8px" }}>
-                ברוך הבא ל-ExamAI.
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, margin: "0 0 10px" }}>שלום, {firstName}!</h1>
+              <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.7, margin: "0 0 28px" }}>
+                ברוך הבא ל-ExamAI. שתי שאלות קצרות<br />ואתה מוכן ליצור את הבחינה הראשונה שלך 🚀
               </p>
-              <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.7, margin: "0 0 32px" }}>
-                שלוש שאלות קצרות כדי שנתאים את המערכת בדיוק בשבילך.
-                זה ייקח פחות מדקה 🚀
-              </p>
-              <div style={{ background: C.purpleLight, borderRadius: 14, padding: "16px 20px", textAlign: "right", marginBottom: 8 }}>
-                {["יוצרים בחינות מהחומר שלך בשניות", "מנתחים שגיאות של כל תלמיד", "שולחים ישירות, ללא הרשמה"].map((t, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", fontSize: 14, color: C.purple, fontWeight: 500 }}>
+              <div style={{ background: C.purpleLight, borderRadius: 14, padding: "16px 20px", textAlign: "right" }}>
+                {[
+                  "מעלה חומר לימוד — מקבל שאלות תוך שניות",
+                  "עורך, מוחק, מוסיף — הבחינה שלך",
+                  "תלמיד מזין קוד קצר ומתחיל מיד",
+                ].map((t, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "5px 0", fontSize: 14, color: C.purple }}>
                     <span style={{ color: C.teal, fontWeight: 800 }}>✓</span> {t}
                   </div>
                 ))}
@@ -113,96 +245,95 @@ export default function OnboardingFlow() {
             </div>
           )}
 
-          {/* ── STEP 1: Subject ── */}
+          {/* ── STEP 1: Who are you? ── */}
           {step === 1 && (
-            <div style={{ padding: "36px 32px" }}>
-              <div style={{ fontSize: 32, marginBottom: 12, textAlign: "center" }}>📚</div>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: "0 0 6px", textAlign: "center" }}>מה אתה מלמד?</h2>
-              <p style={{ fontSize: 14, color: C.muted, textAlign: "center", margin: "0 0 24px" }}>בחר מקצוע — נוכל להתאים את שפת השאלות</p>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
-                {SUBJECTS.filter(s => s !== "אחר").map(s => (
-                  <button key={s} onClick={() => setSubject(s)}
-                    style={{ padding: "10px 6px", borderRadius: 10, border: `2px solid ${subject === s ? C.purple : C.border}`, background: subject === s ? C.purpleLight : C.bg, color: subject === s ? C.purple : C.text, fontSize: 13, fontWeight: subject === s ? 700 : 400, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}>
-                    {s}
-                  </button>
+            <div style={{ padding: "32px 28px" }}>
+              <div style={{ fontSize: 30, marginBottom: 10, textAlign: "center" }}>🙋</div>
+              <h2 style={{ fontSize: 21, fontWeight: 800, color: C.text, margin: "0 0 4px", textAlign: "center" }}>מי אתה?</h2>
+              <p style={{ fontSize: 13, color: C.muted, textAlign: "center", margin: "0 0 20px" }}>נתאים את המערכת בדיוק בשבילך</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {USER_TYPES.map(u => (
+                  <SelectCard key={u.id} selected={userType === u.id} onClick={() => setUserType(u.id)}
+                    icon={u.icon} label={u.label} desc={u.desc} />
                 ))}
-                <button onClick={() => setSubject("אחר")}
-                  style={{ padding: "10px 6px", borderRadius: 10, border: `2px solid ${subject === "אחר" ? C.purple : C.border}`, background: subject === "אחר" ? C.purpleLight : C.bg, color: subject === "אחר" ? C.purple : C.text, fontSize: 13, fontWeight: subject === "אחר" ? 700 : 400, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}>
-                  אחר
-                </button>
               </div>
-              {subject === "אחר" && (
-                <input
-                  value={customSubject}
-                  onChange={e => setCustomSubject(e.target.value)}
-                  placeholder="הקלד מקצוע..."
-                  autoFocus
-                  style={{ width: "100%", padding: "10px 14px", border: `2px solid ${C.purple}`, borderRadius: 10, fontSize: 14, fontFamily: "inherit", outline: "none", background: C.bg, color: C.text, boxSizing: "border-box", marginTop: 4 }}
-                />
+            </div>
+          )}
+
+          {/* ── STEP 2: Context Q2 ── */}
+          {step === 2 && ctx?.q2 && (
+            <div style={{ padding: "32px 28px" }}>
+              <div style={{ fontSize: 30, marginBottom: 10, textAlign: "center" }}>📚</div>
+              <h2 style={{ fontSize: 21, fontWeight: 800, color: C.text, margin: "0 0 4px", textAlign: "center" }}>{ctx.q2.title}</h2>
+              {ctx.q2.sub && <p style={{ fontSize: 13, color: C.muted, textAlign: "center", margin: "0 0 20px" }}>{ctx.q2.sub}</p>}
+
+              {ctx.q2.freeText ? (
+                <textarea value={answer2free} onChange={e => setAnswer2free(e.target.value)}
+                  placeholder="תאר בקצרה את הנושא..."
+                  rows={3} autoFocus
+                  style={{ width: "100%", padding: "12px 14px", border: `2px solid ${C.purple}`, borderRadius: 12, fontSize: 14, fontFamily: "inherit", outline: "none", background: C.bg, color: C.text, boxSizing: "border-box", resize: "none" }} />
+              ) : ctx.q2.grid ? (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: answer2 === "אחר" ? 10 : 0 }}>
+                    {ctx.q2.options.map(s => (
+                      <button key={s} onClick={() => { setAnswer2(s); if (s !== "אחר") setAnswer2free(""); }}
+                        style={{ padding: "10px 6px", borderRadius: 10, border: `2px solid ${answer2 === s ? C.purple : C.border}`, background: answer2 === s ? C.purpleLight : C.bg, color: answer2 === s ? C.purple : C.text, fontSize: 13, fontWeight: answer2 === s ? 700 : 400, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                  {answer2 === "אחר" && (
+                    <input value={answer2free} onChange={e => setAnswer2free(e.target.value)}
+                      placeholder="הקלד..." autoFocus
+                      style={{ width: "100%", padding: "10px 14px", border: `2px solid ${C.purple}`, borderRadius: 10, fontSize: 14, fontFamily: "inherit", outline: "none", background: C.bg, color: C.text, boxSizing: "border-box" }} />
+                  )}
+                </>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {ctx.q2.options.map(o => {
+                    const id = typeof o === "string" ? o : o.id;
+                    const label = typeof o === "string" ? o : o.label;
+                    const sub   = typeof o === "object" ? o.sub : "";
+                    return (
+                      <SelectCard key={id} selected={answer2 === id} onClick={() => setAnswer2(id)}
+                        icon="" label={label} desc={sub} />
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}
 
-          {/* ── STEP 2: Grade level ── */}
-          {step === 2 && (
-            <div style={{ padding: "36px 32px" }}>
-              <div style={{ fontSize: 32, marginBottom: 12, textAlign: "center" }}>🏫</div>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: "0 0 6px", textAlign: "center" }}>באיזה שלב לימודי?</h2>
-              <p style={{ fontSize: 14, color: C.muted, textAlign: "center", margin: "0 0 24px" }}>נתאים את מורכבות השאלות בהתאם</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {GRADES.map(g => (
-                  <button key={g.id} onClick={() => setGradeLevel(g.id)}
-                    style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderRadius: 14, border: `2px solid ${gradeLevel === g.id ? C.purple : C.border}`, background: gradeLevel === g.id ? C.purpleLight : C.bg, cursor: "pointer", fontFamily: "inherit", textAlign: "right", transition: "all 0.15s" }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: gradeLevel === g.id ? C.purple : C.text }}>{g.label}</div>
-                      <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{g.sub}</div>
-                    </div>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: `2px solid ${gradeLevel === g.id ? C.purple : C.border}`, background: gradeLevel === g.id ? C.purple : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      {gradeLevel === g.id && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "white" }} />}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ── STEP 3: Exams per year ── */}
-          {step === 3 && (
-            <div style={{ padding: "36px 32px" }}>
-              <div style={{ fontSize: 32, marginBottom: 12, textAlign: "center" }}>📊</div>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: "0 0 6px", textAlign: "center" }}>כמה בחינות בשנה?</h2>
-              <p style={{ fontSize: 14, color: C.muted, textAlign: "center", margin: "0 0 24px" }}>בקירוב — עוזר לנו להבין את הצרכים שלך</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {EXAMS_PER_YEAR.map(e => (
-                  <button key={e.id} onClick={() => setExamsPerYear(e.id)}
-                    style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 20px", borderRadius: 14, border: `2px solid ${examsPerYear === e.id ? C.purple : C.border}`, background: examsPerYear === e.id ? C.purpleLight : C.bg, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}>
-                    <span style={{ fontSize: 26 }}>{e.icon}</span>
-                    <span style={{ fontSize: 16, fontWeight: examsPerYear === e.id ? 700 : 500, color: examsPerYear === e.id ? C.purple : C.text }}>{e.label}</span>
-                    <div style={{ marginRight: "auto", width: 20, height: 20, borderRadius: "50%", border: `2px solid ${examsPerYear === e.id ? C.purple : C.border}`, background: examsPerYear === e.id ? C.purple : "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {examsPerYear === e.id && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "white" }} />}
-                    </div>
-                  </button>
+          {/* ── STEP 3: Context Q3 ── */}
+          {step === 3 && ctx?.q3 && (
+            <div style={{ padding: "32px 28px" }}>
+              <div style={{ fontSize: 30, marginBottom: 10, textAlign: "center" }}>🎯</div>
+              <h2 style={{ fontSize: 21, fontWeight: 800, color: C.text, margin: "0 0 4px", textAlign: "center" }}>{ctx.q3.title}</h2>
+              {ctx.q3.sub && <p style={{ fontSize: 13, color: C.muted, textAlign: "center", margin: "0 0 20px" }}>{ctx.q3.sub}</p>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {ctx.q3.options.map(o => (
+                  <SelectCard key={o.id} selected={answer3 === o.id} onClick={() => setAnswer3(o.id)}
+                    icon="" label={o.label} desc={o.sub} />
                 ))}
               </div>
             </div>
           )}
 
           {/* ── Footer buttons ── */}
-          <div style={{ padding: "0 32px 28px", display: "flex", gap: 10 }}>
+          <div style={{ padding: "0 28px 24px", display: "flex", gap: 10 }}>
             {step > 0 && (
               <button onClick={() => setStep(s => s - 1)}
-                style={{ padding: "11px 20px", borderRadius: 12, border: `1px solid ${C.border}`, background: "transparent", color: C.muted, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
+                style={{ padding: "11px 18px", borderRadius: 12, border: `1px solid ${C.border}`, background: "transparent", color: C.muted, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
                 ← חזרה
               </button>
             )}
             <button onClick={next} disabled={!canNext() || saving}
               style={{ flex: 1, padding: "13px 0", borderRadius: 12, border: "none", background: canNext() && !saving ? C.purple : C.purpleMid, color: "white", fontSize: 15, fontWeight: 700, cursor: canNext() && !saving ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s" }}>
-              {saving ? "שמירה..." : step === 3 ? "🚀 בואו נתחיל!" : "המשך →"}
+              {saving ? "שמירה..." : step === totalSteps - 1 ? "🚀 בואו נתחיל!" : "המשך →"}
             </button>
           </div>
 
-          {/* Skip */}
-          {step < 3 && (
+          {step < totalSteps - 1 && (
             <div style={{ textAlign: "center", paddingBottom: 20 }}>
               <button onClick={skip} style={{ background: "none", border: "none", color: C.muted, fontSize: 13, cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }}>
                 דלג, אתחיל ישר
@@ -211,9 +342,8 @@ export default function OnboardingFlow() {
           )}
         </div>
 
-        {/* Step name */}
-        <div style={{ textAlign: "center", marginTop: 16, fontSize: 12, color: C.muted }}>
-          שלב {step + 1} מתוך {STEPS.length} · {STEPS[step]}
+        <div style={{ textAlign: "center", marginTop: 14, fontSize: 12, color: C.muted }}>
+          שלב {step + 1} מתוך {totalSteps}
         </div>
       </div>
     </div>
