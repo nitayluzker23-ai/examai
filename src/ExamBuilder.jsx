@@ -86,6 +86,9 @@ export default function ExamBuilder() {
   const [deleting,     setDeleting]     = useState(null);
   const [uploading,    setUploading]    = useState(null);
   const [uploadError,  setUploadError]  = useState("");
+  const [editing,      setEditing]      = useState(null);   // question id being edited
+  const [editDraft,    setEditDraft]    = useState(null);   // { question_text, options, correct_answer_index }
+  const [editSaving,   setEditSaving]   = useState(false);
   const savedExamRef = useRef(null);  // stable ref for useEffect
 
   const fmtSec = (s) => s < 60 ? `${s} שנ׳` : s % 60 ? `${Math.floor(s / 60)}′${s % 60}″` : `${Math.floor(s / 60)} דק׳`;
@@ -181,6 +184,32 @@ export default function ExamBuilder() {
     }).select().single();
     if (error) { setInlineError(error.message); return; }
     setAddedQs(prev => [...prev, data]);
+  };
+
+  const startEdit = (q) => {
+    setEditing(q.id);
+    setEditDraft({
+      question_text: q.content?.question_text ?? "",
+      options: [...(q.content?.options ?? ["","","",""])],
+      correct_answer_index: q.content?.correct_answer_index ?? 0,
+    });
+  };
+
+  const saveEdit = async (q) => {
+    if (!editDraft.question_text.trim()) return;
+    setEditSaving(true);
+    const newContent = {
+      ...q.content,
+      question_text: editDraft.question_text.trim(),
+      options: editDraft.options.map(o => o.trim()),
+      correct_answer_index: editDraft.correct_answer_index,
+    };
+    const { error } = await supabase.from("questions").update({ content: newContent }).eq("id", q.id);
+    if (error) { alert(error.message); setEditSaving(false); return; }
+    setAddedQs(qs => qs.map(x => x.id === q.id ? { ...x, content: newContent } : x));
+    setEditing(null);
+    setEditDraft(null);
+    setEditSaving(false);
   };
 
   const deleteQuestion = async (id) => {
@@ -505,7 +534,7 @@ export default function ExamBuilder() {
                             <span style={{ fontSize: 11, color: C.muted, flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
                           </div>
                           {isOpen && (
-                            <div style={{ borderTop: `1px solid ${C.border}`, padding: "10px 14px" }}>
+                            <div style={{ borderTop: `1px solid ${C.border}`, padding: "12px 14px" }}>
                               {/* Image section */}
                               {c.image_url ? (
                                 <div style={{ marginBottom: 10 }}>
@@ -523,24 +552,75 @@ export default function ExamBuilder() {
                                     onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(q, f); e.target.value = ""; }} />
                                 </label>
                               )}
-                              {/* Options */}
-                              {c.options?.map((opt, i) => (
-                                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 8px", borderRadius: 7, marginBottom: 4, background: i === c.correct_answer_index ? C.tealLight : "transparent", border: `1px solid ${i === c.correct_answer_index ? "#9FD9C7" : "transparent"}` }}>
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: i === c.correct_answer_index ? C.teal : C.muted, flexShrink: 0, minWidth: 16 }}>{i === c.correct_answer_index ? "✓" : `${i+1}.`}</span>
-                                  <span style={{ fontSize: 13, color: C.text }}>{opt}</span>
-                                </div>
-                              ))}
-                              {c.ai_explanation && (
-                                <div style={{ marginTop: 8, padding: "7px 10px", background: C.purpleLight, borderRadius: 7, fontSize: 12, color: C.purple }}>
-                                  <strong>הסבר: </strong>{c.ai_explanation}
+
+                              {/* ── VIEW MODE ── */}
+                              {editing !== q.id && (
+                                <>
+                                  <div style={{ fontSize: 13, color: C.text, marginBottom: 8, lineHeight: 1.5 }}>{c.question_text}</div>
+                                  {c.options?.map((opt, i) => (
+                                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 8px", borderRadius: 7, marginBottom: 4, background: i === c.correct_answer_index ? C.tealLight : "transparent", border: `1px solid ${i === c.correct_answer_index ? "#9FD9C7" : "transparent"}` }}>
+                                      <span style={{ fontSize: 12, fontWeight: 700, color: i === c.correct_answer_index ? C.teal : C.muted, flexShrink: 0, minWidth: 16 }}>{i === c.correct_answer_index ? "✓" : `${i+1}.`}</span>
+                                      <span style={{ fontSize: 13, color: C.text }}>{opt}</span>
+                                    </div>
+                                  ))}
+                                  {c.ai_explanation && (
+                                    <div style={{ marginTop: 8, padding: "7px 10px", background: C.purpleLight, borderRadius: 7, fontSize: 12, color: C.purple }}>
+                                      <strong>הסבר: </strong>{c.ai_explanation}
+                                    </div>
+                                  )}
+                                  <div style={{ marginTop: 10, display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                                    <button onClick={() => startEdit(q)}
+                                      style={{ padding: "5px 14px", background: C.purpleLight, color: C.purple, border: `1px solid ${C.purpleMid}`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                                      ✏️ ערוך
+                                    </button>
+                                    <button onClick={() => deleteQuestion(q.id)} disabled={deleting === q.id}
+                                      style={{ padding: "5px 14px", background: C.redLight, color: C.red, border: `1px solid #F09595`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                                      {deleting === q.id ? "מוחק..." : "🗑 מחק"}
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+
+                              {/* ── EDIT MODE ── */}
+                              {editing === q.id && editDraft && (
+                                <div>
+                                  <div style={{ fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 4 }}>טקסט השאלה</div>
+                                  <textarea
+                                    value={editDraft.question_text}
+                                    onChange={e => setEditDraft(d => ({ ...d, question_text: e.target.value }))}
+                                    rows={3}
+                                    style={{ width: "100%", padding: "8px 10px", border: `1.5px solid ${C.purple}`, borderRadius: 9, fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", background: C.white, color: C.text, boxSizing: "border-box", marginBottom: 10 }}
+                                  />
+                                  <div style={{ fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 6 }}>תשובות — לחץ על מספר לסמן נכונה</div>
+                                  {editDraft.options.map((opt, i) => {
+                                    const isCorrect = i === editDraft.correct_answer_index;
+                                    return (
+                                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
+                                        <div onClick={() => setEditDraft(d => ({ ...d, correct_answer_index: i }))}
+                                          style={{ width: 26, height: 26, borderRadius: "50%", border: `2px solid ${isCorrect ? C.teal : C.border}`, background: isCorrect ? C.teal : "transparent", color: isCorrect ? "white" : C.muted, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0, transition: "all 0.15s" }}>
+                                          {i + 1}
+                                        </div>
+                                        <input
+                                          value={opt}
+                                          onChange={e => setEditDraft(d => ({ ...d, options: d.options.map((o, j) => j === i ? e.target.value : o) }))}
+                                          style={{ flex: 1, padding: "7px 10px", border: `1.5px solid ${isCorrect ? C.teal : C.border}`, borderRadius: 8, fontSize: 13, fontFamily: "inherit", outline: "none", background: isCorrect ? C.tealLight : C.bg, color: C.text, transition: "all 0.15s" }}
+                                        />
+                                      </div>
+                                    );
+                                  })}
+                                  <div style={{ fontSize: 11, color: C.teal, marginBottom: 10 }}>✓ המספר המסומן בירוק = תשובה נכונה</div>
+                                  <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                                    <button onClick={() => { setEditing(null); setEditDraft(null); }}
+                                      style={{ padding: "6px 14px", background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit", color: C.muted }}>
+                                      ביטול
+                                    </button>
+                                    <button onClick={() => saveEdit(q)} disabled={editSaving || !editDraft.question_text.trim()}
+                                      style={{ padding: "6px 16px", background: editSaving ? C.purpleMid : C.purple, color: "white", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                                      {editSaving ? "שומר..." : "✓ שמור שינויים"}
+                                    </button>
+                                  </div>
                                 </div>
                               )}
-                              <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}>
-                                <button onClick={() => deleteQuestion(q.id)} disabled={deleting === q.id}
-                                  style={{ padding: "5px 14px", background: C.redLight, color: C.red, border: `1px solid #F09595`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
-                                  {deleting === q.id ? "מוחק..." : "🗑 מחק"}
-                                </button>
-                              </div>
                             </div>
                           )}
                         </div>
