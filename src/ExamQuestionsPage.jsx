@@ -353,6 +353,10 @@ export default function ExamQuestionsPage() {
                   style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.amber}`, background: C.amberLight, color: C.amber, cursor: "pointer", fontFamily: "inherit" }}>
                   ✍️ הוסף שאלה
                 </button>
+                <a href={`/dashboard/exam/${examId}/live`} target="_blank" rel="noreferrer"
+                  style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.red}`, background: C.redLight, color: C.red, cursor: "pointer", fontFamily: "inherit", textDecoration: "none" }}>
+                  🔴 Live
+                </a>
               </div>
             )}
           </div>

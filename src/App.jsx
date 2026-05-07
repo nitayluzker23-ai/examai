@@ -12,6 +12,7 @@ import ContentUploader from "./ContentUploader";
 import ExamQuestionsPage from "./ExamQuestionsPage";
 import StudentsPage from "./StudentsPage";
 import AdminPage from "./AdminPage";
+import LiveDashboard from "./LiveDashboard";
 import { getPlan } from "./planConfig";
 
 const SUPABASE_URL      = "https://npksscocijjmgzgrolnq.supabase.co";
@@ -323,6 +324,9 @@ export default function App() {
           } />
           <Route path="/dashboard/exam/:examId/questions" element={
             <ProtectedRoute><TeacherLayout><ExamQuestionsPage /></TeacherLayout></ProtectedRoute>
+          } />
+          <Route path="/dashboard/exam/:examId/live" element={
+            <ProtectedRoute><TeacherLayout><LiveDashboard /></TeacherLayout></ProtectedRoute>
           } />
           <Route path="/student/login" element={<StudentLoginPage />} />
           <Route path="/student"       element={<StudentPortal />} />
