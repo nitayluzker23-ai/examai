@@ -10,8 +10,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 
 async function extractTextFromPDF(arrayBuffer) {
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const totalPages = pdf.numPages;
   const pages = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
+  let textPages = 0;
+  for (let i = 1; i <= totalPages; i++) {
     try {
       const page = await pdf.getPage(i);
       const content = await page.getTextContent();
@@ -22,21 +24,18 @@ async function extractTextFromPDF(arrayBuffer) {
         if (prev) {
           const sameY = Math.abs(item.transform[5] - prev.transform[5]) < 3;
           const gap   = item.transform[4] - (prev.transform[4] + (prev.width || 0));
-          if (!sameY) {
-            pageText += "\n";
-          } else if (gap > 1.5) {
-            pageText += " ";
-          }
+          if (!sameY) { pageText += "\n"; }
+          else if (gap > 1.5) { pageText += " "; }
         }
         pageText += item.str;
         prev = item;
       }
-      if (pageText.trim()) pages.push(pageText.trim());
+      if (pageText.trim()) { pages.push(pageText.trim()); textPages++; }
     } catch (e) {
       console.warn(`PDF page ${i} extraction error:`, e);
     }
   }
-  return pages.join("\n\n").trim();
+  return { text: pages.join("\n\n").trim(), totalPages, textPages };
 }
 
 const C = {
@@ -81,6 +80,12 @@ export default function ExamBuilder() {
   const [inlineError,  setInlineError]  = useState("");
   const [fileLoading,  setFileLoading]  = useState(false);  // reading file
   const [fileName,     setFileName]     = useState("");
+  const [pdfInfo,      setPdfInfo]      = useState(null);   // { totalPages, textPages }
+  // Question list management
+  const [expanded,     setExpanded]     = useState(null);
+  const [deleting,     setDeleting]     = useState(null);
+  const [uploading,    setUploading]    = useState(null);
+  const [uploadError,  setUploadError]  = useState("");
   const savedExamRef = useRef(null);  // stable ref for useEffect
 
   const fmtSec = (s) => s < 60 ? `${s} שנ׳` : s % 60 ? `${Math.floor(s / 60)}′${s % 60}″` : `${Math.floor(s / 60)} דק׳`;
@@ -176,6 +181,45 @@ export default function ExamBuilder() {
     }).select().single();
     if (error) { setInlineError(error.message); return; }
     setAddedQs(prev => [...prev, data]);
+  };
+
+  const deleteQuestion = async (id) => {
+    if (!confirm("למחוק שאלה זו?")) return;
+    setDeleting(id);
+    const { error: e } = await supabase.from("questions").delete().eq("id", id);
+    if (e) { alert(e.message); setDeleting(null); return; }
+    setAddedQs(qs => qs.filter(q => q.id !== id));
+    setExpanded(null);
+    setDeleting(null);
+  };
+
+  const uploadImage = async (question, file) => {
+    if (!savedExam) return;
+    setUploading(question.id); setUploadError("");
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${savedExam.id}/${question.id}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("question-images").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: { publicUrl } } = supabase.storage.from("question-images").getPublicUrl(path);
+      const newContent = { ...question.content, image_url: publicUrl };
+      const { error: updateErr } = await supabase.from("questions").update({ content: newContent }).eq("id", question.id);
+      if (updateErr) throw updateErr;
+      setAddedQs(qs => qs.map(q => q.id === question.id ? { ...q, content: newContent } : q));
+    } catch (e) {
+      setUploadError(e.message);
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const removeImage = async (question) => {
+    if (!confirm("להסיר את התמונה מהשאלה?")) return;
+    const newContent = { ...question.content };
+    delete newContent.image_url;
+    const { error } = await supabase.from("questions").update({ content: newContent }).eq("id", question.id);
+    if (error) { alert(error.message); return; }
+    setAddedQs(qs => qs.map(q => q.id === question.id ? { ...q, content: newContent } : q));
   };
 
   const copyLink = () => {
@@ -316,16 +360,15 @@ export default function ExamBuilder() {
             </div>
           )}
 
-          {/* Step 2: Questions — inline builder */}
+          {/* Step 2: Questions — full management */}
           {step === 2 && (
             <div style={{ padding: 24 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: C.text, marginBottom: 12 }}>הוספת שאלות</div>
+              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
               {/* Auto-save status */}
               {saving && (
                 <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: C.muted, marginBottom: 12 }}>
                   <div style={{ width: 14, height: 14, border: `2px solid ${C.purpleLight}`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                  <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
                   יוצר את המבחן...
                 </div>
               )}
@@ -339,16 +382,14 @@ export default function ExamBuilder() {
                 </div>
               )}
 
-              {/* Added questions counter */}
-              {addedQs.length > 0 && (
-                <div style={{ background: C.purpleLight, borderRadius: 10, padding: "8px 14px", fontSize: 12, color: C.purple, marginBottom: 14, fontWeight: 600 }}>
-                  ✅ {addedQs.length} שאלות נוספו למבחן
-                </div>
-              )}
+              {/* Section title */}
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 10 }}>
+                הוסף שאלות {addedQs.length > 0 && <span style={{ fontSize: 12, color: C.purple, fontWeight: 600 }}>({addedQs.length} נוספו)</span>}
+              </div>
 
               {/* Tabs */}
               <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
-                {[["ai","🤖 AI מטקסט"],["manual","✍️ הוסף ידנית"]].map(([k, label]) => (
+                {[["ai","🤖 AI מטקסט"],["manual","✍️ ידנית"]].map(([k, label]) => (
                   <button key={k} onClick={() => setInlineTab(k)}
                     style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: `1.5px solid ${inlineTab===k ? C.purple : C.border}`, background: inlineTab===k ? C.purpleLight : C.white, color: inlineTab===k ? C.purple : C.muted, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
                     {label}
@@ -359,22 +400,21 @@ export default function ExamBuilder() {
               {/* AI Tab */}
               {inlineTab === "ai" && (
                 <div>
-                  {/* File upload strip */}
                   <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", border: `1.5px dashed ${C.purpleMid}`, borderRadius: 10, cursor: fileLoading ? "wait" : "pointer", marginBottom: 8, background: C.purpleLight }}>
                     <input type="file" accept=".txt,.md,.pdf" style={{ display: "none" }}
                       onChange={async e => {
                         const file = e.target.files?.[0];
                         if (!file) return;
                         if (file.size > 20 * 1024 * 1024) { setInlineError("הקובץ גדול מדי (מקסימום 20MB)"); return; }
-                        setFileLoading(true); setFileName(file.name); setInlineError("");
+                        setFileLoading(true); setFileName(file.name); setInlineError(""); setPdfInfo(null);
                         try {
                           if (file.name.toLowerCase().endsWith(".pdf")) {
                             const buf = await file.arrayBuffer();
-                            const text = await extractTextFromPDF(buf);
-                            if (!text) throw new Error("לא הצלחנו לחלץ טקסט מהקובץ");
+                            const { text, totalPages, textPages } = await extractTextFromPDF(buf);
+                            setPdfInfo({ totalPages, textPages });
+                            if (!text) throw new Error(`הקובץ מכיל ${totalPages} עמודים אך ללא טקסט ניתן לחילוץ — ייתכן שמדובר ב-PDF סרוק (תמונות בלבד)`);
                             setInlineText(text);
                           } else {
-                            // .txt / .md
                             const text = await file.text();
                             setInlineText(text);
                           }
@@ -388,31 +428,36 @@ export default function ExamBuilder() {
                       }}
                     />
                     <span style={{ fontSize: 18 }}>{fileLoading ? "⏳" : "📎"}</span>
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: C.purple }}>
-                        {fileLoading ? "קורא קובץ..." : fileName ? `✅ ${fileName}` : "העלה קובץ"}
+                        {fileLoading ? "קורא קובץ..." : fileName ? `✅ ${fileName}` : "העלה קובץ (PDF, TXT, MD)"}
                       </div>
-                      <div style={{ fontSize: 10, color: C.muted }}>PDF, TXT, MD — הטקסט יועתק אוטומטית</div>
+                      {pdfInfo && (
+                        <div style={{ fontSize: 10, color: pdfInfo.textPages < pdfInfo.totalPages ? C.amber : C.teal, marginTop: 2 }}>
+                          {pdfInfo.textPages}/{pdfInfo.totalPages} עמודים עם טקסט
+                          {pdfInfo.textPages < pdfInfo.totalPages && " — חלק מהעמודים סרוקים"}
+                        </div>
+                      )}
+                      {!fileName && <div style={{ fontSize: 10, color: C.muted }}>הטקסט יועתק אוטומטית לתיבה למטה</div>}
                     </div>
-                    {!fileLoading && <span style={{ fontSize: 10, color: C.muted, marginRight: "auto" }}>לחץ לבחירה</span>}
                   </label>
 
                   <textarea
                     value={inlineText}
                     onChange={e => setInlineText(e.target.value)}
-                    placeholder="הדבק כאן טקסט מהספר / סיכום / PDF (Ctrl+A, Ctrl+C מהקובץ, ואז הדבק כאן)"
+                    placeholder="הדבק טקסט מהספר / סיכום, או העלה קובץ למעלה"
                     rows={6}
                     style={{ width: "100%", padding: "10px 12px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", background: C.bg, color: C.text, boxSizing: "border-box", lineHeight: 1.6 }}
                   />
 
                   {inlineText.trim() && (
-                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4, marginBottom: 2 }}>
-                      {inlineText.trim().split(/\s+/).length.toLocaleString()} מילים
+                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                      {inlineText.trim().split(/\s+/).filter(Boolean).length.toLocaleString()} מילים
                     </div>
                   )}
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, marginBottom: 10 }}>
-                    <span style={{ fontSize: 12, color: C.muted, whiteSpace: "nowrap" }}>מספר שאלות:</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, color: C.muted }}>מספר שאלות:</span>
                     <select value={inlineQCount} onChange={e => setInlineQCount(Number(e.target.value))}
                       style={{ fontSize: 12, padding: "5px 8px", borderRadius: 8, border: `1px solid ${C.border}`, fontFamily: "inherit", background: C.white }}>
                       {[3,5,8,10,15].map(n => <option key={n} value={n}>{n}</option>)}
@@ -421,17 +466,88 @@ export default function ExamBuilder() {
                   {inlineError && <div style={{ fontSize: 12, color: C.red, marginBottom: 8 }}>{inlineError}</div>}
                   <button onClick={generateInline} disabled={!savedExam || !inlineText.trim() || generatingQ}
                     style={{ width: "100%", padding: 11, background: savedExam && inlineText.trim() && !generatingQ ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                    {generatingQ ? "מייצר שאלות..." : "🤖 צור שאלות"}
+                    {generatingQ ? (
+                      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                        <span style={{ width: 13, height: 13, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.8s linear infinite", display: "inline-block" }} />
+                        מייצר שאלות...
+                      </span>
+                    ) : "🤖 צור שאלות"}
                   </button>
                 </div>
               )}
 
               {/* Manual Tab */}
-              {inlineTab === "manual" && savedExam && (
-                <InlineManualForm onSave={addManualQ} />
+              {inlineTab === "manual" && (
+                savedExam
+                  ? <InlineManualForm onSave={addManualQ} />
+                  : <div style={{ fontSize: 12, color: C.muted, textAlign: "center", padding: 20 }}>ממתין ליצירת המבחן...</div>
               )}
-              {inlineTab === "manual" && !savedExam && (
-                <div style={{ fontSize: 12, color: C.muted, textAlign: "center", padding: 20 }}>ממתין ליצירת המבחן...</div>
+
+              {/* ── Question List ── */}
+              {addedQs.length > 0 && (
+                <div style={{ marginTop: 22 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 10, borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+                    שאלות במבחן ({addedQs.length})
+                  </div>
+                  {uploadError && (
+                    <div style={{ fontSize: 11, color: C.red, marginBottom: 8 }}>{uploadError}</div>
+                  )}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {addedQs.map((q, idx) => {
+                      const c = q.content ?? {};
+                      const isOpen = expanded === q.id;
+                      return (
+                        <div key={q.id} style={{ background: C.bg, border: `1px solid ${isOpen ? C.purple : C.border}`, borderRadius: 12, overflow: "hidden", transition: "border-color 0.15s" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", cursor: "pointer" }}
+                            onClick={() => setExpanded(isOpen ? null : q.id)}>
+                            <span style={{ fontSize: 11, color: C.muted, minWidth: 20, flexShrink: 0 }}>{idx + 1}</span>
+                            <span style={{ flex: 1, fontSize: 13, color: C.text, lineHeight: 1.4 }}>{c.question_text}</span>
+                            <span style={{ fontSize: 11, color: C.muted, flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
+                          </div>
+                          {isOpen && (
+                            <div style={{ borderTop: `1px solid ${C.border}`, padding: "10px 14px" }}>
+                              {/* Image section */}
+                              {c.image_url ? (
+                                <div style={{ marginBottom: 10 }}>
+                                  <img src={c.image_url} alt="תמונת שאלה" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: `1px solid ${C.border}`, display: "block" }} />
+                                  <button onClick={() => removeImage(q)} style={{ marginTop: 5, fontSize: 11, padding: "3px 10px", border: `1px solid #F09595`, background: C.redLight, color: C.red, borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>
+                                    🗑 הסר תמונה
+                                  </button>
+                                </div>
+                              ) : (
+                                <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, padding: "5px 12px", border: `1px dashed ${C.purpleMid}`, borderRadius: 8, cursor: "pointer", color: C.purple, background: C.purpleLight, marginBottom: 10 }}>
+                                  {uploading === q.id ? (
+                                    <><span style={{ width: 11, height: 11, border: `2px solid ${C.purpleMid}`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite", display: "inline-block" }} /> מעלה...</>
+                                  ) : "🖼 הוסף תמונה"}
+                                  <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} disabled={!!uploading}
+                                    onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(q, f); e.target.value = ""; }} />
+                                </label>
+                              )}
+                              {/* Options */}
+                              {c.options?.map((opt, i) => (
+                                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 8px", borderRadius: 7, marginBottom: 4, background: i === c.correct_answer_index ? C.tealLight : "transparent", border: `1px solid ${i === c.correct_answer_index ? "#9FD9C7" : "transparent"}` }}>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: i === c.correct_answer_index ? C.teal : C.muted, flexShrink: 0, minWidth: 16 }}>{i === c.correct_answer_index ? "✓" : `${i+1}.`}</span>
+                                  <span style={{ fontSize: 13, color: C.text }}>{opt}</span>
+                                </div>
+                              ))}
+                              {c.ai_explanation && (
+                                <div style={{ marginTop: 8, padding: "7px 10px", background: C.purpleLight, borderRadius: 7, fontSize: 12, color: C.purple }}>
+                                  <strong>הסבר: </strong>{c.ai_explanation}
+                                </div>
+                              )}
+                              <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}>
+                                <button onClick={() => deleteQuestion(q.id)} disabled={deleting === q.id}
+                                  style={{ padding: "5px 14px", background: C.redLight, color: C.red, border: `1px solid #F09595`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                                  {deleting === q.id ? "מוחק..." : "🗑 מחק"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
           )}
@@ -490,7 +606,7 @@ export default function ExamBuilder() {
                   onClick={() => setStep(3)}
                   disabled={!savedExam}
                   style={{ flex: 1, padding: 12, background: savedExam ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: savedExam ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                  {addedQs.length > 0 ? `סיום (${addedQs.length} שאלות)` : "דלג על שאלות →"}
+                  {addedQs.length > 0 ? `סיום ושליחה (${addedQs.length} שאלות)` : "דלג →"}
                   <ChevronLeft size={15} />
                 </button>
               )}
