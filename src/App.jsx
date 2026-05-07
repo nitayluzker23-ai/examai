@@ -6,6 +6,7 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import ExamBuilder from "./ExamBuilder";
 import LandingPage from "./LandingPage";
+import OnboardingFlow from "./OnboardingFlow";
 import StudentExamView from "./StudentExamView";
 import InsightsView from "./InsightsView";
 import ExamsList from "./ExamsList";
@@ -82,10 +83,13 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => useContext(AuthContext);
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+function ProtectedRoute({ children, skipOnboarding = false }) {
+  const { user, profile, loading } = useAuth();
   if (loading) return <FullPageSpinner />;
   if (!user) return <Navigate to="/login" replace />;
+  if (!skipOnboarding && profile && !profile.onboarding_done) {
+    return <Navigate to="/onboarding" replace />;
+  }
   return children;
 }
 
@@ -191,7 +195,12 @@ function LoginPage() {
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
 
-  useEffect(() => { if (user) navigate("/dashboard"); }, [user]);
+  useEffect(() => {
+    if (!user) return;
+    if (profile === null) return; // still loading profile
+    if (profile && !profile.onboarding_done) navigate("/onboarding");
+    else navigate("/dashboard");
+  }, [user, profile]); // eslint-disable-line
 
   const handle = async () => {
     setLoading(true); setError("");
@@ -434,8 +443,11 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/"     element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/"          element={<LandingPage />} />
+          <Route path="/login"     element={<LoginPage />} />
+          <Route path="/onboarding" element={
+            <ProtectedRoute skipOnboarding><OnboardingFlow /></ProtectedRoute>
+          } />
           <Route path="/exam"             element={<StudentEntryPage />} />
           <Route path="/exam/:accessCode" element={<StudentEntryPage />} />
           <Route path="/dashboard" element={
