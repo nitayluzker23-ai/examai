@@ -2,6 +2,22 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock, Timer, Layers, ChevronLeft, ChevronRight, Plus, Check, Copy } from "lucide-react";
 import { supabase, useAuth } from "./App";
+import * as pdfjsLib from "pdfjs-dist";
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
+
+async function extractTextFromPDF(arrayBuffer) {
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let text = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(" ") + "\n";
+  }
+  return text.trim();
+}
 
 const C = {
   purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
@@ -43,6 +59,8 @@ export default function ExamBuilder() {
   const [generatingQ,  setGeneratingQ]  = useState(false);
   const [addedQs,      setAddedQs]      = useState([]);     // questions added so far
   const [inlineError,  setInlineError]  = useState("");
+  const [fileLoading,  setFileLoading]  = useState(false);  // reading file
+  const [fileName,     setFileName]     = useState("");
   const savedExamRef = useRef(null);  // stable ref for useEffect
 
   const fmtSec = (s) => s < 60 ? `${s} שנ׳` : s % 60 ? `${Math.floor(s / 60)}′${s % 60}″` : `${Math.floor(s / 60)} דק׳`;
@@ -322,25 +340,41 @@ export default function ExamBuilder() {
               {inlineTab === "ai" && (
                 <div>
                   {/* File upload strip */}
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", border: `1.5px dashed ${C.purpleMid}`, borderRadius: 10, cursor: "pointer", marginBottom: 8, background: C.purpleLight }}>
-                    <input type="file" accept=".txt,.md,.doc,.docx,.pdf" style={{ display: "none" }}
-                      onChange={e => {
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", border: `1.5px dashed ${C.purpleMid}`, borderRadius: 10, cursor: fileLoading ? "wait" : "pointer", marginBottom: 8, background: C.purpleLight }}>
+                    <input type="file" accept=".txt,.md,.pdf" style={{ display: "none" }}
+                      onChange={async e => {
                         const file = e.target.files?.[0];
                         if (!file) return;
-                        if (file.size > 5 * 1024 * 1024) { setInlineError("הקובץ גדול מדי (מקסימום 5MB)"); return; }
-                        const reader = new FileReader();
-                        reader.onload = ev => setInlineText(ev.target.result ?? "");
-                        // Try reading as text (works for .txt, .md, .doc sometimes)
-                        reader.readAsText(file, "UTF-8");
+                        if (file.size > 20 * 1024 * 1024) { setInlineError("הקובץ גדול מדי (מקסימום 20MB)"); return; }
+                        setFileLoading(true); setFileName(file.name); setInlineError("");
+                        try {
+                          if (file.name.toLowerCase().endsWith(".pdf")) {
+                            const buf = await file.arrayBuffer();
+                            const text = await extractTextFromPDF(buf);
+                            if (!text) throw new Error("לא הצלחנו לחלץ טקסט מהקובץ");
+                            setInlineText(text);
+                          } else {
+                            // .txt / .md
+                            const text = await file.text();
+                            setInlineText(text);
+                          }
+                        } catch (err) {
+                          setInlineError("שגיאה בקריאת הקובץ: " + err.message);
+                          setFileName("");
+                        } finally {
+                          setFileLoading(false);
+                        }
                         e.target.value = "";
                       }}
                     />
-                    <span style={{ fontSize: 18 }}>📎</span>
+                    <span style={{ fontSize: 18 }}>{fileLoading ? "⏳" : "📎"}</span>
                     <div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: C.purple }}>העלה קובץ טקסט</div>
-                      <div style={{ fontSize: 10, color: C.muted }}>TXT, MD — או הדבק טקסט ישירות למטה</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: C.purple }}>
+                        {fileLoading ? "קורא קובץ..." : fileName ? `✅ ${fileName}` : "העלה קובץ"}
+                      </div>
+                      <div style={{ fontSize: 10, color: C.muted }}>PDF, TXT, MD — הטקסט יועתק אוטומטית</div>
                     </div>
-                    <span style={{ fontSize: 10, color: C.muted, marginRight: "auto" }}>לחץ לבחירה</span>
+                    {!fileLoading && <span style={{ fontSize: 10, color: C.muted, marginRight: "auto" }}>לחץ לבחירה</span>}
                   </label>
 
                   <textarea
