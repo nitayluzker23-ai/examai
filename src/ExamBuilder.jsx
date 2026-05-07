@@ -30,8 +30,8 @@ export default function ExamBuilder() {
   const [timedBack, setTimedBack] = useState(false);
   const [sessions, setSessions] = useState([{ mins: 20, questions: 10 }, { mins: 20, questions: 10 }]);
   const [breakMins, setBreakMins] = useState(5);
-  const [opensAt,   setOpensAt]   = useState({ date: "", hour: 8,  min: 0 });
-  const [closesAt,  setClosesAt]  = useState({ date: "", hour: 17, min: 0 });
+  const [opensAt,   setOpensAt]   = useState({ day: "", month: "", year: "", hour: 8,  min: 0 });
+  const [closesAt,  setClosesAt]  = useState({ day: "", month: "", year: "", hour: 17, min: 0 });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [savedExam, setSavedExam] = useState(null);
@@ -59,8 +59,8 @@ export default function ExamBuilder() {
         config: buildConfig(),
         status: "draft",
         access_code: code,
-        opens_at:  opensAt.date  ? new Date(`${opensAt.date}T${String(opensAt.hour).padStart(2,"0")}:${String(opensAt.min).padStart(2,"0")}:00`).toISOString()  : null,
-        closes_at: closesAt.date ? new Date(`${closesAt.date}T${String(closesAt.hour).padStart(2,"0")}:${String(closesAt.min).padStart(2,"0")}:00`).toISOString() : null,
+        opens_at:  dtToISO(opensAt),
+        closes_at: dtToISO(closesAt),
       }).select().single();
       if (error) throw error;
       setSavedExam(data);
@@ -128,13 +128,10 @@ export default function ExamBuilder() {
                   <DateTimePicker label="פתיחה" value={opensAt} onChange={setOpensAt} />
                   <DateTimePicker label="סגירה" value={closesAt} onChange={setClosesAt} />
                 </div>
-                {(opensAt.date || closesAt.date) && (
+                {(dtToISO(opensAt) || dtToISO(closesAt)) && (
                   <div style={{ fontSize: 11, color: C.muted, marginTop: 8, background: C.purpleLight, borderRadius: 8, padding: "7px 10px" }}>
                     {(() => {
-                      const fmt = dt => dt.date
-                        ? `${dt.date.split("-").reverse().join("/")} ${String(dt.hour).padStart(2,"0")}:${String(dt.min).padStart(2,"0")}`
-                        : null;
-                      const o = fmt(opensAt), cl = fmt(closesAt);
+                      const o = fmtDT(opensAt), cl = fmtDT(closesAt);
                       if (o && !cl)  return `המבחן נפתח ${o}`;
                       if (!o && cl)  return `המבחן נסגר ${cl}`;
                       if (o && cl)   return `פתוח ${o} — ${cl}`;
@@ -345,39 +342,69 @@ function Summary({ lines }) {
   );
 }
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
+// ── DateTime helpers ─────────────────────────────────────────
+const HOURS   = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = [0, 15, 30, 45];
-const selectStyle = {
-  padding: "7px 6px", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 8,
+const DAYS    = Array.from({ length: 31 }, (_, i) => i + 1);
+const MONTHS  = [
+  [1,"ינואר"],[2,"פברואר"],[3,"מרץ"],[4,"אפריל"],[5,"מאי"],[6,"יוני"],
+  [7,"יולי"],[8,"אוגוסט"],[9,"ספטמבר"],[10,"אוקטובר"],[11,"נובמבר"],[12,"דצמבר"],
+];
+const THIS_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: 5 }, (_, i) => THIS_YEAR + i);
+
+function dtToISO(dt) {
+  if (!dt.day || !dt.month || !dt.year) return null;
+  const y = String(dt.year);
+  const m = String(dt.month).padStart(2, "0");
+  const d = String(dt.day).padStart(2, "0");
+  const h = String(dt.hour).padStart(2, "0");
+  const mn = String(dt.min).padStart(2, "0");
+  return new Date(`${y}-${m}-${d}T${h}:${mn}:00`).toISOString();
+}
+
+function fmtDT(dt) {
+  if (!dt.day || !dt.month || !dt.year) return null;
+  return `${String(dt.day).padStart(2,"0")}/${String(dt.month).padStart(2,"0")}/${dt.year} ${String(dt.hour).padStart(2,"0")}:${String(dt.min).padStart(2,"0")}`;
+}
+
+const selSt = {
+  padding: "7px 4px", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 8,
   fontSize: 12, background: "#f8f7ff", color: "#1a1a2e", fontFamily: "inherit",
-  outline: "none", cursor: "pointer", appearance: "none", WebkitAppearance: "none",
-  textAlign: "center",
+  outline: "none", cursor: "pointer", width: "100%", textAlign: "center",
 };
 
 function DateTimePicker({ label, value, onChange }) {
-  const { date, hour, min } = value;
+  const { day, month, year, hour, min } = value;
   const set = (key, val) => onChange({ ...value, [key]: val });
   return (
     <div>
       <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 4 }}>{label}</div>
-      {/* Date */}
-      <input
-        type="date"
-        value={date}
-        onChange={e => set("date", e.target.value)}
-        style={{ width: "100%", padding: "7px 10px", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 8, fontSize: 12, background: "#f8f7ff", color: "#1a1a2e", fontFamily: "inherit", outline: "none", marginBottom: 5, boxSizing: "border-box" }}
-      />
-      {/* Hour + Minute */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
-        <select value={hour} onChange={e => set("hour", Number(e.target.value))} style={selectStyle}>
-          {HOURS.map(h => (
-            <option key={h} value={h}>{String(h).padStart(2, "0")}</option>
-          ))}
+
+      {/* Date row — DD / MM / YYYY (LTR order) */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 3fr 3fr", gap: 4, marginBottom: 5, direction: "ltr" }}>
+        <select value={day}   onChange={e => set("day",   Number(e.target.value))} style={selSt}>
+          <option value="">יום</option>
+          {DAYS.map(d => <option key={d} value={d}>{String(d).padStart(2,"0")}</option>)}
         </select>
-        <select value={min} onChange={e => set("min", Number(e.target.value))} style={selectStyle}>
-          {MINUTES.map(m => (
-            <option key={m} value={m}>{String(m).padStart(2, "0")}</option>
-          ))}
+        <select value={month} onChange={e => set("month", Number(e.target.value))} style={selSt}>
+          <option value="">חודש</option>
+          {MONTHS.map(([n, name]) => <option key={n} value={n}>{name}</option>)}
+        </select>
+        <select value={year}  onChange={e => set("year",  Number(e.target.value))} style={selSt}>
+          <option value="">שנה</option>
+          {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+      </div>
+
+      {/* Time row — HH : MM (LTR order) */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 4, alignItems: "center", direction: "ltr" }}>
+        <select value={hour} onChange={e => set("hour", Number(e.target.value))} style={selSt}>
+          {HOURS.map(h => <option key={h} value={h}>{String(h).padStart(2,"0")}</option>)}
+        </select>
+        <span style={{ fontSize: 14, fontWeight: 700, color: "#6b7280" }}>:</span>
+        <select value={min}  onChange={e => set("min",  Number(e.target.value))} style={selSt}>
+          {MINUTES.map(m => <option key={m} value={m}>{String(m).padStart(2,"0")}</option>)}
         </select>
       </div>
     </div>
