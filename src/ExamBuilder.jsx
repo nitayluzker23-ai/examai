@@ -30,8 +30,8 @@ export default function ExamBuilder() {
   const [timedBack, setTimedBack] = useState(false);
   const [sessions, setSessions] = useState([{ mins: 20, questions: 10 }, { mins: 20, questions: 10 }]);
   const [breakMins, setBreakMins] = useState(5);
-  const [opensAt,   setOpensAt]   = useState("");   // datetime-local string
-  const [closesAt,  setClosesAt]  = useState("");   // datetime-local string
+  const [opensAt,   setOpensAt]   = useState({ date: "", hour: 8,  min: 0 });
+  const [closesAt,  setClosesAt]  = useState({ date: "", hour: 17, min: 0 });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [savedExam, setSavedExam] = useState(null);
@@ -59,8 +59,8 @@ export default function ExamBuilder() {
         config: buildConfig(),
         status: "draft",
         access_code: code,
-        opens_at:  opensAt  ? new Date(opensAt).toISOString()  : null,
-        closes_at: closesAt ? new Date(closesAt).toISOString() : null,
+        opens_at:  opensAt.date  ? new Date(`${opensAt.date}T${String(opensAt.hour).padStart(2,"0")}:${String(opensAt.min).padStart(2,"0")}:00`).toISOString()  : null,
+        closes_at: closesAt.date ? new Date(`${closesAt.date}T${String(closesAt.hour).padStart(2,"0")}:${String(closesAt.min).padStart(2,"0")}:00`).toISOString() : null,
       }).select().single();
       if (error) throw error;
       setSavedExam(data);
@@ -125,22 +125,20 @@ export default function ExamBuilder() {
                   🗓 חלון זמן (אופציונלי)
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <div>
-                    <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>פתיחה</div>
-                    <input type="datetime-local" value={opensAt} onChange={e => setOpensAt(e.target.value)}
-                      style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, background: C.bg, color: C.text, fontFamily: "inherit", outline: "none" }} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>סגירה</div>
-                    <input type="datetime-local" value={closesAt} onChange={e => setClosesAt(e.target.value)}
-                      style={{ width: "100%", padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 12, background: C.bg, color: C.text, fontFamily: "inherit", outline: "none" }} />
-                  </div>
+                  <DateTimePicker label="פתיחה" value={opensAt} onChange={setOpensAt} />
+                  <DateTimePicker label="סגירה" value={closesAt} onChange={setClosesAt} />
                 </div>
-                {(opensAt || closesAt) && (
+                {(opensAt.date || closesAt.date) && (
                   <div style={{ fontSize: 11, color: C.muted, marginTop: 8, background: C.purpleLight, borderRadius: 8, padding: "7px 10px" }}>
-                    {opensAt && !closesAt && `המבחן נפתח ${new Date(opensAt).toLocaleString("he-IL")}`}
-                    {!opensAt && closesAt && `המבחן נסגר ${new Date(closesAt).toLocaleString("he-IL")}`}
-                    {opensAt && closesAt && `פתוח ${new Date(opensAt).toLocaleString("he-IL")} — ${new Date(closesAt).toLocaleString("he-IL")}`}
+                    {(() => {
+                      const fmt = dt => dt.date
+                        ? `${dt.date.split("-").reverse().join("/")} ${String(dt.hour).padStart(2,"0")}:${String(dt.min).padStart(2,"0")}`
+                        : null;
+                      const o = fmt(opensAt), cl = fmt(closesAt);
+                      if (o && !cl)  return `המבחן נפתח ${o}`;
+                      if (!o && cl)  return `המבחן נסגר ${cl}`;
+                      if (o && cl)   return `פתוח ${o} — ${cl}`;
+                    })()}
                   </div>
                 )}
               </div>
@@ -343,6 +341,45 @@ function Summary({ lines }) {
   return (
     <div style={{ background: "#EEEDFE", borderRadius: 10, padding: "10px 12px", marginTop: 12 }}>
       {lines.map((l, i) => <div key={i} style={{ fontSize: 12, color: "#3C3489", lineHeight: 1.8 }}>{l}</div>)}
+    </div>
+  );
+}
+
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const MINUTES = [0, 15, 30, 45];
+const selectStyle = {
+  padding: "7px 6px", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 8,
+  fontSize: 12, background: "#f8f7ff", color: "#1a1a2e", fontFamily: "inherit",
+  outline: "none", cursor: "pointer", appearance: "none", WebkitAppearance: "none",
+  textAlign: "center",
+};
+
+function DateTimePicker({ label, value, onChange }) {
+  const { date, hour, min } = value;
+  const set = (key, val) => onChange({ ...value, [key]: val });
+  return (
+    <div>
+      <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 4 }}>{label}</div>
+      {/* Date */}
+      <input
+        type="date"
+        value={date}
+        onChange={e => set("date", e.target.value)}
+        style={{ width: "100%", padding: "7px 10px", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 8, fontSize: 12, background: "#f8f7ff", color: "#1a1a2e", fontFamily: "inherit", outline: "none", marginBottom: 5, boxSizing: "border-box" }}
+      />
+      {/* Hour + Minute */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+        <select value={hour} onChange={e => set("hour", Number(e.target.value))} style={selectStyle}>
+          {HOURS.map(h => (
+            <option key={h} value={h}>{String(h).padStart(2, "0")}</option>
+          ))}
+        </select>
+        <select value={min} onChange={e => set("min", Number(e.target.value))} style={selectStyle}>
+          {MINUTES.map(m => (
+            <option key={m} value={m}>{String(m).padStart(2, "0")}</option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 }
