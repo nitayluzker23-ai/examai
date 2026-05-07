@@ -321,13 +321,42 @@ export default function ExamBuilder() {
               {/* AI Tab */}
               {inlineTab === "ai" && (
                 <div>
+                  {/* File upload strip */}
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", border: `1.5px dashed ${C.purpleMid}`, borderRadius: 10, cursor: "pointer", marginBottom: 8, background: C.purpleLight }}>
+                    <input type="file" accept=".txt,.md,.doc,.docx,.pdf" style={{ display: "none" }}
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 5 * 1024 * 1024) { setInlineError("הקובץ גדול מדי (מקסימום 5MB)"); return; }
+                        const reader = new FileReader();
+                        reader.onload = ev => setInlineText(ev.target.result ?? "");
+                        // Try reading as text (works for .txt, .md, .doc sometimes)
+                        reader.readAsText(file, "UTF-8");
+                        e.target.value = "";
+                      }}
+                    />
+                    <span style={{ fontSize: 18 }}>📎</span>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: C.purple }}>העלה קובץ טקסט</div>
+                      <div style={{ fontSize: 10, color: C.muted }}>TXT, MD — או הדבק טקסט ישירות למטה</div>
+                    </div>
+                    <span style={{ fontSize: 10, color: C.muted, marginRight: "auto" }}>לחץ לבחירה</span>
+                  </label>
+
                   <textarea
                     value={inlineText}
                     onChange={e => setInlineText(e.target.value)}
-                    placeholder="הדבק כאן חומר לימוד — AI ייצור שאלות אוטומטית&#10;(טקסט, סיכום, פרק מספר לימוד...)"
+                    placeholder="הדבק כאן טקסט מהספר / סיכום / PDF (Ctrl+A, Ctrl+C מהקובץ, ואז הדבק כאן)"
                     rows={6}
                     style={{ width: "100%", padding: "10px 12px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", background: C.bg, color: C.text, boxSizing: "border-box", lineHeight: 1.6 }}
                   />
+
+                  {inlineText.trim() && (
+                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4, marginBottom: 2 }}>
+                      {inlineText.trim().split(/\s+/).length.toLocaleString()} מילים
+                    </div>
+                  )}
+
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, marginBottom: 10 }}>
                     <span style={{ fontSize: 12, color: C.muted, whiteSpace: "nowrap" }}>מספר שאלות:</span>
                     <select value={inlineQCount} onChange={e => setInlineQCount(Number(e.target.value))}
