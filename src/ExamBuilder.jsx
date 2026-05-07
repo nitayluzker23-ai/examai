@@ -569,7 +569,7 @@ export default function ExamBuilder() {
                                     </div>
                                   )}
                                   <div style={{ marginTop: 10, display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                                    <button onClick={() => startEdit(q)}
+                                    <button onClick={e => { e.stopPropagation(); startEdit(q); }}
                                       style={{ padding: "5px 14px", background: C.purpleLight, color: C.purple, border: `1px solid ${C.purpleMid}`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
                                       ✏️ ערוך
                                     </button>
@@ -583,7 +583,7 @@ export default function ExamBuilder() {
 
                               {/* ── EDIT MODE ── */}
                               {editing === q.id && editDraft && (
-                                <div>
+                                <div onClick={e => e.stopPropagation()}>
                                   <div style={{ fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 4 }}>טקסט השאלה</div>
                                   <textarea
                                     value={editDraft.question_text}
