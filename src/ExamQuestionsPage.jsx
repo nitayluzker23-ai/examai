@@ -299,6 +299,7 @@ export default function ExamQuestionsPage() {
       setWeakTopics(calcWeakTopics([...questions, ...(inserted ?? [])], submissions));
     } catch (e) {
       setGenError(e.message);
+      setTimeout(() => setGenError(""), 6000); // auto-clear after 6s
     } finally {
       setGenerating(null);
     }
@@ -399,7 +400,10 @@ export default function ExamQuestionsPage() {
           </div>
 
           {genError && (
-            <div style={{ padding: "8px 16px", background: C.redLight, color: C.red, fontSize: 12 }}>{genError}</div>
+            <div style={{ padding: "8px 16px", background: C.redLight, color: C.red, fontSize: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>{genError}</span>
+              <button onClick={() => setGenError("")} style={{ background: "none", border: "none", color: C.red, cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "0 0 0 8px" }}>×</button>
+            </div>
           )}
 
           <div style={{ padding: "8px 0" }}>
