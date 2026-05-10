@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
 
@@ -161,6 +161,13 @@ export default function OnboardingFlow() {
   const [answer3,     setAnswer3]     = useState(""); // grade / size / exam type
   const [saving,      setSaving]      = useState(false);
 
+  const [mobile, setMobile] = useState(window.innerWidth < 600);
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 600);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+
   const firstName = profile?.full_name?.split(" ")[0] || "שלום";
   const ctx = userType ? CONTEXT_QUESTIONS[userType] : null;
   const hasStep3 = ctx?.q3 !== null && ctx?.q3 !== undefined;
@@ -211,7 +218,7 @@ export default function OnboardingFlow() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, #f0efff 0%, ${C.bg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, #f0efff 0%, ${C.bg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: mobile ? "16px 12px" : "24px 16px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
       <div style={{ width: "100%", maxWidth: 500 }}>
 
         {/* Progress bar */}
@@ -225,7 +232,7 @@ export default function OnboardingFlow() {
 
           {/* ── STEP 0: Welcome ── */}
           {step === 0 && (
-            <div style={{ padding: "40px 32px", textAlign: "center" }}>
+            <div style={{ padding: mobile ? "28px 20px" : "40px 32px", textAlign: "center" }}>
               <div style={{ fontSize: 52, marginBottom: 16 }}>👋</div>
               <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, margin: "0 0 10px" }}>שלום, {firstName}!</h1>
               <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.7, margin: "0 0 28px" }}>
@@ -247,7 +254,7 @@ export default function OnboardingFlow() {
 
           {/* ── STEP 1: Who are you? ── */}
           {step === 1 && (
-            <div style={{ padding: "32px 28px" }}>
+            <div style={{ padding: mobile ? "22px 16px" : "32px 28px" }}>
               <div style={{ fontSize: 30, marginBottom: 10, textAlign: "center" }}>🙋</div>
               <h2 style={{ fontSize: 21, fontWeight: 800, color: C.text, margin: "0 0 4px", textAlign: "center" }}>מי אתה?</h2>
               <p style={{ fontSize: 13, color: C.muted, textAlign: "center", margin: "0 0 20px" }}>נתאים את המערכת בדיוק בשבילך</p>
@@ -262,7 +269,7 @@ export default function OnboardingFlow() {
 
           {/* ── STEP 2: Context Q2 ── */}
           {step === 2 && ctx?.q2 && (
-            <div style={{ padding: "32px 28px" }}>
+            <div style={{ padding: mobile ? "22px 16px" : "32px 28px" }}>
               <div style={{ fontSize: 30, marginBottom: 10, textAlign: "center" }}>📚</div>
               <h2 style={{ fontSize: 21, fontWeight: 800, color: C.text, margin: "0 0 4px", textAlign: "center" }}>{ctx.q2.title}</h2>
               {ctx.q2.sub && <p style={{ fontSize: 13, color: C.muted, textAlign: "center", margin: "0 0 20px" }}>{ctx.q2.sub}</p>}
@@ -274,7 +281,7 @@ export default function OnboardingFlow() {
                   style={{ width: "100%", padding: "12px 14px", border: `2px solid ${C.purple}`, borderRadius: 12, fontSize: 14, fontFamily: "inherit", outline: "none", background: C.bg, color: C.text, boxSizing: "border-box", resize: "none" }} />
               ) : ctx.q2.grid ? (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: answer2 === "אחר" ? 10 : 0 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 8, marginBottom: answer2 === "אחר" ? 10 : 0 }}>
                     {ctx.q2.options.map(s => (
                       <button key={s} onClick={() => { setAnswer2(s); if (s !== "אחר") setAnswer2free(""); }}
                         style={{ padding: "10px 6px", borderRadius: 10, border: `2px solid ${answer2 === s ? C.purple : C.border}`, background: answer2 === s ? C.purpleLight : C.bg, color: answer2 === s ? C.purple : C.text, fontSize: 13, fontWeight: answer2 === s ? 700 : 400, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}>
@@ -306,7 +313,7 @@ export default function OnboardingFlow() {
 
           {/* ── STEP 3: Context Q3 ── */}
           {step === 3 && ctx?.q3 && (
-            <div style={{ padding: "32px 28px" }}>
+            <div style={{ padding: mobile ? "22px 16px" : "32px 28px" }}>
               <div style={{ fontSize: 30, marginBottom: 10, textAlign: "center" }}>🎯</div>
               <h2 style={{ fontSize: 21, fontWeight: 800, color: C.text, margin: "0 0 4px", textAlign: "center" }}>{ctx.q3.title}</h2>
               {ctx.q3.sub && <p style={{ fontSize: 13, color: C.muted, textAlign: "center", margin: "0 0 20px" }}>{ctx.q3.sub}</p>}
@@ -320,7 +327,7 @@ export default function OnboardingFlow() {
           )}
 
           {/* ── Footer buttons ── */}
-          <div style={{ padding: "0 28px 24px", display: "flex", gap: 10 }}>
+          <div style={{ padding: mobile ? "0 16px 20px" : "0 28px 24px", display: "flex", gap: 10 }}>
             {step > 0 && (
               <button onClick={() => setStep(s => s - 1)}
                 style={{ padding: "11px 18px", borderRadius: 12, border: `1px solid ${C.border}`, background: "transparent", color: C.muted, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>
