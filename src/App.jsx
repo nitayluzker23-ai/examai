@@ -186,7 +186,7 @@ function TeacherLayout({ children }) {
 }
 
 function LoginPage() {
-  const { signIn, signUp, signInGoogle, user } = useAuth();
+  const { signIn, signUp, signInGoogle, user, profile } = useAuth();
   const navigate = useNavigate();
   const [mode,     setMode]     = useState("login");
   const [email,    setEmail]    = useState("");
