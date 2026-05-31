@@ -541,7 +541,7 @@ export default function ExamBuilder() {
                               {c.image_url ? (
                                 <div style={{ marginBottom: 10 }}>
                                   <img src={c.image_url} alt="תמונת שאלה" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 8, border: `1px solid ${C.border}`, display: "block" }} />
-                                  <button onClick={() => removeImage(q)} style={{ marginTop: 5, fontSize: 11, padding: "3px 10px", border: `1px solid #F09595`, background: C.redLight, color: C.red, borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>
+                                  <button onClick={() => removeImage(q)} style={{ marginTop: 5, fontSize: 11, padding: "3px 10px", border: `1px solid #D2A39A`, background: C.redLight, color: C.red, borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>
                                     🗑 הסר תמונה
                                   </button>
                                 </div>
@@ -560,7 +560,7 @@ export default function ExamBuilder() {
                                 <>
                                   <div style={{ fontSize: 13, color: C.text, marginBottom: 8, lineHeight: 1.5 }}>{c.question_text}</div>
                                   {c.options?.map((opt, i) => (
-                                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 8px", borderRadius: 7, marginBottom: 4, background: i === c.correct_answer_index ? C.tealLight : "transparent", border: `1px solid ${i === c.correct_answer_index ? "#9FD9C7" : "transparent"}` }}>
+                                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 8px", borderRadius: 7, marginBottom: 4, background: i === c.correct_answer_index ? C.tealLight : "transparent", border: `1px solid ${i === c.correct_answer_index ? "#A9C3A0" : "transparent"}` }}>
                                       <span style={{ fontSize: 12, fontWeight: 700, color: i === c.correct_answer_index ? C.teal : C.muted, flexShrink: 0, minWidth: 16 }}>{i === c.correct_answer_index ? "✓" : `${i+1}.`}</span>
                                       <span style={{ fontSize: 13, color: C.text }}>{opt}</span>
                                     </div>
@@ -576,7 +576,7 @@ export default function ExamBuilder() {
                                       ✏️ ערוך
                                     </button>
                                     <button onClick={() => deleteQuestion(q.id)} disabled={deleting === q.id}
-                                      style={{ padding: "5px 14px", background: C.redLight, color: C.red, border: `1px solid #F09595`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                                      style={{ padding: "5px 14px", background: C.redLight, color: C.red, border: `1px solid #D2A39A`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
                                       {deleting === q.id ? "מוחק..." : "🗑 מחק"}
                                     </button>
                                   </div>

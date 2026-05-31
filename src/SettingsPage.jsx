@@ -159,7 +159,7 @@ export default function SettingsPage() {
         {/* Show current selection with clear button */}
         {subject && (
           <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, background: C.tealLight, border: `1px solid #9FD9C7`, borderRadius: 20, padding: "5px 8px 5px 14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: C.tealLight, border: `1px solid #A9C3A0`, borderRadius: 20, padding: "5px 8px 5px 14px" }}>
               <span style={{ fontSize: 13, color: C.teal, fontWeight: 700 }}>✓ {subject}</span>
               <button onClick={() => setSubject("")}
                 style={{ background: C.teal, border: "none", color: "white", width: 18, height: 18, borderRadius: "50%", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, padding: 0, fontFamily: "inherit" }}>
@@ -220,7 +220,7 @@ export default function SettingsPage() {
           <div style={{ fontSize: 11, color: C.muted }}>מתנתק מהחשבון</div>
         </div>
         <button onClick={signOut}
-          style={{ padding: "7px 16px", background: C.redLight, color: C.red, border: `1px solid #F09595`, borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          style={{ padding: "7px 16px", background: C.redLight, color: C.red, border: `1px solid #D2A39A`, borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
           התנתק
         </button>
       </div>

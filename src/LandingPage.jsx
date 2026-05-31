@@ -58,7 +58,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ── */}
-      <section style={{ background: `linear-gradient(160deg, #f0efff 0%, ${C.bg} 60%, #e8f5f0 100%)`, padding: mobile ? "52px 20px 48px" : "80px 24px 72px", textAlign: "center" }}>
+      <section style={{ background: `linear-gradient(160deg, #F4F2EC 0%, ${C.bg} 60%, #EDEAE2 100%)`, padding: mobile ? "52px 20px 48px" : "80px 24px 72px", textAlign: "center" }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <div style={{ display: "inline-block", background: C.purpleLight, color: C.purple, fontSize: 12, fontWeight: 700, padding: "5px 14px", borderRadius: 20, marginBottom: 18, border: `1px solid ${C.border}` }}>
             ✦ מערכת בחינות חכמה
@@ -115,7 +115,7 @@ export default function LandingPage() {
             <div style={{ background: C.white, border: `1.5px solid ${C.purple}`, borderRadius: 9, padding: "12px 14px" }}>
               <div style={{ fontSize: 11, color: C.muted, marginBottom: 6 }}>עריכת שאלה 2</div>
               {[["כלורופיל a ו-b", true],["קרוטנואידים",false],["אנתוציאנינים",false],["כולם נכונים",false]].map(([opt, correct], i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", borderRadius: 6, marginBottom: 4, background: correct ? C.tealLight : "transparent", border: `1px solid ${correct ? "#9FD9C7" : C.border}` }}>
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 8px", borderRadius: 6, marginBottom: 4, background: correct ? C.tealLight : "transparent", border: `1px solid ${correct ? "#A9C3A0" : C.border}` }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: correct ? C.teal : C.muted, minWidth: 14 }}>{correct ? "✓" : `${i+1}.`}</span>
                   <span style={{ fontSize: 12 }}>{opt}</span>
                 </div>

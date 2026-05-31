@@ -139,7 +139,7 @@ export default function InsightsView() {
       {/* ── Top bar ── */}
       <div style={{ background: C.purple, padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: "#CECBF6", marginBottom: 2 }}>מרחב עבודה</div>
+          <div style={{ fontSize: 11, color: "#E8E3D9", marginBottom: 2 }}>מרחב עבודה</div>
           <div onClick={() => setWsOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
             <span style={{ fontSize: 15, fontWeight: 600, color: "#F4F2EC" }}>{ws?.name}</span>
             <span style={{ color: "#9B958A", fontSize: 12 }}>{wsOpen ? "▲" : "▼"}</span>
@@ -201,7 +201,7 @@ export default function InsightsView() {
         {tab === "live" && (
           <div>
             {alerts.length > 0 && (
-              <div style={{ background: C.redLight, border: `1px solid #F09595`, borderRadius: 12, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.red }}>
+              <div style={{ background: C.redLight, border: `1px solid #D2A39A`, borderRadius: 12, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.red }}>
                 <strong>התראה:</strong> {alerts.map(s => s.name).join(", ")} — יצאו מהמסך יותר מ-3 פעמים
               </div>
             )}
@@ -229,7 +229,7 @@ export default function InsightsView() {
             </div>
 
             {selTopic && TOPIC_DETAIL[selTopic] && (
-              <div style={{ background: C.white, borderRadius: 16, border: `1px solid #F09595`, padding: 20, animation: "fadeIn 0.25s ease" }}>
+              <div style={{ background: C.white, borderRadius: 16, border: `1px solid #D2A39A`, padding: 20, animation: "fadeIn 0.25s ease" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                   <div style={{ fontSize: 14, fontWeight: 600, color: C.red }}>נושא קשה: {selTopic}</div>
                   <button onClick={() => setSelTopic(null)} style={{ background: "none", border: "none", cursor: "pointer", color: C.muted, fontSize: 18 }}>✕</button>
@@ -328,7 +328,7 @@ function TopicBar({ t, selected, onClick }) {
 function StudentRow({ s }) {
   const isAlert = s.tabs >= 3;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: isAlert ? "#fff5f5" : C.white, border: `1px solid ${isAlert ? "#F09595" : C.border}`, borderRadius: 12, marginBottom: 6 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: isAlert ? "#F7F1EE" : C.white, border: `1px solid ${isAlert ? "#D2A39A" : C.border}`, borderRadius: 12, marginBottom: 6 }}>
       <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.status === "done" ? C.teal : s.status === "active" ? "#F59E0B" : C.border, flexShrink: 0, animation: s.status === "active" ? "pulse 2s infinite" : "none" }} />
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: C.text }}>{s.name}</div>

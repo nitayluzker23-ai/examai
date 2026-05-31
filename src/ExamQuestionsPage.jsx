@@ -422,7 +422,7 @@ export default function ExamQuestionsPage() {
               <button onClick={createRetryExam} disabled={creatingRetry}
                 style={{ fontSize: 12, fontWeight: 600, padding: "5px 12px", borderRadius: 8, border: `1px solid ${C.teal}`, background: C.tealLight, color: C.teal, cursor: creatingRetry ? "not-allowed" : "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 5 }}>
                 {creatingRetry ? (
-                  <><span style={{ display: "inline-block", width: 11, height: 11, border: `2px solid #9FD9C7`, borderTopColor: C.teal, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />יוצר...</>
+                  <><span style={{ display: "inline-block", width: 11, height: 11, border: `2px solid #A9C3A0`, borderTopColor: C.teal, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />יוצר...</>
                 ) : "🔁 צור מבחן חזרה"}
               </button>
             </div>
@@ -552,7 +552,7 @@ export default function ExamQuestionsPage() {
                       <img src={c.image_url} alt="תמונת שאלה"
                         style={{ maxWidth: "100%", maxHeight: 280, borderRadius: 10, border: `1px solid ${C.border}`, display: "block" }} />
                       <button onClick={() => removeImage(q)}
-                        style={{ marginTop: 6, fontSize: 11, padding: "3px 10px", border: `1px solid #F09595`, background: C.redLight, color: C.red, borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>
+                        style={{ marginTop: 6, fontSize: 11, padding: "3px 10px", border: `1px solid #D2A39A`, background: C.redLight, color: C.red, borderRadius: 6, cursor: "pointer", fontFamily: "inherit" }}>
                         🗑 הסר תמונה
                       </button>
                     </div>
@@ -580,7 +580,7 @@ export default function ExamQuestionsPage() {
                         <div key={i} style={{
                           display: "flex", alignItems: "flex-start", gap: 8, padding: "6px 10px", borderRadius: 8, marginBottom: 4,
                           background: i === c.correct_answer_index ? C.tealLight : C.bg,
-                          border: `1px solid ${i === c.correct_answer_index ? "#9FD9C7" : "transparent"}`
+                          border: `1px solid ${i === c.correct_answer_index ? "#A9C3A0" : "transparent"}`
                         }}>
                           <span style={{ fontSize: 12, fontWeight: 700, color: i === c.correct_answer_index ? C.teal : C.muted, flexShrink: 0, minWidth: 18 }}>
                             {i === c.correct_answer_index ? "✓" : `${i + 1}.`}
@@ -599,7 +599,7 @@ export default function ExamQuestionsPage() {
                           ✏️ ערוך
                         </button>
                         <button onClick={() => deleteQuestion(q.id)} disabled={deleting === q.id}
-                          style={{ padding: "6px 14px", background: C.redLight, color: C.red, border: `1px solid #F09595`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                          style={{ padding: "6px 14px", background: C.redLight, color: C.red, border: `1px solid #D2A39A`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
                           {deleting === q.id ? "מוחק..." : "🗑 מחק"}
                         </button>
                       </div>

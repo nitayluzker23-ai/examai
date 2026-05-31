@@ -724,7 +724,7 @@ function ReviewItem({ q, a, isCorrect, isSkip, index }) {
           <span style={{ fontSize: 18, flexShrink: 0, background: "#F4F2EC", color: "#37352F", borderRadius: 8, padding: "2px 8px" }}>שאלה פתוחה</span>
         </div>
         {q.content.model_answer && (
-          <div style={{ background: "#E8EDE6", border: `1px solid #9FD9C7`, borderRadius: 10, padding: "10px 12px", marginTop: 10, fontSize: 12, color: "#4F6F52", lineHeight: 1.7 }}>
+          <div style={{ background: "#E8EDE6", border: `1px solid #A9C3A0`, borderRadius: 10, padding: "10px 12px", marginTop: 10, fontSize: 12, color: "#4F6F52", lineHeight: 1.7 }}>
             <strong>תשובה לדוגמה: </strong>{q.content.model_answer}
           </div>
         )}
@@ -732,7 +732,7 @@ function ReviewItem({ q, a, isCorrect, isSkip, index }) {
     );
   }
 
-  const border = isSkip ? C.border : isCorrect ? "#5DCAA5" : "#F09595";
+  const border = isSkip ? C.border : isCorrect ? "#7D9E78" : "#D2A39A";
   const bg     = isSkip ? C.white  : isCorrect ? "#E8EDE622" : "#F3E2DD22";
   return (
     <div style={{ border: `1px solid ${border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 8, background: bg }}>
@@ -751,7 +751,7 @@ function ReviewItem({ q, a, isCorrect, isSkip, index }) {
         </button>
       )}
       {open && (
-        <div style={{ background: C.redLight, border: `1px solid #F09595`, borderRadius: 10, padding: "10px 12px", marginTop: 10, fontSize: 12, color: "#791F1F", lineHeight: 1.7, animation: "fadeIn 0.2s ease" }}>
+        <div style={{ background: C.redLight, border: `1px solid #D2A39A`, borderRadius: 10, padding: "10px 12px", marginTop: 10, fontSize: 12, color: "#791F1F", lineHeight: 1.7, animation: "fadeIn 0.2s ease" }}>
           {q.content.ai_explanation}
         </div>
       )}

@@ -179,7 +179,7 @@ export default function StudentsPage() {
         const pct = Math.round((students.length / max) * 100);
         const full = students.length >= max;
         return (
-          <div style={{ background: full ? C.redLight : C.amberLight, border: `1px solid ${full ? "#F09595" : "#E8C878"}`, borderRadius: 10, padding: "8px 14px", fontSize: 12, color: full ? C.red : C.amber, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ background: full ? C.redLight : C.amberLight, border: `1px solid ${full ? "#D2A39A" : "#E8C878"}`, borderRadius: 10, padding: "8px 14px", fontSize: 12, color: full ? C.red : C.amber, marginBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>{full ? "⚠ הגעת למגבלת התלמידים בתוכנית שלך." : `תלמידים: ${students.length} / ${max}`}</span>
             <span style={{ fontWeight: 700 }}>{pct}%</span>
           </div>
@@ -303,7 +303,7 @@ function ClassItem({ label, sub, count, active, onClick, onEdit, onDelete, onPro
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      style={{ padding: "10px 12px", cursor: "pointer", background: active ? C.purpleLight : hover ? "#f5f4ff" : C.white, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 6, transition: "background 0.15s" }}>
+      style={{ padding: "10px 12px", cursor: "pointer", background: active ? C.purpleLight : hover ? "#F4F2EC" : C.white, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 6, transition: "background 0.15s" }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: active ? 600 : 400, color: active ? C.purple : C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</div>
         {sub && <div style={{ fontSize: 10, color: C.muted }}>{sub}</div>}

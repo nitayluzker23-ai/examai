@@ -218,7 +218,7 @@ export default function OnboardingFlow() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, #f0efff 0%, ${C.bg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: mobile ? "16px 12px" : "24px 16px", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, #F4F2EC 0%, ${C.bg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: mobile ? "16px 12px" : "24px 16px", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       <div style={{ width: "100%", maxWidth: 500 }}>
 
         {/* Progress bar */}

@@ -170,7 +170,7 @@ function TeacherLayout({ children }) {
         {mobile && (
           <div style={{ background: C.purple, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontSize: 16, fontWeight: 800, color: "#F4F2EC" }}>ExamAI</span>
-            <span style={{ fontSize: 12, color: "#CECBF6" }}>{profile?.full_name ?? ""}</span>
+            <span style={{ fontSize: 12, color: "#E8E3D9" }}>{profile?.full_name ?? ""}</span>
           </div>
         )}
         {children}
@@ -359,7 +359,7 @@ function BrandingPage() {
         <Row label="תפקיד" value="מורה / מדריך" />
         <div style={{ marginTop: 16 }}>
           <button onClick={async () => { await signOut(); navigate("/login"); }}
-            style={{ padding: "9px 18px", background: "#F3E2DD", color: "#A6493B", border: "1px solid #F09595", borderRadius: 10, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+            style={{ padding: "9px 18px", background: "#F3E2DD", color: "#A6493B", border: "1px solid #D2A39A", borderRadius: 10, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
             יציאה מהמערכת
           </button>
         </div>
@@ -635,7 +635,7 @@ function StudentPortal() {
             + מבחן חדש
           </button>
           <button onClick={async () => { await signOut(); navigate("/student/login"); }}
-            style={{ fontSize: 12, padding: "7px 12px", borderRadius: 10, border: `1px solid rgba(255,255,255,0.3)`, background: "transparent", color: "#CECBF6", cursor: "pointer", fontFamily: "inherit" }}>
+            style={{ fontSize: 12, padding: "7px 12px", borderRadius: 10, border: `1px solid rgba(255,255,255,0.3)`, background: "transparent", color: "#E8E3D9", cursor: "pointer", fontFamily: "inherit" }}>
             יציאה
           </button>
         </div>
