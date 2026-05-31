@@ -124,26 +124,36 @@ export default function AssistantWidget() {
     <>
       <style>{`
         @keyframes bounce { 0%,80%,100% { transform: scale(0.7); opacity:0.5 } 40% { transform: scale(1); opacity:1 } }
-        @keyframes slideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
+        @keyframes slideIn { from { opacity:0; transform:translateX(-20px) } to { opacity:1; transform:translateX(0) } }
         @keyframes fadeIn  { from { opacity:0 } to { opacity:1 } }
+        @keyframes pulse   { 0%,100% { box-shadow: 2px 0 20px rgba(83,74,183,0.4) } 50% { box-shadow: 2px 0 32px rgba(83,74,183,0.7) } }
+        .ai-btn:hover { transform: translateY(-50%) translateX(4px) !important; }
       `}</style>
 
-      {/* ── Floating half-circle button ── */}
+      {/* ── Floating tab button ── */}
       {!open && (
-        <button onClick={handleOpen}
+        <button className="ai-btn" onClick={handleOpen}
           style={{
             position: "fixed", left: 0, top: "50%", transform: "translateY(-50%)",
-            width: 44, height: 80,
-            background: `linear-gradient(135deg, ${C.purple} 0%, #3C3489 100%)`,
-            border: "none", borderRadius: "0 40px 40px 0",
+            width: 64, height: 120,
+            background: `linear-gradient(160deg, ${C.purple} 0%, #3C3489 100%)`,
+            border: "none", borderRadius: "0 20px 20px 0",
             cursor: "pointer", zIndex: 999,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
-            boxShadow: "2px 0 16px rgba(83,74,183,0.35)",
-            transition: "transform 0.2s, box-shadow 0.2s",
-          }}
-          title="עוזר AI">
-          <span style={{ fontSize: 20 }}>🤖</span>
-          <span style={{ fontSize: 9, color: "rgba(255,255,255,0.85)", fontFamily: "'Noto Sans Hebrew',sans-serif", writingMode: "vertical-rl", letterSpacing: 1 }}>עזרה</span>
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
+            boxShadow: "3px 0 24px rgba(83,74,183,0.45)",
+            animation: "pulse 3s ease-in-out infinite",
+            transition: "transform 0.2s",
+          }}>
+          <span style={{ fontSize: 28 }}>🤖</span>
+          <span style={{
+            fontSize: 11, fontWeight: 700,
+            color: "white",
+            fontFamily: "'Noto Sans Hebrew',sans-serif",
+            writingMode: "vertical-rl",
+            textOrientation: "mixed",
+            letterSpacing: 2,
+            opacity: 0.95,
+          }}>עוזר AI</span>
         </button>
       )}
 
