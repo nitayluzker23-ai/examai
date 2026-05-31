@@ -7,12 +7,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  amber: "#854F0B", amberLight: "#FAEEDA",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.1)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  amber: "#9A7B3F", amberLight: "#F3EBD9",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 async function extractText(file) {
@@ -145,7 +145,7 @@ export default function PastExamsPage() {
   const readyCount = files.filter(f => !f.loading && f.text.trim()).length;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}`}</style>
 
       {/* Header */}
@@ -229,7 +229,7 @@ export default function PastExamsPage() {
         {/* Analyze button */}
         {!analysis && (
           <button onClick={analyze} disabled={readyCount === 0 || analyzing}
-            style={{ width: "100%", padding: "15px 0", background: readyCount > 0 && !analyzing ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 800, cursor: readyCount > 0 ? "pointer" : "not-allowed", fontFamily: "inherit", boxShadow: readyCount > 0 ? "0 4px 18px rgba(83,74,183,0.3)" : "none", marginBottom: 8 }}>
+            style={{ width: "100%", padding: "15px 0", background: readyCount > 0 && !analyzing ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 800, cursor: readyCount > 0 ? "pointer" : "not-allowed", fontFamily: "inherit", boxShadow: readyCount > 0 ? "0 4px 18px rgba(43,41,37,0.18)" : "none", marginBottom: 8 }}>
             {analyzing ? (
               <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                 <span style={{ width: 18, height: 18, border: "3px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.8s linear infinite", display: "inline-block" }} />
@@ -356,7 +356,7 @@ export default function PastExamsPage() {
             {/* Actions */}
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button onClick={createExam} disabled={creating}
-                style={{ flex: 2, padding: "13px 0", background: creating ? C.purpleMid : C.purple, color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 18px rgba(83,74,183,0.3)", minWidth: 180 }}>
+                style={{ flex: 2, padding: "13px 0", background: creating ? C.purpleMid : C.purple, color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 18px rgba(43,41,37,0.18)", minWidth: 180 }}>
                 {creating ? "יוצר..." : "🚀 התחל מבחן בסגנון זה"}
               </button>
               <button onClick={() => { setAnalysis(null); setError(""); }}

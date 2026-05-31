@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  amber: "#854F0B", amberLight: "#FAEEDA",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  amber: "#9A7B3F", amberLight: "#F3EBD9",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 export default function CompanyDashboard() {
@@ -82,7 +82,7 @@ export default function CompanyDashboard() {
   );
 
   return (
-    <div style={{ padding: mobile ? "20px 16px" : "28px 24px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl", maxWidth: 760, margin: "0 auto" }}>
+    <div style={{ padding: mobile ? "20px 16px" : "28px 24px", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl", maxWidth: 760, margin: "0 auto" }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Header */}
@@ -93,7 +93,7 @@ export default function CompanyDashboard() {
 
       {/* CTA */}
       <button onClick={() => navigate("/dashboard/new")}
-        style={{ width: "100%", padding: "18px 24px", background: `linear-gradient(135deg, ${C.purple} 0%, #3C3489 100%)`, color: "white", border: "none", borderRadius: 18, fontSize: 17, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", marginBottom: 20, boxShadow: "0 6px 24px rgba(83,74,183,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+        style={{ width: "100%", padding: "18px 24px", background: `linear-gradient(135deg, ${C.purple} 0%, #211F1A 100%)`, color: "white", border: "none", borderRadius: 18, fontSize: 17, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", marginBottom: 20, boxShadow: "0 6px 24px rgba(43,41,37,0.18)", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
         <span style={{ fontSize: 26 }}>📋</span>
         <div style={{ textAlign: "right" }}>
           <div>צור בחינת הכשרה חדשה</div>

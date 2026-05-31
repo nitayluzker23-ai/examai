@@ -4,12 +4,12 @@ import { Navigate } from "react-router-dom";
 import { PLANS } from "./planConfig";
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  amber: "#854F0B", amberLight: "#FAEEDA",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  amber: "#9A7B3F", amberLight: "#F3EBD9",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 const FEATURE_LABELS = {
@@ -73,7 +73,7 @@ export default function AdminPage() {
   );
 
   return (
-    <div style={{ padding: "24px 20px", direction: "rtl", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", maxWidth: 1000, margin: "0 auto" }}>
+    <div style={{ padding: "24px 20px", direction: "rtl", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", maxWidth: 1000, margin: "0 auto" }}>
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
@@ -253,7 +253,7 @@ function Spinner({ small }) {
   const s = small ? 20 : 32;
   return (
     <div style={{ display: "flex", justifyContent: "center", padding: small ? 8 : 40 }}>
-      <div style={{ width: s, height: s, border: `3px solid #EEEDFE`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div style={{ width: s, height: s, border: `3px solid #F4F2EC`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );

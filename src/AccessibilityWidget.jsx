@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.1)", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", white: "#fff",
 };
 
 const STORAGE_KEY = "a11y_settings";
@@ -111,7 +111,7 @@ export default function AccessibilityWidget() {
               position: "fixed", bottom: 80, right: 18, zIndex: 2147483001,
               width: 320, maxWidth: "92vw", maxHeight: "80vh", overflowY: "auto",
               background: C.white, borderRadius: 18, boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
-              fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl",
+              fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl",
               padding: 18, border: `1px solid ${C.border}`,
             }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>

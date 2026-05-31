@@ -8,12 +8,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  amber: "#854F0B", amberLight: "#FAEEDA",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.1)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  amber: "#9A7B3F", amberLight: "#F3EBD9",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 async function extractTextFromPDF_or_text(file) {
@@ -224,7 +224,7 @@ export default function SelfTestPage() {
 
   // ── CREATE SCREEN ──────────────────────────────────────────
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Header */}
@@ -244,7 +244,7 @@ export default function SelfTestPage() {
       <div style={{ maxWidth: 560, margin: "0 auto", padding: mobile ? "20px 16px" : "28px 20px" }}>
 
         {/* Main card */}
-        <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 16px rgba(83,74,183,0.07)", padding: mobile ? 20 : 28, marginBottom: 20 }}>
+        <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 16px rgba(43,41,37,0.06)", padding: mobile ? 20 : 28, marginBottom: 20 }}>
 
           {/* File upload */}
           <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", border: `2px dashed ${fileLoading ? C.purpleMid : fileName ? C.teal : C.purpleMid}`, borderRadius: 14, cursor: fileLoading ? "wait" : "pointer", background: fileName ? C.tealLight : C.purpleLight, marginBottom: 14, transition: "all 0.2s" }}>
@@ -383,7 +383,7 @@ export default function SelfTestPage() {
 
           {/* CTA */}
           <button onClick={createAndStart} disabled={!text.trim() || generating}
-            style={{ width: "100%", marginTop: 14, padding: "14px 0", background: text.trim() && !generating ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 800, cursor: text.trim() ? "pointer" : "not-allowed", fontFamily: "inherit", boxShadow: text.trim() ? "0 4px 18px rgba(83,74,183,0.3)" : "none", transition: "all 0.2s" }}>
+            style={{ width: "100%", marginTop: 14, padding: "14px 0", background: text.trim() && !generating ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 800, cursor: text.trim() ? "pointer" : "not-allowed", fontFamily: "inherit", boxShadow: text.trim() ? "0 4px 18px rgba(43,41,37,0.18)" : "none", transition: "all 0.2s" }}>
             {generating ? "מייצר..." : `🚀 צור ובחן עכשיו (${qCount} שאלות)`}
           </button>
         </div>

@@ -54,12 +54,12 @@ const TOPIC_DETAIL = {
 
 // ── Colors ────────────────────────────────────────────────
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleDark: "#3C3489",
-  teal: "#0F6E56",   tealLight: "#E1F5EE",
-  amber: "#854F0B",  amberLight: "#FAEEDA",
-  red:   "#A32D2D",  redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleDark: "#211F1A",
+  teal: "#4F6F52",   tealLight: "#E8EDE6",
+  amber: "#9A7B3F",  amberLight: "#F3EBD9",
+  red:   "#A6493B",  redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 // ── CSV export ────────────────────────────────────────────
@@ -134,15 +134,15 @@ export default function InsightsView() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
 
       {/* ── Top bar ── */}
       <div style={{ background: C.purple, padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11, color: "#CECBF6", marginBottom: 2 }}>מרחב עבודה</div>
           <div onClick={() => setWsOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: "#EEEDFE" }}>{ws?.name}</span>
-            <span style={{ color: "#AFA9EC", fontSize: 12 }}>{wsOpen ? "▲" : "▼"}</span>
+            <span style={{ fontSize: 15, fontWeight: 600, color: "#F4F2EC" }}>{ws?.name}</span>
+            <span style={{ color: "#9B958A", fontSize: 12 }}>{wsOpen ? "▲" : "▼"}</span>
           </div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -155,7 +155,7 @@ export default function InsightsView() {
 
         {/* Workspace dropdown */}
         {wsOpen && (
-          <div style={{ position: "absolute", top: "100%", right: 20, background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", zIndex: 100, minWidth: 220, overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: "100%", right: 20, background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, boxShadow: "0 8px 24px rgba(55,53,47,0.14)", zIndex: 100, minWidth: 220, overflow: "hidden" }}>
             {WORKSPACES.map(w => (
               <div key={w.id} onClick={() => switchWs(w.id)}
                 style={{ padding: "12px 16px", cursor: "pointer", background: w.id === wsId ? C.purpleLight : "transparent", fontSize: 13, color: w.id === wsId ? C.purple : C.text, fontWeight: w.id === wsId ? 600 : 400, borderBottom: `1px solid ${C.border}`, display: "flex", alignItems: "center", gap: 8 }}>
@@ -379,4 +379,4 @@ function EmptyState({ text }) {
   return <div style={{ textAlign: "center", padding: "16px 0", fontSize: 13, color: C.muted }}>{text}</div>;
 }
 
-const C_USED = { purple: "#534AB7", purpleLight: "#EEEDFE", purpleDark: "#3C3489", teal: "#0F6E56", tealLight: "#E1F5EE", amber: "#854F0B", amberLight: "#FAEEDA", red: "#A32D2D", redLight: "#FCEBEB", text: "#1a1a2e", muted: "#6b7280", border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff" };
+const C_USED = { purple: "#37352F", purpleLight: "#F4F2EC", purpleDark: "#211F1A", teal: "#4F6F52", tealLight: "#E8EDE6", amber: "#9A7B3F", amberLight: "#F3EBD9", red: "#A6493B", redLight: "#F3E2DD", text: "#2B2925", muted: "#6B655C", border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff" };

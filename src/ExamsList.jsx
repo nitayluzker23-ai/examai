@@ -3,12 +3,12 @@ import { supabase } from "./App";
 import QRCode from "qrcode";
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  amber: "#854F0B", amberLight: "#FAEEDA",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  amber: "#9A7B3F", amberLight: "#F3EBD9",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 export default function ExamsList() {
@@ -65,7 +65,7 @@ export default function ExamsList() {
   };
 
   return (
-    <div style={{ padding: 20, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl", maxWidth: 640, margin: "0 auto" }}>
+    <div style={{ padding: 20, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl", maxWidth: 640, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700, color: C.text }}>המבחנים שלי</div>
@@ -130,7 +130,7 @@ export default function ExamsList() {
                     📲 שלח בוואטסאפ
                   </button>
                   <button onClick={() => setEmailExam(exam)}
-                    style={{ padding: "7px 14px", background: "#FEF3E2", color: "#854F0B", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                    style={{ padding: "7px 14px", background: "#FEF3E2", color: "#9A7B3F", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
                     ✉️ שלח במייל
                   </button>
                   <button onClick={() => setQrExam(exam)}
@@ -198,7 +198,7 @@ function EmailModal({ exam, onClose }) {
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: C.white, borderRadius: 18, padding: 24, width: "100%", maxWidth: 420, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: C.white, borderRadius: 18, padding: 24, width: "100%", maxWidth: 420, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
           <div style={{ fontSize: 17, fontWeight: 800, color: C.text }}>✉️ שליחת המבחן במייל</div>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: C.muted }}>×</button>
@@ -218,7 +218,7 @@ function EmailModal({ exam, onClose }) {
         )}
 
         <button onClick={send} disabled={sending || !emails.trim()}
-          style={{ width: "100%", marginTop: 16, padding: 12, background: emails.trim() && !sending ? C.purple : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: emails.trim() && !sending ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
+          style={{ width: "100%", marginTop: 16, padding: 12, background: emails.trim() && !sending ? C.purple : "#9B958A", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: emails.trim() && !sending ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
           {sending ? "שולח..." : "שלח הזמנות"}
         </button>
       </div>
@@ -235,7 +235,7 @@ function QRModal({ exam, onClose, examUrl }) {
     if (!canvasRef.current) return;
     QRCode.toCanvas(canvasRef.current, url, {
       width: 220, margin: 2,
-      color: { dark: "#534AB7", light: "#FFFFFF" },
+      color: { dark: "#37352F", light: "#FFFFFF" },
     });
   }, [url]);
 
@@ -253,10 +253,10 @@ function QRModal({ exam, onClose, examUrl }) {
     const win = window.open("", "_blank");
     win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><style>
       body{font-family:'Segoe UI',sans-serif;direction:rtl;text-align:center;padding:40px;background:#fff}
-      h2{color:#534AB7;margin-bottom:4px}
-      p{color:#6b7280;font-size:14px;margin-bottom:20px}
-      img{border-radius:12px;border:2px solid #EEEDFE}
-      .code{font-family:monospace;font-size:22px;font-weight:700;color:#534AB7;background:#EEEDFE;padding:6px 18px;border-radius:8px;display:inline-block;margin-top:16px}
+      h2{color:#37352F;margin-bottom:4px}
+      p{color:#6B655C;font-size:14px;margin-bottom:20px}
+      img{border-radius:12px;border:2px solid #F4F2EC}
+      .code{font-family:monospace;font-size:22px;font-weight:700;color:#37352F;background:#F4F2EC;padding:6px 18px;border-radius:8px;display:inline-block;margin-top:16px}
       @media print{body{padding:20px}}
     </style></head><body>
       <h2>${exam.title}</h2>
@@ -271,7 +271,7 @@ function QRModal({ exam, onClose, examUrl }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 20 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: "#fff", borderRadius: 20, padding: 28, maxWidth: 320, width: "100%", textAlign: "center", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+      <div style={{ background: "#fff", borderRadius: 20, padding: 28, maxWidth: 320, width: "100%", textAlign: "center", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: C.purple, marginBottom: 4 }}>{exam.title}</div>
         <div style={{ fontSize: 12, color: C.muted, marginBottom: 20 }}>סרקו כדי להיכנס למבחן</div>
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>

@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.1)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 function LegalLayout({ title, updated, children }) {
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       <div style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: "16px 24px" }}>
         <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Link to="/" style={{ fontSize: 20, fontWeight: 800, color: C.purple, textDecoration: "none" }}>ExamAI</Link>

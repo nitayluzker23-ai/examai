@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 const USER_TYPES = [
@@ -84,7 +84,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div style={{ padding: "28px 20px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl", maxWidth: 520, margin: "0 auto" }}>
+    <div style={{ padding: "28px 20px", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl", maxWidth: 520, margin: "0 auto" }}>
 
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>⚙️ הגדרות</h1>

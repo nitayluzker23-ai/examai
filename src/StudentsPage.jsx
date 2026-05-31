@@ -3,12 +3,12 @@ import { supabase, useAuth } from "./App";
 import { charsToPages } from "./planConfig";
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  amber: "#854F0B", amberLight: "#FAEEDA",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  amber: "#9A7B3F", amberLight: "#F3EBD9",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 // ── helpers ────────────────────────────────────────────────
@@ -158,7 +158,7 @@ export default function StudentsPage() {
   if (loading) return <Spinner />;
 
   return (
-    <div style={{ padding: "20px 16px", direction: "rtl", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", maxWidth: 900, margin: "0 auto" }}>
+    <div style={{ padding: "20px 16px", direction: "rtl", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", maxWidth: 900, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 700, color: C.purple }}>תלמידים</div>
@@ -469,7 +469,7 @@ function Modal({ title, onClose, children }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 16 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: C.white, borderRadius: 18, padding: 24, width: "100%", maxWidth: 400, direction: "rtl", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif" }}>
+      <div style={{ background: C.white, borderRadius: 18, padding: 24, width: "100%", maxWidth: 400, direction: "rtl", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>{title}</div>
           <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20, color: C.muted, lineHeight: 1 }}>✕</button>
@@ -494,7 +494,7 @@ function Input({ value, onChange, placeholder, type = "text", autoFocus }) {
 function Spinner() {
   return (
     <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
-      <div style={{ width: 32, height: 32, border: `3px solid #EEEDFE`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div style={{ width: 32, height: 32, border: `3px solid #F4F2EC`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );

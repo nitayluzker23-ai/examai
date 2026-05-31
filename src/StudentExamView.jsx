@@ -33,12 +33,12 @@ const DEMO_QUESTIONS = [
 
 // ── Colors ───────────────────────────────────────────────
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleDark: "#3C3489",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  amber: "#854F0B", amberLight: "#FAEEDA",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleDark: "#211F1A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  amber: "#9A7B3F", amberLight: "#F3EBD9",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 // ── shuffle array ─────────────────────────────────────────
@@ -352,7 +352,7 @@ export default function StudentExamView({ initialCode } = {}) {
   // RENDER
   // ══════════════════════════════════════════════
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "24px 16px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", justifyContent: "center", alignItems: "flex-start", padding: "24px 16px", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
 
         {/* Tab warning banner */}
@@ -365,7 +365,7 @@ export default function StudentExamView({ initialCode } = {}) {
 
         {/* ── LOBBY ── */}
         {phase === "lobby" && (
-          <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 20px rgba(83,74,183,0.08)", overflow: "hidden" }}>
+          <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 20px rgba(43,41,37,0.08)", overflow: "hidden" }}>
             <div style={{ background: brand?.primary ?? C.purple, padding: "28px 24px 24px", textAlign: "center" }}>
               {brand?.logoUrl && <img src={brand.logoUrl} alt="לוגו" style={{ height: 40, objectFit: "contain", marginBottom: 10, borderRadius: 6 }} />}
               <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", marginBottom: 6 }}>ברוך הבא</div>
@@ -406,7 +406,7 @@ export default function StudentExamView({ initialCode } = {}) {
               <button
                 onClick={fetchExam}
                 disabled={loading || code.length < 6 || !name.trim()}
-                style={{ width: "100%", padding: 13, background: (code.length === 6 && name.trim()) ? C.purple : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: (code.length === 6 && name.trim()) ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s", marginTop: initialCode ? 10 : 0 }}>
+                style={{ width: "100%", padding: 13, background: (code.length === 6 && name.trim()) ? C.purple : "#9B958A", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: (code.length === 6 && name.trim()) ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s", marginTop: initialCode ? 10 : 0 }}>
                 {loading ? "מחפש..." : "כניסה ←"}
               </button>
             </div>
@@ -415,7 +415,7 @@ export default function StudentExamView({ initialCode } = {}) {
 
         {/* ── BRIEFING ── */}
         {phase === "briefing" && exam && (
-          <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 20px rgba(83,74,183,0.08)", overflow: "hidden" }}>
+          <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 20px rgba(43,41,37,0.08)", overflow: "hidden" }}>
             <div style={{ background: brand?.primary ?? C.purple, padding: "24px 24px 20px" }}>
               {brand?.logoUrl && <img src={brand.logoUrl} alt="לוגו" style={{ height: 32, objectFit: "contain", marginBottom: 8, borderRadius: 4 }} />}
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginBottom: 4 }}>שלום, {name}! הוזמנת למבחן:</div>
@@ -436,7 +436,7 @@ export default function StudentExamView({ initialCode } = {}) {
 
         {/* ── BREAK ── */}
         {phase === "break" && (
-          <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, padding: 32, textAlign: "center", boxShadow: "0 2px 20px rgba(83,74,183,0.08)" }}>
+          <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, padding: 32, textAlign: "center", boxShadow: "0 2px 20px rgba(43,41,37,0.08)" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>☕</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 6 }}>הפסקה</div>
             <div style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>הפרק הבא מתחיל בעוד</div>
@@ -451,7 +451,7 @@ export default function StudentExamView({ initialCode } = {}) {
         {phase === "exam" && questions.length > 0 && (
           <div>
             {/* Header */}
-            <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: "14px 16px", marginBottom: 10, boxShadow: "0 1px 8px rgba(83,74,183,0.06)" }}>
+            <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: "14px 16px", marginBottom: 10, boxShadow: "0 1px 8px rgba(43,41,37,0.06)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <span style={{ fontSize: 13, color: C.muted }}>שאלה {qIndex + 1} מתוך {questions.length}</span>
                 {timeLeft !== null && (
@@ -473,7 +473,7 @@ export default function StudentExamView({ initialCode } = {}) {
             </div>
 
             {/* Question card */}
-            <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(83,74,183,0.06)" }}>
+            <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(43,41,37,0.06)" }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: C.text, lineHeight: 1.6, marginBottom: questions[qIndex].content.image_url ? 14 : 20 }}>
                 {questions[qIndex].content.question_text}
               </div>
@@ -514,7 +514,7 @@ export default function StudentExamView({ initialCode } = {}) {
                     <button
                       onClick={() => advanceQuestion()}
                       disabled={!canAdvance}
-                      style={{ flex: exam.config.can_go_back && qIndex > 0 ? 2 : 1, padding: 12, background: canAdvance ? (brand?.primary ?? C.purple) : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: canAdvance ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s" }}>
+                      style={{ flex: exam.config.can_go_back && qIndex > 0 ? 2 : 1, padding: 12, background: canAdvance ? (brand?.primary ?? C.purple) : "#9B958A", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: canAdvance ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s" }}>
                       {qIndex + 1 === questions.length ? "סיום המבחן ←" : "שאלה הבאה ←"}
                     </button>
                   </div>
@@ -530,7 +530,7 @@ export default function StudentExamView({ initialCode } = {}) {
             <ResultHeader answers={answers} questions={questions} name={name} />
             <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
               <button onClick={() => printStudentReport(exam, questions, answers, name)}
-                style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: "9px 14px", borderRadius: 10, border: "none", background: "#534AB7", color: "white", cursor: "pointer", fontFamily: "inherit", minWidth: 140 }}>
+                style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: "9px 14px", borderRadius: 10, border: "none", background: "#37352F", color: "white", cursor: "pointer", fontFamily: "inherit", minWidth: 140 }}>
                 🖨 הורד דוח PDF
               </button>
               {isSelfTest && (
@@ -547,7 +547,7 @@ export default function StudentExamView({ initialCode } = {}) {
               )}
             </div>
             <TopicBreakdown answers={answers} questions={questions} />
-            <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(83,74,183,0.06)", marginTop: 12 }}>
+            <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(43,41,37,0.06)", marginTop: 12 }}>
               <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 14 }}>סקירת שאלות</div>
               {questions.map((q, i) => {
                 const a = answers[i];
@@ -641,7 +641,7 @@ function TopicBreakdown({ answers, questions }) {
   const topStrong = topics[topics.length - 1];
 
   return (
-    <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(83,74,183,0.06)", marginTop: 12 }}>
+    <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(43,41,37,0.06)", marginTop: 12 }}>
       <div style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 4 }}>ביצועים לפי נושא</div>
       <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>סדר מהחלש לחזק</div>
 
@@ -688,7 +688,7 @@ function ResultHeader({ answers, questions, name }) {
   const color = pct >= 80 ? C.teal : pct >= 60 ? C.amber : C.red;
   const bg    = pct >= 80 ? C.tealLight : pct >= 60 ? C.amberLight : C.redLight;
   return (
-    <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 24, textAlign: "center", boxShadow: "0 1px 8px rgba(83,74,183,0.06)" }}>
+    <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 24, textAlign: "center", boxShadow: "0 1px 8px rgba(43,41,37,0.06)" }}>
       <div style={{ fontSize: 13, color: C.muted, marginBottom: 4 }}>כל הכבוד, {name}!</div>
       <div style={{ fontSize: 52, fontWeight: 800, color, lineHeight: 1 }}>{pct}%</div>
       <div style={{ fontSize: 13, color: C.muted, marginTop: 4, marginBottom: 16 }}>{correct} מתוך {questions.length} נכון</div>
@@ -721,10 +721,10 @@ function ReviewItem({ q, a, isCorrect, isSkip, index }) {
               {a?.text_answer?.trim() ? a.text_answer : <span style={{ color: C.muted }}>לא נענה</span>}
             </div>
           </div>
-          <span style={{ fontSize: 18, flexShrink: 0, background: "#EEEDFE", color: "#534AB7", borderRadius: 8, padding: "2px 8px" }}>שאלה פתוחה</span>
+          <span style={{ fontSize: 18, flexShrink: 0, background: "#F4F2EC", color: "#37352F", borderRadius: 8, padding: "2px 8px" }}>שאלה פתוחה</span>
         </div>
         {q.content.model_answer && (
-          <div style={{ background: "#E1F5EE", border: `1px solid #9FD9C7`, borderRadius: 10, padding: "10px 12px", marginTop: 10, fontSize: 12, color: "#0F6E56", lineHeight: 1.7 }}>
+          <div style={{ background: "#E8EDE6", border: `1px solid #9FD9C7`, borderRadius: 10, padding: "10px 12px", marginTop: 10, fontSize: 12, color: "#4F6F52", lineHeight: 1.7 }}>
             <strong>תשובה לדוגמה: </strong>{q.content.model_answer}
           </div>
         )}
@@ -733,7 +733,7 @@ function ReviewItem({ q, a, isCorrect, isSkip, index }) {
   }
 
   const border = isSkip ? C.border : isCorrect ? "#5DCAA5" : "#F09595";
-  const bg     = isSkip ? C.white  : isCorrect ? "#E1F5EE22" : "#FCEBEB22";
+  const bg     = isSkip ? C.white  : isCorrect ? "#E8EDE622" : "#F3E2DD22";
   return (
     <div style={{ border: `1px solid ${border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 8, background: bg }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
@@ -746,7 +746,7 @@ function ReviewItem({ q, a, isCorrect, isSkip, index }) {
         <span style={{ fontSize: 20, flexShrink: 0 }}>{isSkip ? "—" : isCorrect ? "✓" : "✗"}</span>
       </div>
       {!isSkip && !isCorrect && (
-        <button onClick={() => setOpen(o => !o)} style={{ marginTop: 10, background: "none", border: `1px solid #AFA9EC`, borderRadius: 8, padding: "5px 12px", fontSize: 12, color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>
+        <button onClick={() => setOpen(o => !o)} style={{ marginTop: 10, background: "none", border: `1px solid #9B958A`, borderRadius: 8, padding: "5px 12px", fontSize: 12, color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>
           {open ? "סגור הסבר ↑" : "ניתוח תשובה ↓"}
         </button>
       )}
@@ -759,4 +759,4 @@ function ReviewItem({ q, a, isCorrect, isSkip, index }) {
   );
 }
 
-const C_GLOBAL = { purple: "#534AB7", purpleLight: "#EEEDFE", teal: "#0F6E56", tealLight: "#E1F5EE", amber: "#854F0B", amberLight: "#FAEEDA", red: "#A32D2D", redLight: "#FCEBEB", text: "#1a1a2e", muted: "#6b7280", border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff" };
+const C_GLOBAL = { purple: "#37352F", purpleLight: "#F4F2EC", teal: "#4F6F52", tealLight: "#E8EDE6", amber: "#9A7B3F", amberLight: "#F3EBD9", red: "#A6493B", redLight: "#F3E2DD", text: "#2B2925", muted: "#6B655C", border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff" };

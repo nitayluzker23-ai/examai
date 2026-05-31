@@ -39,12 +39,12 @@ async function extractTextFromPDF(arrayBuffer) {
 }
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  amber: "#854F0B", amberLight: "#FAEEDA",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.1)", bg: "#f8f7ff", white: "#ffffff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  amber: "#9A7B3F", amberLight: "#F3EBD9",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#ffffff",
 };
 
 const STEPS = ["פרטים", "מבנה", "שאלות", "שליחה"];
@@ -261,7 +261,7 @@ export default function ExamBuilder() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", justifyContent: "center", padding: "24px 16px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", justifyContent: "center", padding: "24px 16px", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
 
         <div style={{ marginBottom: 24 }}>
@@ -290,7 +290,7 @@ export default function ExamBuilder() {
           ))}
         </div>
 
-        <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 16px rgba(83,74,183,0.07)", overflow: "hidden" }}>
+        <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: "0 2px 16px rgba(43,41,37,0.06)", overflow: "hidden" }}>
 
           {/* Step 0: Details */}
           {step === 0 && (
@@ -703,9 +703,9 @@ export default function ExamBuilder() {
 function Field({ label, placeholder, value, onChange }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 5, fontWeight: 500 }}>{label}</div>
+      <div style={{ fontSize: 12, color: "#6B655C", marginBottom: 5, fontWeight: 500 }}>{label}</div>
       <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        style={{ width: "100%", padding: "10px 12px", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, fontSize: 14, background: "#f8f7ff", color: "#1a1a2e", fontFamily: "inherit", direction: "rtl", outline: "none" }} />
+        style={{ width: "100%", padding: "10px 12px", border: "1px solid rgba(55,53,47,0.14)", borderRadius: 10, fontSize: 14, background: "#FAF9F6", color: "#2B2925", fontFamily: "inherit", direction: "rtl", outline: "none" }} />
     </div>
   );
 }
@@ -713,16 +713,16 @@ function Field({ label, placeholder, value, onChange }) {
 function ModeCard({ id, mode, onSelect, icon, iconBg, title, badgeLabel, badgeColor, badgeBg, desc }) {
   const sel = mode === id;
   return (
-    <div onClick={() => onSelect(id)} style={{ border: `${sel ? 2 : 1}px solid ${sel ? "#534AB7" : "rgba(0,0,0,0.1)"}`, borderRadius: 14, padding: "12px 14px", marginBottom: 8, cursor: "pointer", background: sel ? "#EEEDFE20" : "white", transition: "all 0.2s", display: "flex", gap: 12, alignItems: "flex-start" }}>
+    <div onClick={() => onSelect(id)} style={{ border: `${sel ? 2 : 1}px solid ${sel ? "#37352F" : "rgba(55,53,47,0.10)"}`, borderRadius: 14, padding: "12px 14px", marginBottom: 8, cursor: "pointer", background: sel ? "#F4F2EC20" : "white", transition: "all 0.2s", display: "flex", gap: 12, alignItems: "flex-start" }}>
       <div style={{ width: 38, height: 38, borderRadius: 10, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{icon}</div>
       <div style={{ flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#1a1a2e" }}>{title}</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#2B2925" }}>{title}</span>
           <span style={{ background: badgeBg, color: badgeColor, fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 20 }}>{badgeLabel}</span>
         </div>
-        <div style={{ fontSize: 12, color: "#6b7280", lineHeight: 1.5 }}>{desc}</div>
+        <div style={{ fontSize: 12, color: "#6B655C", lineHeight: 1.5 }}>{desc}</div>
       </div>
-      {sel && <Check size={16} color="#534AB7" style={{ flexShrink: 0, marginTop: 2 }} />}
+      {sel && <Check size={16} color="#37352F" style={{ flexShrink: 0, marginTop: 2 }} />}
     </div>
   );
 }
@@ -731,10 +731,10 @@ function SliderRow({ label, value, min, max, step, onChange, display, compact })
   return (
     <div style={{ marginBottom: compact ? 8 : 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-        <span style={{ fontSize: 12, color: "#6b7280", fontWeight: 500 }}>{label}</span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#534AB7" }}>{display}</span>
+        <span style={{ fontSize: 12, color: "#6B655C", fontWeight: 500 }}>{label}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "#37352F" }}>{display}</span>
       </div>
-      <input type="range" min={min} max={max} value={value} step={step} onChange={e => onChange(parseInt(e.target.value))} style={{ width: "100%", accentColor: "#534AB7" }} />
+      <input type="range" min={min} max={max} value={value} step={step} onChange={e => onChange(parseInt(e.target.value))} style={{ width: "100%", accentColor: "#37352F" }} />
     </div>
   );
 }
@@ -742,8 +742,8 @@ function SliderRow({ label, value, min, max, step, onChange, display, compact })
 function ToggleRow({ label, value, onChange }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0" }}>
-      <span style={{ fontSize: 13, color: "#1a1a2e" }}>{label}</span>
-      <div onClick={() => onChange(!value)} style={{ width: 40, height: 22, borderRadius: 11, background: value ? "#534AB7" : "rgba(0,0,0,0.15)", cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+      <span style={{ fontSize: 13, color: "#2B2925" }}>{label}</span>
+      <div onClick={() => onChange(!value)} style={{ width: 40, height: 22, borderRadius: 11, background: value ? "#37352F" : "rgba(0,0,0,0.15)", cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
         <div style={{ width: 16, height: 16, borderRadius: "50%", background: "white", position: "absolute", top: 3, right: value ? 3 : 21, transition: "right 0.2s" }} />
       </div>
     </div>
@@ -769,17 +769,17 @@ function InlineManualForm({ onSave }) {
   return (
     <div>
       <textarea value={qText} onChange={e=>setQText(e.target.value)} placeholder="טקסט השאלה" rows={2}
-        style={{ width:"100%", padding:"9px 12px", border:`1px solid rgba(0,0,0,0.1)`, borderRadius:10, fontSize:13, fontFamily:"inherit", resize:"vertical", outline:"none", background:"#f8f7ff", boxSizing:"border-box", marginBottom:8 }} />
+        style={{ width:"100%", padding:"9px 12px", border:`1px solid rgba(55,53,47,0.10)`, borderRadius:10, fontSize:13, fontFamily:"inherit", resize:"vertical", outline:"none", background:"#FAF9F6", boxSizing:"border-box", marginBottom:8 }} />
       {opts.map((o, i) => (
         <div key={i} style={{ display:"flex", alignItems:"center", gap:7, marginBottom:6 }}>
-          <div onClick={()=>setCorrect(i)} style={{ width:26, height:26, borderRadius:"50%", background: correct===i ? "#534AB7" : "#EEEDFE", color: correct===i ? "white" : "#534AB7", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0 }}>{LETTERS[i]}</div>
+          <div onClick={()=>setCorrect(i)} style={{ width:26, height:26, borderRadius:"50%", background: correct===i ? "#37352F" : "#F4F2EC", color: correct===i ? "white" : "#37352F", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0 }}>{LETTERS[i]}</div>
           <input value={o} onChange={e=>setOpts(opts.map((v,j)=>j===i?e.target.value:v))} placeholder={`תשובה ${LETTERS[i]}`}
-            style={{ flex:1, padding:"7px 10px", border:`1px solid rgba(0,0,0,0.1)`, borderRadius:8, fontSize:13, fontFamily:"inherit", outline:"none", background:"#f8f7ff" }} />
+            style={{ flex:1, padding:"7px 10px", border:`1px solid rgba(55,53,47,0.10)`, borderRadius:8, fontSize:13, fontFamily:"inherit", outline:"none", background:"#FAF9F6" }} />
         </div>
       ))}
-      {correct === null && <div style={{fontSize:11,color:"#6b7280",marginBottom:8}}>לחץ על אות לסמן תשובה נכונה</div>}
+      {correct === null && <div style={{fontSize:11,color:"#6B655C",marginBottom:8}}>לחץ על אות לסמן תשובה נכונה</div>}
       <button onClick={handleSave} disabled={!ready||saving}
-        style={{ width:"100%", padding:10, background: ready&&!saving ? "#534AB7":"#AFA9EC", color:"white", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor: ready&&!saving?"pointer":"not-allowed", fontFamily:"inherit", marginTop:4 }}>
+        style={{ width:"100%", padding:10, background: ready&&!saving ? "#37352F":"#9B958A", color:"white", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor: ready&&!saving?"pointer":"not-allowed", fontFamily:"inherit", marginTop:4 }}>
         {saving ? "שומר..." : "+ הוסף שאלה"}
       </button>
     </div>
@@ -788,8 +788,8 @@ function InlineManualForm({ onSave }) {
 
 function Summary({ lines }) {
   return (
-    <div style={{ background: "#EEEDFE", borderRadius: 10, padding: "10px 12px", marginTop: 12 }}>
-      {lines.map((l, i) => <div key={i} style={{ fontSize: 12, color: "#3C3489", lineHeight: 1.8 }}>{l}</div>)}
+    <div style={{ background: "#F4F2EC", borderRadius: 10, padding: "10px 12px", marginTop: 12 }}>
+      {lines.map((l, i) => <div key={i} style={{ fontSize: 12, color: "#211F1A", lineHeight: 1.8 }}>{l}</div>)}
     </div>
   );
 }
@@ -821,8 +821,8 @@ function fmtDT(dt) {
 }
 
 const selSt = {
-  padding: "7px 4px", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 8,
-  fontSize: 12, background: "#f8f7ff", color: "#1a1a2e", fontFamily: "inherit",
+  padding: "7px 4px", border: "1px solid rgba(55,53,47,0.10)", borderRadius: 8,
+  fontSize: 12, background: "#FAF9F6", color: "#2B2925", fontFamily: "inherit",
   outline: "none", cursor: "pointer", width: "100%", textAlign: "center",
 };
 
@@ -831,7 +831,7 @@ function DateTimePicker({ label, value, onChange }) {
   const set = (key, val) => onChange({ ...value, [key]: val });
   return (
     <div>
-      <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 11, color: "#6B655C", marginBottom: 4 }}>{label}</div>
 
       {/* Date row — DD / MM / YYYY (LTR order) */}
       <div style={{ display: "grid", gridTemplateColumns: "2fr 3fr 3fr", gap: 4, marginBottom: 5, direction: "ltr" }}>
@@ -854,7 +854,7 @@ function DateTimePicker({ label, value, onChange }) {
         <select value={hour} onChange={e => set("hour", Number(e.target.value))} style={selSt}>
           {HOURS.map(h => <option key={h} value={h}>{String(h).padStart(2,"0")}</option>)}
         </select>
-        <span style={{ fontSize: 14, fontWeight: 700, color: "#6b7280" }}>:</span>
+        <span style={{ fontSize: 14, fontWeight: 700, color: "#6B655C" }}>:</span>
         <select value={min}  onChange={e => set("min",  Number(e.target.value))} style={selSt}>
           {MINUTES.map(m => <option key={m} value={m}>{String(m).padStart(2,"0")}</option>)}
         </select>

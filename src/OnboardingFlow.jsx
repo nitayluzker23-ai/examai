@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.1)", bg: "#f8f7ff", white: "#ffffff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#ffffff",
 };
 
 const USER_TYPES = [
@@ -218,7 +218,7 @@ export default function OnboardingFlow() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, #f0efff 0%, ${C.bg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: mobile ? "16px 12px" : "24px 16px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: `linear-gradient(135deg, #f0efff 0%, ${C.bg} 100%)`, display: "flex", alignItems: "center", justifyContent: "center", padding: mobile ? "16px 12px" : "24px 16px", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       <div style={{ width: "100%", maxWidth: 500 }}>
 
         {/* Progress bar */}
@@ -228,7 +228,7 @@ export default function OnboardingFlow() {
           ))}
         </div>
 
-        <div style={{ background: C.white, borderRadius: 24, boxShadow: "0 8px 48px rgba(83,74,183,0.12)", overflow: "hidden" }}>
+        <div style={{ background: C.white, borderRadius: 24, boxShadow: "0 8px 48px rgba(43,41,37,0.08)", overflow: "hidden" }}>
 
           {/* ── STEP 0: Welcome ── */}
           {step === 0 && (

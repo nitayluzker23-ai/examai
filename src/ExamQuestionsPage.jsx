@@ -7,19 +7,19 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const fnHeaders = { apikey: SUPABASE_ANON_KEY };
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  amber: "#854F0B", amberLight: "#FAEEDA",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  amber: "#9A7B3F", amberLight: "#F3EBD9",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 const DIFF_LABEL = { Easy: "קל", Medium: "בינוני", Hard: "קשה" };
 const DIFF_STYLE = {
-  Easy:   { background: "#E1F5EE", color: "#0F6E56" },
-  Medium: { background: "#EEEDFE", color: "#534AB7" },
-  Hard:   { background: "#FAEEDA", color: "#854F0B" },
+  Easy:   { background: "#E8EDE6", color: "#4F6F52" },
+  Medium: { background: "#F4F2EC", color: "#37352F" },
+  Hard:   { background: "#F3EBD9", color: "#9A7B3F" },
 };
 
 // ── Calculate which topics have the most errors ──────────
@@ -335,7 +335,7 @@ export default function ExamQuestionsPage() {
   };
 
   if (loading) return (
-    <div style={{ padding: 40, textAlign: "center", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ padding: 40, textAlign: "center", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       <div style={{ width: 36, height: 36, border: `3px solid ${C.purpleLight}`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
@@ -344,7 +344,7 @@ export default function ExamQuestionsPage() {
   const hasSubmissions = submissions.length > 0;
 
   return (
-    <div style={{ padding: "24px 20px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl", maxWidth: 760, margin: "0 auto" }}>
+    <div style={{ padding: "24px 20px", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl", maxWidth: 760, margin: "0 auto" }}>
       <div style={{ marginBottom: 16 }}>
         <Link to="/dashboard/exams" style={{ fontSize: 13, color: C.purple, textDecoration: "none" }}>← חזרה לרשימת המבחנים</Link>
       </div>

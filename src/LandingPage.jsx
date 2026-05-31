@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleDark: "#3C3489",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(83,74,183,0.12)", bg: "#f8f7ff", white: "#ffffff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleDark: "#211F1A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(43,41,37,0.08)", bg: "#FAF9F6", white: "#ffffff",
 };
 
 const STEPS = [
@@ -34,7 +34,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div style={{ fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl", color: C.text, background: C.white }}>
+    <div style={{ fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl", color: C.text, background: C.white }}>
 
       {/* ── NAVBAR ── */}
       <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,255,255,0.93)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${C.border}`, padding: `0 ${mobile ? 16 : 24}px` }}>
@@ -73,7 +73,7 @@ export default function LandingPage() {
           </p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <button onClick={() => navigate("/login?signup=1")}
-              style={{ padding: mobile ? "12px 28px" : "14px 36px", borderRadius: 14, border: "none", background: C.purple, color: "white", fontSize: mobile ? 15 : 17, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 20px rgba(83,74,183,0.35)", width: mobile ? "100%" : "auto" }}>
+              style={{ padding: mobile ? "12px 28px" : "14px 36px", borderRadius: 14, border: "none", background: C.purple, color: "white", fontSize: mobile ? 15 : 17, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 20px rgba(43,41,37,0.20)", width: mobile ? "100%" : "auto" }}>
               התחל בחינם ←
             </button>
             {!mobile && (
@@ -168,7 +168,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section style={{ padding: mobile ? "52px 20px" : "72px 24px", background: `linear-gradient(135deg, ${C.purple} 0%, #3C3489 100%)`, textAlign: "center" }}>
+      <section style={{ padding: mobile ? "52px 20px" : "72px 24px", background: `linear-gradient(135deg, ${C.purple} 0%, #211F1A 100%)`, textAlign: "center" }}>
         <div style={{ maxWidth: 520, margin: "0 auto" }}>
           <h2 style={{ fontSize: mobile ? 24 : 36, fontWeight: 900, color: "white", margin: "0 0 14px", lineHeight: 1.25 }}>
             מוכן לבנות בחינה בדקות?

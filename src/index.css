@@ -6,14 +6,19 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #f8f7ff;
-  color: #1a1a2e;
-  font-family: 'Noto Sans Hebrew', system-ui, 'Segoe UI', Roboto, sans-serif;
+  background: #FAF9F6;
+  color: #2B2925;
+  font-family: 'Assistant', system-ui, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   /* Force light theme — the app is designed light-only */
   color-scheme: light;
+}
+
+/* Serif display font for headings (editorial, warm-minimal look) */
+h1, h2, h3, .serif {
+  font-family: 'Frank Ruhl Libre', Georgia, serif;
 }
 
 body {

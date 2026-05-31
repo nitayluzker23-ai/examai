@@ -3,11 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  red: "#A32D2D", redLight: "#FCEBEB",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.1)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  red: "#A6493B", redLight: "#F3E2DD",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 const PAGE_LABELS = {
@@ -136,11 +136,11 @@ export default function AssistantWidget() {
           style={{
             position: "fixed", left: 0, top: "50%", transform: "translateY(-50%)",
             width: 64, height: 120,
-            background: `linear-gradient(160deg, ${C.purple} 0%, #3C3489 100%)`,
+            background: `linear-gradient(160deg, ${C.purple} 0%, #211F1A 100%)`,
             border: "none", borderRadius: "0 20px 20px 0",
             cursor: "pointer", zIndex: 999,
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8,
-            boxShadow: "3px 0 24px rgba(83,74,183,0.45)",
+            boxShadow: "3px 0 24px rgba(43,41,37,0.22)",
             animation: "pulse 3s ease-in-out infinite",
             transition: "transform 0.2s",
           }}>
@@ -165,13 +165,13 @@ export default function AssistantWidget() {
           background: C.white,
           boxShadow: "4px 0 32px rgba(83,74,183,0.18)",
           zIndex: 1000, display: "flex", flexDirection: "column",
-          fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif",
+          fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif",
           direction: "rtl",
           animation: "slideUp 0.22s ease",
         }}>
 
           {/* Header */}
-          <div style={{ background: `linear-gradient(135deg, ${C.purple} 0%, #3C3489 100%)`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ background: `linear-gradient(135deg, ${C.purple} 0%, #211F1A 100%)`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 22 }}>🤖</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "white" }}>עוזר ExamAI</div>

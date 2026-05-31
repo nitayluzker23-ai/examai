@@ -30,10 +30,10 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const C = {
-  purple: "#534AB7", purpleLight: "#EEEDFE", purpleDark: "#3C3489",
-  teal: "#0F6E56", tealLight: "#E1F5EE",
-  text: "#1a1a2e", muted: "#6b7280",
-  border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
+  purple: "#37352F", purpleLight: "#F4F2EC", purpleDark: "#211F1A",
+  teal: "#4F6F52", tealLight: "#E8EDE6",
+  text: "#2B2925", muted: "#6B655C",
+  border: "rgba(55,53,47,0.10)", bg: "#FAF9F6", white: "#fff",
 };
 
 const AuthContext = createContext(null);
@@ -127,7 +127,7 @@ function TeacherLayout({ children }) {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: C.bg, direction: "rtl", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: C.bg, direction: "rtl", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif" }}>
       {!mobile && (
         <aside style={{ width: 220, background: C.white, borderLeft: `1px solid ${C.border}`, display: "flex", flexDirection: "column", flexShrink: 0 }}>
           <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.border}` }}>
@@ -155,7 +155,7 @@ function TeacherLayout({ children }) {
           <div style={{ padding: 12, borderTop: `1px solid ${C.border}` }}>
             {profile?.is_admin && (
               <Link to="/admin" style={{ textDecoration: "none" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 10, marginBottom: 6, background: location.pathname === "/admin" ? "#3C348922" : "transparent", color: "#534AB7", fontSize: 13, fontWeight: 600 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: 10, marginBottom: 6, background: location.pathname === "/admin" ? "#211F1A22" : "transparent", color: "#37352F", fontSize: 13, fontWeight: 600 }}>
                   🛡 לוח ניהול
                 </div>
               </Link>
@@ -169,7 +169,7 @@ function TeacherLayout({ children }) {
       <main style={{ flex: 1, overflow: "auto", paddingBottom: mobile ? 72 : 0 }}>
         {mobile && (
           <div style={{ background: C.purple, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 16, fontWeight: 800, color: "#EEEDFE" }}>ExamAI</span>
+            <span style={{ fontSize: 16, fontWeight: 800, color: "#F4F2EC" }}>ExamAI</span>
             <span style={{ fontSize: 12, color: "#CECBF6" }}>{profile?.full_name ?? ""}</span>
           </div>
         )}
@@ -226,13 +226,13 @@ function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       <div style={{ width: "100%", maxWidth: 380 }}>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <div style={{ fontSize: 32, fontWeight: 800, color: C.purple }}>ExamAI</div>
           <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>מערכת מבחנים חכמה למורים</div>
         </div>
-        <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, padding: 28, boxShadow: "0 4px 24px rgba(83,74,183,0.08)" }}>
+        <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, padding: 28, boxShadow: "0 4px 24px rgba(43,41,37,0.08)" }}>
           {/* Google button */}
           <button onClick={() => signInGoogle("teacher")}
             style={{ width: "100%", padding: "11px", background: C.white, border: `1.5px solid ${C.border}`, borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16, color: C.text }}>
@@ -252,12 +252,12 @@ function LoginPage() {
           <AuthField label="אימייל" value={email} onChange={setEmail} placeholder="teacher@school.com" type="email" />
           <AuthField label="סיסמה" value={password} onChange={setPassword} placeholder="לפחות 8 תווים" type="password" />
           {error && (
-            <div style={{ fontSize: 12, color: error.includes("נשלח") ? C.teal : "#A32D2D", background: error.includes("נשלח") ? C.tealLight : "#FCEBEB", borderRadius: 8, padding: "9px 12px", marginBottom: 14 }}>
+            <div style={{ fontSize: 12, color: error.includes("נשלח") ? C.teal : "#A6493B", background: error.includes("נשלח") ? C.tealLight : "#F3E2DD", borderRadius: 8, padding: "9px 12px", marginBottom: 14 }}>
               {error}
             </div>
           )}
           <button onClick={handle} disabled={loading || !email || !password}
-            style={{ width: "100%", padding: 13, background: (email && password) ? C.purple : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: (email && password) ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
+            style={{ width: "100%", padding: 13, background: (email && password) ? C.purple : "#9B958A", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: (email && password) ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
             {loading ? "מתחבר..." : mode === "login" ? "כניסה ←" : "יצירת חשבון ←"}
           </button>
           <div style={{ textAlign: "center", marginTop: 16, fontSize: 12, color: C.muted }}>
@@ -348,7 +348,7 @@ function BrandingPage() {
   };
 
   return (
-    <div style={{ padding: 20, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl", maxWidth: 520 }}>
+    <div style={{ padding: 20, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl", maxWidth: 520 }}>
       <div style={{ fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 20 }}>הגדרות</div>
 
       {/* Account info */}
@@ -359,7 +359,7 @@ function BrandingPage() {
         <Row label="תפקיד" value="מורה / מדריך" />
         <div style={{ marginTop: 16 }}>
           <button onClick={async () => { await signOut(); navigate("/login"); }}
-            style={{ padding: "9px 18px", background: "#FCEBEB", color: "#A32D2D", border: "1px solid #F09595", borderRadius: 10, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+            style={{ padding: "9px 18px", background: "#F3E2DD", color: "#A6493B", border: "1px solid #F09595", borderRadius: 10, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
             יציאה מהמערכת
           </button>
         </div>
@@ -378,7 +378,7 @@ function BrandingPage() {
               <img src={logoPreview} alt="לוגו"
                 style={{ width: 72, height: 72, objectFit: "contain", borderRadius: 12, border: `1px solid ${C.border}`, background: C.bg, padding: 6 }} />
               <button onClick={removeLogo}
-                style={{ position: "absolute", top: -6, left: -6, width: 20, height: 20, borderRadius: "50%", background: "#A32D2D", color: "white", border: "none", cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                style={{ position: "absolute", top: -6, left: -6, width: 20, height: 20, borderRadius: "50%", background: "#A6493B", color: "white", border: "none", cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             </div>
           ) : (
             <div style={{ width: 72, height: 72, borderRadius: 12, border: `2px dashed ${C.purpleMid}`, background: C.purpleLight, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🏢</div>
@@ -401,9 +401,9 @@ function BrandingPage() {
         {/* Color */}
         <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 8 }}>צבע ראשי</div>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-          <input type="color" value={brandPrimary || "#534AB7"} onChange={e => setBrandPrimary(e.target.value)}
+          <input type="color" value={brandPrimary || "#37352F"} onChange={e => setBrandPrimary(e.target.value)}
             style={{ width: 44, height: 44, padding: 2, border: `1px solid ${C.border}`, borderRadius: 10, cursor: "pointer", background: "none" }} />
-          <input value={brandPrimary} onChange={e => setBrandPrimary(e.target.value)} placeholder="#534AB7"
+          <input value={brandPrimary} onChange={e => setBrandPrimary(e.target.value)} placeholder="#37352F"
             style={{ width: 110, padding: "8px 10px", border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontFamily: "monospace", outline: "none", color: C.text, background: C.bg }} />
           {logoPreview && (
             <span style={{ fontSize: 12, color: C.muted }}>← חולץ אוטומטית מהלוגו</span>
@@ -424,7 +424,7 @@ function BrandingPage() {
           </div>
         )}
 
-        {error  && <div style={{ fontSize: 12, color: "#A32D2D", marginBottom: 10 }}>{error}</div>}
+        {error  && <div style={{ fontSize: 12, color: "#A6493B", marginBottom: 10 }}>{error}</div>}
         {saved  && <div style={{ fontSize: 12, color: C.teal,   marginBottom: 10 }}>✓ נשמר בהצלחה!</div>}
 
         <button onClick={handleSave} disabled={saving}
@@ -438,7 +438,7 @@ function BrandingPage() {
 
 function NotFound() {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl", flexDirection: "column", gap: 12 }}>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl", flexDirection: "column", gap: 12 }}>
       <div style={{ fontSize: 48, fontWeight: 800, color: C.purple }}>404</div>
       <div style={{ fontSize: 15, color: C.muted }}>הדף לא נמצא</div>
       <Link to="/" style={{ color: C.purple, fontSize: 13 }}>חזרה לדף הבית</Link>
@@ -529,7 +529,7 @@ function Row({ label, value }) {
 function FullPageSpinner() {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.bg }}>
-      <div style={{ width: 36, height: 36, border: `3px solid #EEEDFE`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div style={{ width: 36, height: 36, border: `3px solid #F4F2EC`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -555,13 +555,13 @@ function StudentLoginPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       <div style={{ width: "100%", maxWidth: 360 }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <div style={{ fontSize: 32, fontWeight: 800, color: C.purple }}>ExamAI</div>
           <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>פורטל תלמידים</div>
         </div>
-        <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, padding: 28, boxShadow: "0 4px 24px rgba(83,74,183,0.08)" }}>
+        <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, padding: 28, boxShadow: "0 4px 24px rgba(43,41,37,0.08)" }}>
           {sent ? (
             <div style={{ textAlign: "center", padding: "12px 0" }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>📬</div>
@@ -581,7 +581,7 @@ function StudentLoginPage() {
               <AuthField label="אימייל" value={email} onChange={setEmail} placeholder="student@gmail.com" type="email" />
               {error && <div style={{ fontSize: 12, color: C.red, marginBottom: 10 }}>{error}</div>}
               <button onClick={handleMagicLink} disabled={loading || !email.trim()}
-                style={{ width: "100%", padding: 13, background: email.trim() ? C.purple : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: email.trim() ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
+                style={{ width: "100%", padding: 13, background: email.trim() ? C.purple : "#9B958A", color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: email.trim() ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
                 {loading ? "שולח..." : "שלח קישור כניסה ←"}
               </button>
               <div style={{ textAlign: "center", marginTop: 14, fontSize: 12, color: C.muted }}>
@@ -622,16 +622,16 @@ function StudentPortal() {
   const best = history.length ? Math.max(...history.map(s => s.score)) : null;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
       {/* Header */}
       <div style={{ background: C.purple, padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: "#EEEDFE" }}>ExamAI</div>
-          <div style={{ fontSize: 12, color: "#AFA9EC" }}>{user?.email}</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: "#F4F2EC" }}>ExamAI</div>
+          <div style={{ fontSize: 12, color: "#9B958A" }}>{user?.email}</div>
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <button onClick={() => navigate("/exam")}
-            style={{ fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 10, border: "none", background: "#EEEDFE", color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>
+            style={{ fontSize: 13, fontWeight: 600, padding: "7px 14px", borderRadius: 10, border: "none", background: "#F4F2EC", color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>
             + מבחן חדש
           </button>
           <button onClick={async () => { await signOut(); navigate("/student/login"); }}
@@ -701,7 +701,7 @@ function StudentPortal() {
 function Spinner() {
   return (
     <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-      <div style={{ width: 30, height: 30, border: "3px solid #EEEDFE", borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+      <div style={{ width: 30, height: 30, border: "3px solid #F4F2EC", borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
