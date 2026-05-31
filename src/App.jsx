@@ -8,7 +8,8 @@ import ExamBuilder from "./ExamBuilder";
 import LandingPage from "./LandingPage";
 import OnboardingFlow from "./OnboardingFlow";
 import Dashboard from "./Dashboard";
-import SelfTestPage from "./SelfTestPage";
+import SelfTestPage  from "./SelfTestPage";
+import SettingsPage  from "./SettingsPage";
 import StudentExamView from "./StudentExamView";
 import InsightsView from "./InsightsView";
 import ExamsList from "./ExamsList";
@@ -275,7 +276,7 @@ function StudentEntryPage() {
   return <StudentExamView initialCode={accessCode} />;
 }
 
-function SettingsPage() {
+function BrandingPage() {
   const { user, profile, signOut, fetchProfile } = useAuth();
   const navigate  = useNavigate();
   const logoRef   = useRef(null);
@@ -475,6 +476,9 @@ export default function App() {
           } />
           <Route path="/dashboard/settings" element={
             <ProtectedRoute><TeacherLayout><SettingsPage /></TeacherLayout></ProtectedRoute>
+          } />
+          <Route path="/dashboard/branding" element={
+            <ProtectedRoute><TeacherLayout><BrandingPage /></TeacherLayout></ProtectedRoute>
           } />
           <Route path="/dashboard/exam/:examId/questions" element={
             <ProtectedRoute><TeacherLayout><ExamQuestionsPage /></TeacherLayout></ProtectedRoute>

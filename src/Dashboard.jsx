@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
 import StudentDashboard from "./StudentDashboard";
+import ParentDashboard  from "./ParentDashboard";
+import CompanyDashboard from "./CompanyDashboard";
+import TutorDashboard   from "./TutorDashboard";
 
 const C = {
   purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
@@ -38,7 +41,10 @@ export default function Dashboard() {
 
   // Route to role-specific dashboard
   const role = profile?.school_type;
-  if (role === "student") return <StudentDashboard />;
+  if (role === "student")        return <StudentDashboard />;
+  if (role === "parent")         return <ParentDashboard />;
+  if (role === "company")        return <CompanyDashboard />;
+  if (role === "private_tutor")  return <TutorDashboard />;
 
   const [exams,      setExams]      = useState([]);
   const [students,   setStudents]   = useState([]);

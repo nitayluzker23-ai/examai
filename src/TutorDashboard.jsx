@@ -1,0 +1,208 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase, useAuth } from "./App";
+
+const C = {
+  purple: "#534AB7", purpleLight: "#EEEDFE", purpleMid: "#AFA9EC",
+  teal: "#0F6E56", tealLight: "#E1F5EE",
+  amber: "#854F0B", amberLight: "#FAEEDA",
+  red: "#A32D2D", redLight: "#FCEBEB",
+  text: "#1a1a2e", muted: "#6b7280",
+  border: "rgba(0,0,0,0.09)", bg: "#f8f7ff", white: "#fff",
+};
+
+export default function TutorDashboard() {
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const [exams,    setExams]    = useState([]);
+  const [students, setStudents] = useState([]);
+  const [stats,    setStats]    = useState({ exams: 0, students: 0, avgScore: null });
+  const [loading,  setLoading]  = useState(true);
+  const [deleting, setDeleting] = useState(null);
+  const [copied,   setCopied]   = useState(null);
+  const [showAddStu, setShowAddStu] = useState(false);
+  const [stuName,  setStuName]  = useState("");
+  const [addingStu, setAddingStu] = useState(false);
+  const [mobile,   setMobile]   = useState(window.innerWidth < 600);
+
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 600);
+    window.addEventListener("resize", fn); return () => window.removeEventListener("resize", fn);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const [{ data: exs }, { data: stus }] = await Promise.all([
+        supabase.from("exams").select("id,title,access_code,status,created_at,subject,group_name")
+          .eq("workspace_id", user.id).order("created_at", { ascending: false }).limit(15),
+        supabase.from("students").select("id,name,notes,created_at")
+          .eq("workspace_id", user.id).order("name"),
+      ]);
+
+      const exsList = exs ?? [];
+      if (exsList.length) {
+        const { data: subs } = await supabase.from("submissions")
+          .select("exam_id,score,student_name,completed_at")
+          .in("exam_id", exsList.map(e => e.id));
+        const enriched = exsList.map(e => ({ ...e, subs: (subs ?? []).filter(s => s.exam_id === e.id) }));
+        const scores = (subs ?? []).map(s => s.score).filter(s => s != null);
+        setExams(enriched);
+        setStats({
+          exams: exsList.length,
+          students: (stus ?? []).length,
+          avgScore: scores.length ? Math.round(scores.reduce((a,b) => a+b,0) / scores.length) : null,
+        });
+      }
+      setStudents(stus ?? []);
+      setLoading(false);
+    })();
+  }, [user]);
+
+  const addStudent = async () => {
+    if (!stuName.trim()) return;
+    setAddingStu(true);
+    const { data, error } = await supabase.from("students").insert({ workspace_id: user.id, name: stuName.trim() }).select().single();
+    if (!error && data) { setStudents(s => [...s, data]); setStuName(""); setShowAddStu(false); setStats(s => ({ ...s, students: s.students + 1 })); }
+    setAddingStu(false);
+  };
+
+  const deleteStudent = async (id) => {
+    await supabase.from("class_students").delete().eq("student_id", id);
+    await supabase.from("students").delete().eq("id", id);
+    setStudents(s => s.filter(x => x.id !== id));
+    setStats(s => ({ ...s, students: s.students - 1 }));
+  };
+
+  const deleteExam = async (id) => {
+    if (!confirm("למחוק את המבחן?")) return;
+    setDeleting(id);
+    await supabase.from("questions").delete().eq("exam_id", id);
+    await supabase.from("submissions").delete().eq("exam_id", id);
+    await supabase.from("exams").delete().eq("id", id);
+    setExams(e => e.filter(x => x.id !== id));
+    setDeleting(null);
+  };
+
+  const copyLink = (code) => {
+    navigator.clipboard?.writeText(`${window.location.origin}/exam/${code}`);
+    setCopied(code); setTimeout(() => setCopied(null), 2000);
+  };
+
+  const firstName = profile?.full_name?.split(" ")[0] || "";
+  const subject   = profile?.subject || "המקצוע";
+
+  if (loading) return (
+    <div style={{ padding: 40, textAlign: "center" }}>
+      <div style={{ width: 32, height: 32, border: `3px solid ${C.purpleLight}`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+
+  return (
+    <div style={{ padding: mobile ? "20px 16px" : "28px 24px", fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl", maxWidth: 720, margin: "0 auto" }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+
+      {/* Header */}
+      <div style={{ marginBottom: 22 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>
+          {firstName ? `שלום, ${firstName} 👤` : "לוח הבקרה"}
+        </h1>
+        <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>מורה פרטי · {subject}</div>
+      </div>
+
+      {/* CTA */}
+      <button onClick={() => navigate("/dashboard/new")}
+        style={{ width: "100%", padding: "18px 24px", background: `linear-gradient(135deg, ${C.purple} 0%, #3C3489 100%)`, color: "white", border: "none", borderRadius: 18, fontSize: 17, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", marginBottom: 20, boxShadow: "0 6px 24px rgba(83,74,183,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+        <span style={{ fontSize: 26 }}>✨</span>
+        <div style={{ textAlign: "right" }}>
+          <div>צור מבחן לתלמיד</div>
+          <div style={{ fontSize: 13, fontWeight: 400, opacity: 0.85, marginTop: 2 }}>מחומר לימוד — ב-AI, תוך שניות</div>
+        </div>
+      </button>
+
+      {/* Stats */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 20 }}>
+        {[
+          { label: "מבחנים",  value: stats.exams, icon: "📋", color: C.purple, bg: C.purpleLight },
+          { label: "תלמידים", value: stats.students, icon: "👤", color: C.teal, bg: C.tealLight },
+          { label: "ממוצע",   value: stats.avgScore != null ? `${stats.avgScore}` : "—", icon: "📊", color: C.amber, bg: C.amberLight },
+        ].map((s, i) => (
+          <div key={i} style={{ background: C.white, borderRadius: 14, padding: "14px 10px", border: `1px solid ${C.border}`, textAlign: "center" }}>
+            <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
+            <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Students */}
+      <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden", marginBottom: 16 }}>
+        <div style={{ padding: "12px 18px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>👤 תלמידים ({students.length})</div>
+          <button onClick={() => setShowAddStu(v => !v)}
+            style={{ padding: "6px 14px", background: showAddStu ? C.bg : C.teal, color: showAddStu ? C.muted : "white", border: showAddStu ? `1px solid ${C.border}` : "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            {showAddStu ? "ביטול" : "+ הוסף"}
+          </button>
+        </div>
+        {showAddStu && (
+          <div style={{ padding: "12px 18px", background: C.tealLight, borderBottom: `1px solid ${C.border}`, display: "flex", gap: 8 }}>
+            <input value={stuName} onChange={e => setStuName(e.target.value)} onKeyDown={e => e.key === "Enter" && addStudent()}
+              placeholder="שם התלמיד" autoFocus
+              style={{ flex: 1, padding: "8px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontFamily: "inherit", outline: "none", background: C.white }} />
+            <button onClick={addStudent} disabled={!stuName.trim() || addingStu}
+              style={{ padding: "8px 16px", background: C.teal, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+              {addingStu ? "..." : "✓ הוסף"}
+            </button>
+          </div>
+        )}
+        {students.length === 0 ? (
+          <div style={{ padding: 20, textAlign: "center", color: C.muted, fontSize: 13 }}>הוסף תלמידים לניהול מעקב</div>
+        ) : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "12px 18px" }}>
+            {students.map(s => (
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 6, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 20, padding: "5px 6px 5px 12px", fontSize: 13 }}>
+                <span style={{ color: C.text }}>{s.name}</span>
+                <button onClick={() => deleteStudent(s.id)}
+                  style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 15, lineHeight: 1, padding: "0 2px" }}>×</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Recent exams */}
+      <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
+        <div style={{ padding: "12px 18px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>📋 מבחנים אחרונים</div>
+          <button onClick={() => navigate("/dashboard/exams")}
+            style={{ padding: "5px 12px", background: C.purpleLight, color: C.purple, border: "none", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            כולם →
+          </button>
+        </div>
+        {exams.length === 0 ? (
+          <div style={{ padding: 24, textAlign: "center", color: C.muted, fontSize: 13 }}>אין מבחנים עדיין</div>
+        ) : exams.slice(0,5).map(e => (
+          <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 18px", borderBottom: `1px solid ${C.border}`, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</div>
+              <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>{e.subs.length} הגשות · {e.subject}</div>
+            </div>
+            <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+              <button onClick={() => copyLink(e.access_code)}
+                style={{ padding: "5px 10px", background: copied === e.access_code ? C.tealLight : C.purpleLight, color: copied === e.access_code ? C.teal : C.purple, border: "none", borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                {copied === e.access_code ? "✓" : `📎 ${e.access_code}`}
+              </button>
+              <button onClick={() => navigate(`/dashboard/exams/${e.id}/questions`)}
+                style={{ padding: "5px 10px", background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 7, fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>✏️</button>
+              <button onClick={() => deleteExam(e.id)} disabled={deleting === e.id}
+                style={{ padding: "5px 10px", background: C.redLight, color: C.red, border: "none", borderRadius: 7, fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}>
+                {deleting === e.id ? "..." : "🗑"}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
