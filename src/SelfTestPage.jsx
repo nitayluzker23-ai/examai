@@ -16,6 +16,15 @@ const C = {
   border: "rgba(0,0,0,0.1)", bg: "#f8f7ff", white: "#fff",
 };
 
+async function extractTextFromPDF_or_text(file) {
+  if (file.name.toLowerCase().endsWith(".pdf")) {
+    const buf = await file.arrayBuffer();
+    const { text } = await extractTextFromPDF(buf);
+    return text;
+  }
+  return await file.text();
+}
+
 async function extractTextFromPDF(arrayBuffer) {
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages = [];
@@ -52,13 +61,21 @@ export default function SelfTestPage() {
   const [text,        setText]        = useState("");
   const [qCount,      setQCount]      = useState(10);
   const [fileName,    setFileName]    = useState("");
-  const [fileLoading, setFileLoading] = useState(false);
-  const [pdfInfo,     setPdfInfo]     = useState(null);
-  const [generating,  setGenerating]  = useState(false);
-  const [error,       setError]       = useState("");
-  const [phase,       setPhase]       = useState("create"); // create | generating
-  const [history,     setHistory]     = useState([]);
-  const [mobile,      setMobile]      = useState(window.innerWidth < 600);
+  const [fileLoading,    setFileLoading]    = useState(false);
+  const [pdfInfo,        setPdfInfo]        = useState(null);
+  const [generating,     setGenerating]     = useState(false);
+  const [error,          setError]          = useState("");
+  const [phase,          setPhase]          = useState("create");
+  const [history,        setHistory]        = useState([]);
+  const [mobile,         setMobile]         = useState(window.innerWidth < 600);
+  // Advanced options
+  const [showAdvanced,   setShowAdvanced]   = useState(false);
+  const [topicTags,      setTopicTags]      = useState([]); // important topics
+  const [topicInput,     setTopicInput]     = useState("");
+  const [lecturerHint,   setLecturerHint]   = useState(""); // "המרצה אמר..."
+  const [hwText,         setHwText]         = useState(""); // homework text
+  const [hwFileName,     setHwFileName]     = useState("");
+  const [hwLoading,      setHwLoading]      = useState(false);
 
   useEffect(() => {
     const fn = () => setMobile(window.innerWidth < 600);
@@ -135,8 +152,20 @@ export default function SelfTestPage() {
       // 2. Generate questions
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
+      // Build enriched text with advanced options
+      let enrichedText = text.trim();
+      if (topicTags.length > 0) {
+        enrichedText = `נושאים חשובים שיש להתמקד בהם: ${topicTags.join(", ")}.\n\n${enrichedText}`;
+      }
+      if (lecturerHint.trim()) {
+        enrichedText = `הנחיית המרצה/המורה: ${lecturerHint.trim()}\n\n${enrichedText}`;
+      }
+      if (hwText.trim()) {
+        enrichedText = `${enrichedText}\n\n--- שיעורי בית ---\n${hwText.trim()}`;
+      }
+
       const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
-        body: { text: text.trim(), num_questions: qCount },
+        body: { text: enrichedText, num_questions: qCount },
         headers: { Authorization: `Bearer ${token}` },
       });
       if (fnErr) throw new Error(fnErr.message);
@@ -199,10 +228,14 @@ export default function SelfTestPage() {
       <div style={{ background: C.white, borderBottom: `1px solid ${C.border}`, padding: `14px ${mobile ? 16 : 28}px`, display: "flex", alignItems: "center", gap: 12 }}>
         <button onClick={() => navigate("/dashboard")}
           style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 20, padding: 0, lineHeight: 1 }}>←</button>
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{ fontSize: 16, fontWeight: 800, color: C.purple }}>🎓 בחן את עצמי</div>
           <div style={{ fontSize: 11, color: C.muted }}>העלה חומר לימוד וקבל בחינה מיד</div>
         </div>
+        <button onClick={() => navigate("/past-exams")}
+          style={{ padding: "7px 14px", background: C.amberLight, color: C.amber, border: `1px solid ${C.amber}`, borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
+          📂 מבחני עבר
+        </button>
       </div>
 
       <div style={{ maxWidth: 560, margin: "0 auto", padding: mobile ? "20px 16px" : "28px 20px" }}>
@@ -259,9 +292,71 @@ export default function SelfTestPage() {
             <div style={{ marginTop: 12, background: C.redLight, color: C.red, borderRadius: 10, padding: "10px 14px", fontSize: 13 }}>{error}</div>
           )}
 
+          {/* Advanced options toggle */}
+          <button onClick={() => setShowAdvanced(v => !v)}
+            style={{ width: "100%", marginTop: 14, padding: "9px 0", background: "transparent", border: `1px dashed ${C.purpleMid}`, borderRadius: 10, fontSize: 13, color: C.purple, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>
+            {showAdvanced ? "▲ הסתר הגדרות מתקדמות" : "▼ הגדרות מתקדמות (נושאים / רמז מרצה / שיעורי בית)"}
+          </button>
+
+          {showAdvanced && (
+            <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 12, padding: 14, background: C.bg, borderRadius: 12, border: `1px solid ${C.border}` }}>
+
+              {/* Important topics */}
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6 }}>🎯 נושאים חשובים</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 7 }}>
+                  {topicTags.map(t => (
+                    <div key={t} style={{ display: "flex", alignItems: "center", gap: 4, background: C.purpleLight, border: `1px solid ${C.purpleMid}`, borderRadius: 20, padding: "4px 8px 4px 12px" }}>
+                      <span style={{ fontSize: 12, color: C.purple, fontWeight: 600 }}>{t}</span>
+                      <button onClick={() => setTopicTags(prev => prev.filter(x => x !== t))}
+                        style={{ background: "none", border: "none", color: C.purple, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 7 }}>
+                  <input value={topicInput} onChange={e => setTopicInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter" && topicInput.trim()) { setTopicTags(p => [...p, topicInput.trim()]); setTopicInput(""); } }}
+                    placeholder='הוסף נושא + Enter (למשל: "פוטוסינתזה")'
+                    style={{ flex: 1, padding: "8px 11px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontFamily: "inherit", outline: "none", background: C.white }} />
+                  <button onClick={() => { if (topicInput.trim()) { setTopicTags(p => [...p, topicInput.trim()]); setTopicInput(""); } }}
+                    style={{ padding: "8px 14px", background: C.purple, color: "white", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>+</button>
+                </div>
+              </div>
+
+              {/* Lecturer hint */}
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6 }}>🗣️ המרצה / המורה אמר...</div>
+                <textarea value={lecturerHint} onChange={e => setLecturerHint(e.target.value)}
+                  placeholder='למשל: "הבחינה תתמקד בפרקים 3-5, עם דגש על חישובים"'
+                  rows={2}
+                  style={{ width: "100%", padding: "9px 11px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontFamily: "inherit", outline: "none", background: C.white, resize: "vertical", boxSizing: "border-box" }} />
+              </div>
+
+              {/* Homework upload */}
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6 }}>📝 שיעורי בית (אופציונלי)</div>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", border: `1px dashed ${C.purpleMid}`, borderRadius: 9, cursor: hwLoading ? "wait" : "pointer", background: hwFileName ? C.tealLight : C.purpleLight }}>
+                  <input type="file" accept=".txt,.md,.pdf" style={{ display: "none" }}
+                    onChange={async e => {
+                      const f = e.target.files?.[0]; if (!f) return;
+                      setHwLoading(true); setHwFileName(f.name);
+                      const t = await extractTextFromPDF_or_text(f).catch(() => "");
+                      setHwText(t); setHwLoading(false); e.target.value = "";
+                    }} />
+                  <span style={{ fontSize: 16 }}>{hwLoading ? "⏳" : hwFileName ? "✅" : "📎"}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: hwFileName ? C.teal : C.purple }}>
+                    {hwLoading ? "קורא..." : hwFileName || "העלה קובץ שיעורי בית"}
+                  </span>
+                  {hwFileName && <button onClick={e => { e.preventDefault(); e.stopPropagation(); setHwText(""); setHwFileName(""); }}
+                    style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 16, marginRight: "auto" }}>×</button>}
+                </label>
+              </div>
+            </div>
+          )}
+
           {/* CTA */}
           <button onClick={createAndStart} disabled={!text.trim() || generating}
-            style={{ width: "100%", marginTop: 18, padding: "14px 0", background: text.trim() && !generating ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 800, cursor: text.trim() ? "pointer" : "not-allowed", fontFamily: "inherit", boxShadow: text.trim() ? "0 4px 18px rgba(83,74,183,0.3)" : "none", transition: "all 0.2s" }}>
+            style={{ width: "100%", marginTop: 14, padding: "14px 0", background: text.trim() && !generating ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 800, cursor: text.trim() ? "pointer" : "not-allowed", fontFamily: "inherit", boxShadow: text.trim() ? "0 4px 18px rgba(83,74,183,0.3)" : "none", transition: "all 0.2s" }}>
             {generating ? "מייצר..." : `🚀 צור ובחן עכשיו (${qCount} שאלות)`}
           </button>
         </div>

@@ -92,11 +92,21 @@ export default function StudentDashboard() {
 
       {/* BIG CTA */}
       <button onClick={() => navigate("/self-test")}
-        style={{ width: "100%", padding: "20px 24px", background: `linear-gradient(135deg, ${C.purple} 0%, #3C3489 100%)`, color: "white", border: "none", borderRadius: 18, fontSize: 18, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", marginBottom: 20, boxShadow: "0 6px 24px rgba(83,74,183,0.35)", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+        style={{ width: "100%", padding: "20px 24px", background: `linear-gradient(135deg, ${C.purple} 0%, #3C3489 100%)`, color: "white", border: "none", borderRadius: 18, fontSize: 18, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", marginBottom: 10, boxShadow: "0 6px 24px rgba(83,74,183,0.35)", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
         <span style={{ fontSize: 28 }}>🚀</span>
         <div style={{ textAlign: "right" }}>
           <div>בחן את עצמי עכשיו</div>
           <div style={{ fontSize: 13, fontWeight: 400, opacity: 0.85, marginTop: 2 }}>העלה חומר לימוד וקבל בחינה מיד</div>
+        </div>
+      </button>
+
+      {/* Past exams CTA */}
+      <button onClick={() => navigate("/past-exams")}
+        style={{ width: "100%", padding: "14px 24px", background: `linear-gradient(135deg, ${C.amber} 0%, #6b3d08 100%)`, color: "white", border: "none", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+        <span style={{ fontSize: 22 }}>📂</span>
+        <div style={{ textAlign: "right" }}>
+          <div>מבחני עבר</div>
+          <div style={{ fontSize: 12, fontWeight: 400, opacity: 0.85, marginTop: 1 }}>נתח מבחנים קודמים ·חזה נושאים · צור מבחן בסגנון</div>
         </div>
       </button>
 

@@ -9,6 +9,7 @@ import LandingPage from "./LandingPage";
 import OnboardingFlow from "./OnboardingFlow";
 import Dashboard from "./Dashboard";
 import SelfTestPage      from "./SelfTestPage";
+import PastExamsPage     from "./PastExamsPage";
 import SettingsPage      from "./SettingsPage";
 import AssistantWidget   from "./AssistantWidget";
 import StudentExamView from "./StudentExamView";
@@ -452,6 +453,9 @@ export default function App() {
           <Route path="/login"     element={<LoginPage />} />
           <Route path="/self-test" element={
             <ProtectedRoute><SelfTestPage /></ProtectedRoute>
+          } />
+          <Route path="/past-exams" element={
+            <ProtectedRoute><PastExamsPage /></ProtectedRoute>
           } />
           <Route path="/onboarding" element={
             <ProtectedRoute skipOnboarding><OnboardingFlow /></ProtectedRoute>
