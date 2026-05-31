@@ -19,9 +19,9 @@ const USER_TYPES = [
   { id: "other",           icon: "✨", label: "אחר" },
 ];
 
-const SUBJECTS = [
+const DEFAULT_SUBJECTS = [
   "מתמטיקה","אנגלית","עברית","מדעים","ביולוגיה","פיזיקה","כימיה",
-  "היסטוריה","גיאוגרפיה","תנ״ך","אזרחות","ספרות","פסיכומטרי","אחר",
+  "היסטוריה","גיאוגרפיה","תנ״ך","אזרחות","ספרות","פסיכומטרי",
 ];
 
 const GRADE_LEVELS = [
@@ -43,6 +43,31 @@ export default function SettingsPage() {
   const [saving,    setSaving]    = useState(false);
   const [saved,     setSaved]     = useState(false);
   const [error,     setError]     = useState("");
+
+  // Subject editing
+  const [hiddenSubjects, setHiddenSubjects] = useState([]); // subjects removed from list
+  const [customSubject,  setCustomSubject]  = useState("");  // new subject being typed
+  const [extraSubjects,  setExtraSubjects]  = useState([]); // user-added subjects
+
+  const visibleDefaults = DEFAULT_SUBJECTS.filter(s => !hiddenSubjects.includes(s));
+  const allSubjects = [...visibleDefaults, ...extraSubjects];
+
+  const addCustomSubject = () => {
+    const v = customSubject.trim();
+    if (!v || allSubjects.includes(v)) return;
+    setExtraSubjects(prev => [...prev, v]);
+    setSubject(v);
+    setCustomSubject("");
+  };
+
+  const removeSubject = (s) => {
+    if (DEFAULT_SUBJECTS.includes(s)) {
+      setHiddenSubjects(prev => [...prev, s]);
+    } else {
+      setExtraSubjects(prev => prev.filter(x => x !== s));
+    }
+    if (subject === s) setSubject("");
+  };
 
   const save = async () => {
     setSaving(true); setSaved(false); setError("");
@@ -92,19 +117,51 @@ export default function SettingsPage() {
 
       {/* Subject */}
       <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, marginBottom: 16 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 6 }}>
           {role === "company" ? "תחום עיסוק" : role === "student" ? "מה לומד?" : "מקצוע"}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-          {SUBJECTS.map(s => (
-            <button key={s} onClick={() => setSubject(s)}
-              style={{ padding: "9px 6px", borderRadius: 9, border: `2px solid ${subject === s ? C.purple : C.border}`, background: subject === s ? C.purpleLight : C.bg, color: subject === s ? C.purple : C.text, fontSize: 12, fontWeight: subject === s ? 700 : 400, cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s" }}>
-              {s}
-            </button>
-          ))}
+        <div style={{ fontSize: 12, color: C.muted, marginBottom: 12 }}>לחץ לבחירה · X להסרה · הוסף מקצוע משלך למטה</div>
+
+        {/* Subject chips */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 12 }}>
+          {allSubjects.map(s => {
+            const isSelected = subject === s;
+            return (
+              <div key={s} style={{ display: "flex", alignItems: "center", gap: 0, borderRadius: 20, border: `2px solid ${isSelected ? C.purple : C.border}`, background: isSelected ? C.purpleLight : C.bg, overflow: "hidden", transition: "all 0.15s" }}>
+                <button onClick={() => setSubject(s)}
+                  style={{ padding: "6px 10px 6px 12px", background: "transparent", border: "none", color: isSelected ? C.purple : C.text, fontSize: 13, fontWeight: isSelected ? 700 : 400, cursor: "pointer", fontFamily: "inherit" }}>
+                  {s}
+                </button>
+                <button onClick={() => removeSubject(s)}
+                  style={{ padding: "6px 8px 6px 4px", background: "transparent", border: "none", color: isSelected ? C.purple : C.muted, fontSize: 14, cursor: "pointer", lineHeight: 1, fontFamily: "inherit" }}>
+                  ×
+                </button>
+              </div>
+            );
+          })}
         </div>
-        <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="או הקלד חופשי..."
-          style={{ marginTop: 10, width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontFamily: "inherit", outline: "none", background: C.bg, boxSizing: "border-box" }} />
+
+        {/* Add custom subject */}
+        <div style={{ display: "flex", gap: 7 }}>
+          <input
+            value={customSubject}
+            onChange={e => setCustomSubject(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && addCustomSubject()}
+            placeholder="הוסף מקצוע חדש..."
+            style={{ flex: 1, padding: "8px 12px", border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontFamily: "inherit", outline: "none", background: C.bg, boxSizing: "border-box" }}
+          />
+          <button onClick={addCustomSubject} disabled={!customSubject.trim()}
+            style={{ padding: "8px 14px", background: customSubject.trim() ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: customSubject.trim() ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
+            + הוסף
+          </button>
+        </div>
+
+        {/* Show current selection */}
+        {subject && (
+          <div style={{ marginTop: 10, fontSize: 12, color: C.teal, fontWeight: 600 }}>
+            ✓ נבחר: {subject}
+          </div>
+        )}
       </div>
 
       {/* Grade level */}
