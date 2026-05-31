@@ -391,8 +391,11 @@ function ClassModal({ cls, onSave, onClose, error }) {
     <Modal title={cls ? "עריכת כיתה/מגמה" : "כיתה / מגמה חדשה"} onClose={onClose}>
       <Label>שם הכיתה / מגמה</Label>
       <Input value={name} onChange={setName} placeholder='למשל: כיתה ה׳2 או מתמטיקה 4 יח׳' autoFocus />
-      <Label>שנת לימודים (אופציונלי)</Label>
-      <Input value={year} onChange={setYear} placeholder="למשל: 2025" type="number" />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
+        <span style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>שנת לימודים</span>
+        <span style={{ fontSize: 11, color: C.muted, background: "#f3f4f6", borderRadius: 20, padding: "1px 8px" }}>לא חובה</span>
+      </div>
+      <Input value={year} onChange={setYear} placeholder="למשל: 2025 — אפשר להשאיר ריק" type="number" />
       {error && <div style={{ fontSize: 12, color: C.red, marginBottom: 10 }}>{error}</div>}
       <button onClick={handle} disabled={!name.trim() || saving}
         style={{ width: "100%", padding: 12, background: name.trim() ? C.purple : C.purpleMid, color: C.white, border: "none", borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: name.trim() ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
