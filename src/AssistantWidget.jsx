@@ -46,19 +46,18 @@ export default function AssistantWidget() {
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
-  // Only for paid users (or admin)
-  const isPaid = profile?.is_admin || (profile?.plan && profile.plan !== "free");
-  if (!user || !isPaid) return null;
-
-  // Auto-scroll
+  // All hooks MUST come before any conditional return
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Focus input when opened
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 150);
   }, [open]);
+
+  // Only for paid users (or admin) — AFTER all hooks
+  const isPaid = profile?.is_admin || (profile?.plan && profile.plan !== "free");
+  if (!user || !isPaid) return null;
 
   // Greeting on first open
   const handleOpen = () => {
