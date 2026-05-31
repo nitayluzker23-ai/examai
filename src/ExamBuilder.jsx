@@ -156,9 +156,11 @@ export default function ExamBuilder() {
         difficulty: "Medium",
         content: {
           question_text:       q.question_text,
-          options:             q.options,
+          question_type:       q.question_type ?? "multiple_choice",
+          options:             q.options ?? [],
           correct_answer_index: q.correct_answer_index,
           ai_explanation:      q.ai_explanation,
+          model_answer:        q.model_answer ?? null,
         },
       }));
       const { data: inserted, error: insErr } = await supabase.from("questions").insert(rows).select();

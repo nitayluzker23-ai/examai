@@ -132,7 +132,7 @@ export default function PastExamsPage() {
       if (qs.length) {
         await supabase.from("questions").insert(qs.slice(0, numQ).map((q, i) => ({
           exam_id: exam.id, sort_order: i, difficulty: "Medium",
-          content: { question_text: q.question_text, options: q.options, correct_answer_index: q.correct_answer_index, ai_explanation: q.ai_explanation },
+          content: { question_text: q.question_text, question_type: q.question_type ?? "multiple_choice", options: q.options ?? [], correct_answer_index: q.correct_answer_index, ai_explanation: q.ai_explanation, model_answer: q.model_answer ?? null },
         })));
       }
 

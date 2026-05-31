@@ -76,6 +76,7 @@ export default function SelfTestPage() {
   const [hwText,         setHwText]         = useState(""); // homework text
   const [hwFileName,     setHwFileName]     = useState("");
   const [hwLoading,      setHwLoading]      = useState(false);
+  const [qTypes,         setQTypes]         = useState(["multiple_choice"]); // question types
 
   useEffect(() => {
     const fn = () => setMobile(window.innerWidth < 600);
@@ -165,7 +166,7 @@ export default function SelfTestPage() {
       }
 
       const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
-        body: { text: enrichedText, num_questions: qCount },
+        body: { text: enrichedText, num_questions: qCount, question_types: qTypes },
         headers: { Authorization: `Bearer ${token}` },
       });
       if (fnErr) throw new Error(fnErr.message);
@@ -185,9 +186,11 @@ export default function SelfTestPage() {
         difficulty: "Medium",
         content: {
           question_text: q.question_text,
-          options: q.options,
+          question_type: q.question_type ?? "multiple_choice",
+          options: q.options ?? [],
           correct_answer_index: q.correct_answer_index,
           ai_explanation: q.ai_explanation,
+          model_answer: q.model_answer ?? null,
         },
       }));
       const { error: insErr } = await supabase.from("questions").insert(rows);
@@ -350,6 +353,30 @@ export default function SelfTestPage() {
                   {hwFileName && <button onClick={e => { e.preventDefault(); e.stopPropagation(); setHwText(""); setHwFileName(""); }}
                     style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 16, marginRight: "auto" }}>×</button>}
                 </label>
+              </div>
+
+              {/* Question types */}
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6 }}>🧩 סוגי שאלות</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {[["multiple_choice","רב-ברירה"],["true_false","נכון / לא נכון"],["open","שאלה פתוחה"]].map(([k, label]) => {
+                    const active = qTypes.includes(k);
+                    return (
+                      <button key={k}
+                        onClick={() => setQTypes(prev => {
+                          if (prev.includes(k)) {
+                            const next = prev.filter(x => x !== k);
+                            return next.length ? next : ["multiple_choice"]; // never empty
+                          }
+                          return [...prev, k];
+                        })}
+                        style={{ padding: "7px 13px", borderRadius: 20, border: `2px solid ${active ? C.purple : C.border}`, background: active ? C.purpleLight : C.white, color: active ? C.purple : C.muted, fontSize: 12, fontWeight: active ? 700 : 500, cursor: "pointer", fontFamily: "inherit" }}>
+                        {active ? "✓ " : ""}{label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize: 11, color: C.muted, marginTop: 5 }}>שאלות פתוחות אינן מקבלות ציון אוטומטי — תוצג תשובה לדוגמה</div>
               </div>
             </div>
           )}

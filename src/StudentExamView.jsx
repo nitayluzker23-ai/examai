@@ -55,6 +55,8 @@ const shuffle = (arr) => {
 function shuffleAnswers(questions) {
   return questions.map(q => {
     const opts = q.content.options;
+    // Open questions have no options — leave untouched
+    if (!Array.isArray(opts) || opts.length === 0) return q;
     const correctIdx = q.content.correct_answer_index;
     const indexed = opts.map((opt, i) => ({ opt, isCorrect: i === correctIdx }));
     const shuffled = shuffle(indexed);
@@ -85,8 +87,9 @@ export default function StudentExamView({ initialCode } = {}) {
   const [exam, setExam]           = useState(null);
   const [questions, setQuestions] = useState([]);
   const [qIndex, setQIndex]       = useState(0);
-  const [answers, setAnswers]     = useState([]);         // [{question_id, selected_index, time_spent_seconds}]
+  const [answers, setAnswers]     = useState([]);         // [{question_id, selected_index, text_answer, time_spent_seconds}]
   const [selected, setSelected]   = useState(null);
+  const [textAnswer, setTextAnswer] = useState("");       // for open questions
   const [timeLeft, setTimeLeft]   = useState(null);
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState("");
@@ -241,13 +244,16 @@ export default function StudentExamView({ initialCode } = {}) {
     clearInterval(timerRef.current);
     const spent = Math.round((Date.now() - qStartRef.current) / 1000);
     const q = questions[qIndex];
+    const qIsOpen = q.content?.question_type === "open" || !q.content?.options?.length;
     const newAnswers = [...answers, {
       question_id: q.id,
-      selected_index: timeout ? -1 : selected,
+      selected_index: qIsOpen ? null : (timeout ? -1 : selected),
+      text_answer: qIsOpen ? textAnswer.trim() : null,
       time_spent_seconds: spent,
     }];
     setAnswers(newAnswers);
     setSelected(null);
+    setTextAnswer("");
     qStartRef.current = Date.now();
 
     // sessions: check if session is done
@@ -291,11 +297,17 @@ export default function StudentExamView({ initialCode } = {}) {
   // ── Finish exam ─────────────────────────────────────────
   const finishExam = async (finalAnswers) => {
     clearInterval(timerRef.current);
+    // Auto-grade only closed questions (MC / true-false). Open questions are excluded from the score.
+    const gradable = questions.filter(q => {
+      const t = q.content?.question_type;
+      return t !== "open" && (q.content?.options?.length > 0);
+    });
     const score = finalAnswers.reduce((acc, a) => {
       const q = questions.find(q => q.id === a.question_id);
-      return acc + (q && a.selected_index === q.content.correct_answer_index ? 1 : 0);
+      if (!q || q.content?.question_type === "open" || !q.content?.options?.length) return acc;
+      return acc + (a.selected_index === q.content.correct_answer_index ? 1 : 0);
     }, 0);
-    const scorePct = Math.round((score / questions.length) * 100);
+    const scorePct = gradable.length ? Math.round((score / gradable.length) * 100) : 0;
 
     try {
       await supabase.from("submissions").insert({
@@ -471,23 +483,43 @@ export default function StudentExamView({ initialCode } = {}) {
                     style={{ maxWidth: "100%", maxHeight: 320, borderRadius: 10, border: `1px solid ${C.border}` }} />
                 </div>
               )}
-              {questions[qIndex].content.options.map((opt, i) => (
-                <OptionRow key={i} letter={"אבגד"[i]} text={opt} index={i} selected={selected} onSelect={setSelected} />
-              ))}
-              <div style={{ marginTop: 18, display: "flex", gap: 8 }}>
-                {exam.config.can_go_back && qIndex > 0 && (
-                  <button onClick={() => { clearInterval(timerRef.current); setQIndex(q => q - 1); setSelected(answers[qIndex - 1]?.selected_index ?? null); }}
-                    style={{ flex: 1, padding: 10, background: "transparent", color: C.purple, border: `1px solid ${C.purple}`, borderRadius: 12, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
-                    → חזרה
-                  </button>
-                )}
-                <button
-                  onClick={() => advanceQuestion()}
-                  disabled={selected === null}
-                  style={{ flex: exam.config.can_go_back && qIndex > 0 ? 2 : 1, padding: 12, background: selected !== null ? (brand?.primary ?? C.purple) : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: selected !== null ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s" }}>
-                  {qIndex + 1 === questions.length ? "סיום המבחן ←" : "שאלה הבאה ←"}
-                </button>
-              </div>
+              {(() => {
+                const cIsOpen = questions[qIndex].content?.question_type === "open" || !questions[qIndex].content?.options?.length;
+                if (cIsOpen) {
+                  return (
+                    <textarea
+                      value={textAnswer}
+                      onChange={e => setTextAnswer(e.target.value)}
+                      placeholder="כתוב את תשובתך כאן..."
+                      rows={5}
+                      style={{ width: "100%", padding: "12px 14px", border: `1.5px solid ${C.border}`, borderRadius: 12, fontSize: 14, fontFamily: "inherit", resize: "vertical", outline: "none", background: C.bg, color: C.text, boxSizing: "border-box", lineHeight: 1.6, direction: "rtl" }}
+                    />
+                  );
+                }
+                return questions[qIndex].content.options.map((opt, i) => (
+                  <OptionRow key={i} letter={"אבגד"[i]} text={opt} index={i} selected={selected} onSelect={setSelected} />
+                ));
+              })()}
+              {(() => {
+                const cIsOpen = questions[qIndex].content?.question_type === "open" || !questions[qIndex].content?.options?.length;
+                const canAdvance = cIsOpen ? textAnswer.trim().length > 0 : selected !== null;
+                return (
+                  <div style={{ marginTop: 18, display: "flex", gap: 8 }}>
+                    {exam.config.can_go_back && qIndex > 0 && (
+                      <button onClick={() => { clearInterval(timerRef.current); setQIndex(q => q - 1); setSelected(answers[qIndex - 1]?.selected_index ?? null); setTextAnswer(answers[qIndex - 1]?.text_answer ?? ""); }}
+                        style={{ flex: 1, padding: 10, background: "transparent", color: C.purple, border: `1px solid ${C.purple}`, borderRadius: 12, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                        → חזרה
+                      </button>
+                    )}
+                    <button
+                      onClick={() => advanceQuestion()}
+                      disabled={!canAdvance}
+                      style={{ flex: exam.config.can_go_back && qIndex > 0 ? 2 : 1, padding: 12, background: canAdvance ? (brand?.primary ?? C.purple) : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: canAdvance ? "pointer" : "not-allowed", fontFamily: "inherit", transition: "background 0.2s" }}>
+                      {qIndex + 1 === questions.length ? "סיום המבחן ←" : "שאלה הבאה ←"}
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -675,6 +707,31 @@ function ResultHeader({ answers, questions, name }) {
 // ── ReviewItem ────────────────────────────────────────────
 function ReviewItem({ q, a, isCorrect, isSkip, index }) {
   const [open, setOpen] = useState(false);
+  const isOpenQ = q.content?.question_type === "open" || !q.content?.options?.length;
+
+  // ── Open question: show student's text + model answer (not auto-graded) ──
+  if (isOpenQ) {
+    return (
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 8, background: C.white }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5, marginBottom: 6 }}>{q.content.question_text}</div>
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 2 }}>תשובתך:</div>
+            <div style={{ fontSize: 13, color: C.text, background: C.bg, borderRadius: 8, padding: "8px 10px", lineHeight: 1.6 }}>
+              {a?.text_answer?.trim() ? a.text_answer : <span style={{ color: C.muted }}>לא נענה</span>}
+            </div>
+          </div>
+          <span style={{ fontSize: 18, flexShrink: 0, background: "#EEEDFE", color: "#534AB7", borderRadius: 8, padding: "2px 8px" }}>שאלה פתוחה</span>
+        </div>
+        {q.content.model_answer && (
+          <div style={{ background: "#E1F5EE", border: `1px solid #9FD9C7`, borderRadius: 10, padding: "10px 12px", marginTop: 10, fontSize: 12, color: "#0F6E56", lineHeight: 1.7 }}>
+            <strong>תשובה לדוגמה: </strong>{q.content.model_answer}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const border = isSkip ? C.border : isCorrect ? "#5DCAA5" : "#F09595";
   const bg     = isSkip ? C.white  : isCorrect ? "#E1F5EE22" : "#FCEBEB22";
   return (
