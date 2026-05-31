@@ -35,16 +35,21 @@ const StatusBadge = ({ status }) => (
   </span>
 );
 
+// Router: pick the dashboard by role. Only calls useAuth (one hook) before
+// returning, so no Rules-of-Hooks violation regardless of which one renders.
 export default function Dashboard() {
-  const { user, profile, fetchProfile } = useAuth();
-  const navigate = useNavigate();
-
-  // Route to role-specific dashboard
+  const { profile } = useAuth();
   const role = profile?.school_type;
   if (role === "student")        return <StudentDashboard />;
   if (role === "parent")         return <ParentDashboard />;
   if (role === "company")        return <CompanyDashboard />;
   if (role === "private_tutor")  return <TutorDashboard />;
+  return <TeacherDashboard />;
+}
+
+function TeacherDashboard() {
+  const { user, profile, fetchProfile } = useAuth();
+  const navigate = useNavigate();
 
   const [exams,      setExams]      = useState([]);
   const [students,   setStudents]   = useState([]);
