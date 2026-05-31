@@ -36,6 +36,13 @@ export default function StudentsPage() {
   const [editStudent,     setEditStudent]     = useState(null); // student obj or null
   const [editClass,       setEditClass]       = useState(null);
   const [search,          setSearch]          = useState("");
+  const [mobile,          setMobile]          = useState(typeof window !== "undefined" && window.innerWidth < 640);
+
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 640);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
 
   useEffect(() => { if (user) load(); }, [user]);
 
@@ -179,10 +186,10 @@ export default function StudentsPage() {
         );
       })()}
 
-      <div style={{ display: "flex", gap: 14 }}>
+      <div style={{ display: "flex", gap: 14, flexDirection: mobile ? "column" : "row" }}>
 
         {/* ── Classes sidebar ── */}
-        <div style={{ width: 200, flexShrink: 0 }}>
+        <div style={{ width: mobile ? "100%" : 200, flexShrink: 0 }}>
           <div style={{ background: C.white, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>
             <ClassItem
               label="כל התלמידים"
