@@ -12,6 +12,8 @@ import SelfTestPage      from "./SelfTestPage";
 import PastExamsPage     from "./PastExamsPage";
 import SettingsPage      from "./SettingsPage";
 import AssistantWidget   from "./AssistantWidget";
+import AccessibilityWidget from "./AccessibilityWidget";
+import { TermsPage, PrivacyPage, AccessibilityStatementPage } from "./LegalPages";
 import StudentExamView from "./StudentExamView";
 import InsightsView from "./InsightsView";
 import ExamsList from "./ExamsList";
@@ -451,6 +453,9 @@ export default function App() {
         <Routes>
           <Route path="/"          element={<LandingPage />} />
           <Route path="/login"     element={<LoginPage />} />
+          <Route path="/terms"                    element={<TermsPage />} />
+          <Route path="/privacy"                  element={<PrivacyPage />} />
+          <Route path="/accessibility-statement"  element={<AccessibilityStatementPage />} />
           <Route path="/self-test" element={
             <ProtectedRoute><SelfTestPage /></ProtectedRoute>
           } />
@@ -496,6 +501,7 @@ export default function App() {
           <Route path="/student"       element={<StudentPortal />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <AccessibilityWidget />
       </BrowserRouter>
     </AuthProvider>
   );

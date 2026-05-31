@@ -184,9 +184,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ background: C.text, padding: "20px 24px", textAlign: "center" }}>
+      <footer style={{ background: C.text, padding: "24px", textAlign: "center" }}>
+        <div style={{ display: "flex", gap: 18, justifyContent: "center", flexWrap: "wrap", marginBottom: 12 }}>
+          <a href="/terms" style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>תנאי שימוש</a>
+          <a href="/privacy" style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>מדיניות פרטיות</a>
+          <a href="/accessibility-statement" style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>הצהרת נגישות</a>
+        </div>
         <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
-          © 2025 ExamAI · כל הזכויות שמורות
+          © 2026 ExamAI · כל הזכויות שמורות
         </div>
       </footer>
     </div>
