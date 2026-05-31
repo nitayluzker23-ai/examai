@@ -73,7 +73,7 @@ export default function LandingPage() {
           </p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <button onClick={() => navigate("/login?signup=1")}
-              style={{ padding: mobile ? "12px 28px" : "14px 36px", borderRadius: 14, border: "none", background: C.purple, color: "white", fontSize: mobile ? 15 : 17, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 20px rgba(43,41,37,0.20)", width: mobile ? "100%" : "auto" }}>
+              style={{ padding: mobile ? "12px 28px" : "14px 36px", borderRadius: 14, border: "none", background: "#C2683D", color: "white", fontSize: mobile ? 15 : 17, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 6px 20px rgba(194,104,61,0.30)", width: mobile ? "100%" : "auto" }}>
               התחל בחינם ←
             </button>
             {!mobile && (
