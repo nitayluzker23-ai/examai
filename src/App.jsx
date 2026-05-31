@@ -8,8 +8,9 @@ import ExamBuilder from "./ExamBuilder";
 import LandingPage from "./LandingPage";
 import OnboardingFlow from "./OnboardingFlow";
 import Dashboard from "./Dashboard";
-import SelfTestPage  from "./SelfTestPage";
-import SettingsPage  from "./SettingsPage";
+import SelfTestPage      from "./SelfTestPage";
+import SettingsPage      from "./SettingsPage";
+import AssistantWidget   from "./AssistantWidget";
 import StudentExamView from "./StudentExamView";
 import InsightsView from "./InsightsView";
 import ExamsList from "./ExamsList";
@@ -170,6 +171,7 @@ function TeacherLayout({ children }) {
           </div>
         )}
         {children}
+        <AssistantWidget />
       </main>
       {mobile && (
         <nav style={{ position: "fixed", bottom: 0, right: 0, left: 0, background: C.white, borderTop: `1px solid ${C.border}`, display: "flex", zIndex: 50, height: 60 }}>

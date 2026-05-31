@@ -23,21 +23,24 @@ const FEATURE_LABELS = {
 
 export default function AdminPage() {
   const { user, profile, loading: authLoading } = useAuth();
-  const [teachers,  setTeachers]  = useState([]);
-  const [features,  setFeatures]  = useState([]);
-  const [totals,    setTotals]    = useState({ teachers: 0, exams: 0, questions: 0, submissions: 0 });
-  const [loading,   setLoading]   = useState(true);
-  const [search,    setSearch]    = useState("");
-  const [sortBy,    setSortBy]    = useState("exam_count"); // exam_count | question_count | submission_count | joined_at
+  const [teachers,        setTeachers]        = useState([]);
+  const [features,        setFeatures]        = useState([]);
+  const [featureRequests, setFeatureRequests] = useState([]);
+  const [totals,          setTotals]          = useState({ teachers: 0, exams: 0, questions: 0, submissions: 0 });
+  const [loading,         setLoading]         = useState(true);
+  const [search,          setSearch]          = useState("");
+  const [sortBy,          setSortBy]          = useState("exam_count");
 
   useEffect(() => { if (profile?.is_admin) load(); }, [profile]);
 
   async function load() {
     setLoading(true);
-    const [{ data: teachers }, { data: features }] = await Promise.all([
+    const [{ data: teachers }, { data: features }, { data: requests }] = await Promise.all([
       supabase.from("admin_teacher_stats").select("*").order(sortBy, { ascending: false }),
       supabase.from("admin_feature_stats").select("*").order("total_uses", { ascending: false }),
+      supabase.from("feature_requests").select("*").order("created_at", { ascending: false }),
     ]);
+    setFeatureRequests(requests ?? []);
 
     const t = teachers ?? [];
     setTeachers(t);
@@ -191,6 +194,47 @@ export default function AdminPage() {
               </table>
             </div>
           </div>
+        </div>
+
+        {/* ── Feature Requests ── */}
+        <div style={{ marginTop: 28 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 14 }}>
+            📩 בקשות פיצ'ר מהעוזר AI
+            {featureRequests.filter(r => r.status === "pending").length > 0 && (
+              <span style={{ marginRight: 8, background: C.red, color: "white", borderRadius: 20, padding: "2px 9px", fontSize: 12 }}>
+                {featureRequests.filter(r => r.status === "pending").length} חדשות
+              </span>
+            )}
+          </div>
+          {featureRequests.length === 0 ? (
+            <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, padding: 24, textAlign: "center", color: C.muted, fontSize: 13 }}>
+              אין בקשות עדיין
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {featureRequests.map(r => (
+                <div key={r.id} style={{ background: C.white, borderRadius: 12, border: `1px solid ${r.status === "pending" ? C.amber : C.border}`, padding: "14px 18px", display: "flex", alignItems: "flex-start", gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>{r.request}</div>
+                    <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+                      {r.user_email} · {r.user_role} · {new Date(r.created_at).toLocaleDateString("he-IL")}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    {["pending","reviewed","done"].map(s => (
+                      <button key={s} onClick={async () => {
+                        await supabase.from("feature_requests").update({ status: s }).eq("id", r.id);
+                        setFeatureRequests(prev => prev.map(x => x.id === r.id ? { ...x, status: s } : x));
+                      }}
+                        style={{ padding: "4px 10px", borderRadius: 7, border: `1px solid ${C.border}`, background: r.status === s ? (s === "done" ? C.tealLight : s === "reviewed" ? C.purpleLight : C.amberLight) : "transparent", color: r.status === s ? (s === "done" ? C.teal : s === "reviewed" ? C.purple : C.amber) : C.muted, fontSize: 11, cursor: "pointer", fontFamily: "inherit", fontWeight: r.status === s ? 700 : 400 }}>
+                        {s === "pending" ? "ממתין" : s === "reviewed" ? "נבדק" : "בוצע"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
