@@ -7,6 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 import ExamBuilder from "./ExamBuilder";
 import LandingPage from "./LandingPage";
 import OnboardingFlow from "./OnboardingFlow";
+import Dashboard from "./Dashboard";
 import StudentExamView from "./StudentExamView";
 import InsightsView from "./InsightsView";
 import ExamsList from "./ExamsList";
@@ -261,7 +262,7 @@ function LoginPage() {
   );
 }
 
-function DashboardHome()    { return <InsightsView />; }
+function DashboardHome()    { return <Dashboard />; }
 function NewExamPage()      { return <ExamBuilder />; }
 function ExamsPage()        { return <ExamsList />; }
 function QuestionBankPage() { return <ContentUploader />; }
