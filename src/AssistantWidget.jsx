@@ -47,7 +47,7 @@ export default function AssistantWidget() {
   const inputRef  = useRef(null);
 
   // Only for paid users (or admin)
-  const isPaid = profile?.is_admin || (planConfig && planConfig.name !== "free");
+  const isPaid = profile?.is_admin || (profile?.plan && profile.plan !== "free");
   if (!user || !isPaid) return null;
 
   // Auto-scroll
@@ -82,9 +82,6 @@ export default function AssistantWidget() {
     setLoading(true);
 
     try {
-      const session = await supabase.auth.getSession();
-      const token   = session.data.session?.access_token;
-
       const { data, error } = await supabase.functions.invoke("ai-assistant", {
         body: {
           messages:    history,
@@ -93,7 +90,6 @@ export default function AssistantWidget() {
           userSubject: profile?.subject ?? "",
           lang,
         },
-        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (error) throw new Error(error.message);
@@ -109,11 +105,8 @@ export default function AssistantWidget() {
 
   const handleEscalate = async (requestText) => {
     try {
-      const session = await supabase.auth.getSession();
-      const token   = session.data.session?.access_token;
       await supabase.functions.invoke("ai-assistant", {
         body: { escalate: true, escalateText: requestText, userRole: profile?.school_type ?? "" },
-        headers: { Authorization: `Bearer ${token}` },
       });
       setEscalated(true);
       setMessages(prev => [...prev, {
