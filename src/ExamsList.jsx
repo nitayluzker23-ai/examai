@@ -16,6 +16,7 @@ export default function ExamsList() {
   const [loading, setLoading] = useState(true);
   const [copied,  setCopied]  = useState(null);
   const [qrExam,  setQrExam]  = useState(null); // exam for QR modal
+  const [emailExam, setEmailExam] = useState(null); // exam for email modal
 
   useEffect(() => { fetchExams(); }, []);
 
@@ -128,6 +129,10 @@ export default function ExamsList() {
                     style={{ padding: "7px 14px", background: "#E7F9EF", color: "#128C7E", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
                     📲 שלח בוואטסאפ
                   </button>
+                  <button onClick={() => setEmailExam(exam)}
+                    style={{ padding: "7px 14px", background: "#FEF3E2", color: "#854F0B", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                    ✉️ שלח במייל
+                  </button>
                   <button onClick={() => setQrExam(exam)}
                     style={{ padding: "7px 14px", background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
                     📱 QR
@@ -156,6 +161,67 @@ export default function ExamsList() {
       })}
 
       {qrExam && <QRModal exam={qrExam} onClose={() => setQrExam(null)} examUrl={examUrl} />}
+      {emailExam && <EmailModal exam={emailExam} onClose={() => setEmailExam(null)} />}
+    </div>
+  );
+}
+
+// ── Email Invite Modal ─────────────────────────────────────
+function EmailModal({ exam, onClose }) {
+  const [emails,  setEmails]  = useState("");
+  const [sending, setSending] = useState(false);
+  const [result,  setResult]  = useState(null); // {ok, msg}
+
+  const send = async () => {
+    const list = emails.split(/[,\n;\s]+/).map(e => e.trim()).filter(Boolean);
+    if (!list.length) { setResult({ ok: false, msg: "הזן לפחות כתובת אימייל אחת" }); return; }
+    setSending(true); setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-exam-invite", {
+        body: { to: list, examTitle: exam.title, examCode: exam.access_code },
+      });
+      if (error) {
+        // Supabase wraps non-2xx; try to read the function's JSON error
+        let msg = error.message;
+        try { const b = await error.context?.json?.(); if (b?.error) msg = b.error; } catch (_) {}
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+      setResult({ ok: true, msg: `נשלח ל-${data?.sent ?? list.length} נמענים ✓` });
+      setEmails("");
+    } catch (e) {
+      setResult({ ok: false, msg: e.message });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: C.white, borderRadius: 18, padding: 24, width: "100%", maxWidth: 420, fontFamily: "'Noto Sans Hebrew','Segoe UI',sans-serif", direction: "rtl" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <div style={{ fontSize: 17, fontWeight: 800, color: C.text }}>✉️ שליחת המבחן במייל</div>
+          <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: C.muted }}>×</button>
+        </div>
+        <div style={{ fontSize: 13, color: C.muted, marginBottom: 16 }}>{exam.title} · קוד {exam.access_code}</div>
+
+        <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 6 }}>כתובות אימייל (מופרדות בפסיק או שורה)</div>
+        <textarea value={emails} onChange={e => setEmails(e.target.value)}
+          placeholder="student1@example.com, student2@example.com"
+          rows={4}
+          style={{ width: "100%", padding: "10px 12px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 13, fontFamily: "inherit", outline: "none", background: C.bg, color: C.text, boxSizing: "border-box", resize: "vertical", direction: "ltr", textAlign: "left" }} />
+
+        {result && (
+          <div style={{ marginTop: 12, fontSize: 13, padding: "9px 12px", borderRadius: 9, background: result.ok ? C.tealLight : C.redLight, color: result.ok ? C.teal : C.red }}>
+            {result.msg}
+          </div>
+        )}
+
+        <button onClick={send} disabled={sending || !emails.trim()}
+          style={{ width: "100%", marginTop: 16, padding: 12, background: emails.trim() && !sending ? C.purple : "#AFA9EC", color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: emails.trim() && !sending ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
+          {sending ? "שולח..." : "שלח הזמנות"}
+        </button>
+      </div>
     </div>
   );
 }
