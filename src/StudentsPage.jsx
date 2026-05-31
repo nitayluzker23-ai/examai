@@ -66,11 +66,11 @@ export default function StudentsPage() {
   const classCount = (classId) => assignments.filter(a => a.class_id === classId).length;
 
   // ── CRUD ──────────────────────────────────────────────────
-  async function saveStudent({ id, name, notes, classIds }) {
+  async function saveStudent({ id, name, notes, phone, address, classIds }) {
     setError("");
     try {
       if (id) {
-        await supabase.from("students").update({ name, notes }).eq("id", id);
+        await supabase.from("students").update({ name, notes, phone: phone || null, address: address || null }).eq("id", id);
         // sync assignments
         await supabase.from("class_students").delete().eq("student_id", id);
       } else {
@@ -85,7 +85,7 @@ export default function StudentsPage() {
           return;
         }
         const { data, error: e } = await supabase.from("students")
-          .insert({ workspace_id: user.id, name, notes }).select().single();
+          .insert({ workspace_id: user.id, name, notes, phone: phone || null, address: address || null }).select().single();
         if (e) throw e;
         id = data.id;
       }
@@ -326,8 +326,10 @@ function StudentModal({ student, classes, assignments, onSave, onClose, error })
   const initClassIds = student
     ? assignments.filter(a => a.student_id === student.id).map(a => a.class_id)
     : [];
-  const [name,     setName]     = useState(student?.name ?? "");
-  const [notes,    setNotes]    = useState(student?.notes ?? "");
+  const [name,     setName]     = useState(student?.name    ?? "");
+  const [notes,    setNotes]    = useState(student?.notes   ?? "");
+  const [phone,    setPhone]    = useState(student?.phone   ?? "");
+  const [address,  setAddress]  = useState(student?.address ?? "");
   const [classIds, setClassIds] = useState(initClassIds);
   const [saving,   setSaving]   = useState(false);
 
@@ -337,7 +339,7 @@ function StudentModal({ student, classes, assignments, onSave, onClose, error })
   const handle = async () => {
     if (!name.trim()) return;
     setSaving(true);
-    await onSave({ id: student?.id, name: name.trim(), notes: notes.trim() || null, classIds });
+    await onSave({ id: student?.id, name: name.trim(), notes: notes.trim() || null, phone: phone.trim() || null, address: address.trim() || null, classIds });
     setSaving(false);
   };
 
@@ -345,6 +347,24 @@ function StudentModal({ student, classes, assignments, onSave, onClose, error })
     <Modal title={student ? "עריכת תלמיד" : "הוספת תלמיד"} onClose={onClose}>
       <Label>שם מלא</Label>
       <Input value={name} onChange={setName} placeholder="שם פרטי ושם משפחה" autoFocus />
+
+      <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+            <span style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>טלפון</span>
+            <span style={{ fontSize: 10, color: C.muted, background: "#f3f4f6", borderRadius: 20, padding: "1px 7px" }}>לא חובה</span>
+          </div>
+          <Input value={phone} onChange={setPhone} placeholder="050-0000000" type="tel" />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+            <span style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>כתובת</span>
+            <span style={{ fontSize: 10, color: C.muted, background: "#f3f4f6", borderRadius: 20, padding: "1px 7px" }}>לא חובה</span>
+          </div>
+          <Input value={address} onChange={setAddress} placeholder="עיר, רחוב..." />
+        </div>
+      </div>
+
       <Label>הערות (אופציונלי)</Label>
       <Input value={notes} onChange={setNotes} placeholder="למשל: לקות למידה, צרכים מיוחדים..." />
 
