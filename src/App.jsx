@@ -8,6 +8,7 @@ import ExamBuilder from "./ExamBuilder";
 import LandingPage from "./LandingPage";
 import OnboardingFlow from "./OnboardingFlow";
 import Dashboard from "./Dashboard";
+import SelfTestPage from "./SelfTestPage";
 import StudentExamView from "./StudentExamView";
 import InsightsView from "./InsightsView";
 import ExamsList from "./ExamsList";
@@ -446,6 +447,9 @@ export default function App() {
         <Routes>
           <Route path="/"          element={<LandingPage />} />
           <Route path="/login"     element={<LoginPage />} />
+          <Route path="/self-test" element={
+            <ProtectedRoute><SelfTestPage /></ProtectedRoute>
+          } />
           <Route path="/onboarding" element={
             <ProtectedRoute skipOnboarding><OnboardingFlow /></ProtectedRoute>
           } />

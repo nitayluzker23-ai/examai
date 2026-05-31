@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "./App";
 import { printStudentReport } from "./printUtils";
 import { useAuth } from "./App";
@@ -71,9 +72,16 @@ function shuffleAnswers(questions) {
 // ═══════════════════════════════════════════════════════════
 export default function StudentExamView({ initialCode } = {}) {
   const { user } = useAuth() ?? {};
+  const navigate = useNavigate();
+
+  // Self-test mode: read ?selftest=1&name=... from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const isSelfTest = urlParams.get("selftest") === "1";
+  const urlName    = urlParams.get("name") ?? "";
+
   const [phase, setPhase]         = useState("lobby");    // lobby | briefing | exam | break | done
   const [code, setCode]           = useState(initialCode ?? "");
-  const [name, setName]           = useState("");
+  const [name, setName]           = useState(isSelfTest && urlName ? urlName : "");
   const [exam, setExam]           = useState(null);
   const [questions, setQuestions] = useState([]);
   const [qIndex, setQIndex]       = useState(0);
@@ -131,6 +139,13 @@ export default function StudentExamView({ initialCode } = {}) {
     if (timeLeft !== 0 || !exam) return;
     if (exam.config?.mode === "timed") advanceQuestion(true);
   }, [timeLeft]); // advanceQuestion intentionally omitted — recreated each render with fresh state
+
+  // ── Auto-start in selftest mode ──────────────────────────
+  useEffect(() => {
+    if (isSelfTest && code && urlName) {
+      fetchExam();
+    }
+  }, []); // eslint-disable-line
 
   // ── Fetch exam by code ──────────────────────────────────
   const fetchExam = async () => {
@@ -481,11 +496,23 @@ export default function StudentExamView({ initialCode } = {}) {
         {phase === "done" && (
           <div>
             <ResultHeader answers={answers} questions={questions} name={name} />
-            <div style={{ textAlign: "center", marginTop: 10 }}>
+            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
               <button onClick={() => printStudentReport(exam, questions, answers, name)}
-                style={{ fontSize: 13, fontWeight: 600, padding: "8px 18px", borderRadius: 10, border: "none", background: "#534AB7", color: "white", cursor: "pointer", fontFamily: "inherit" }}>
-                🖨 הורד דוח אישי PDF
+                style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: "9px 14px", borderRadius: 10, border: "none", background: "#534AB7", color: "white", cursor: "pointer", fontFamily: "inherit", minWidth: 140 }}>
+                🖨 הורד דוח PDF
               </button>
+              {isSelfTest && (
+                <>
+                  <button onClick={() => { setPhase("lobby"); setAnswers([]); setQIndex(0); }}
+                    style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: "9px 14px", borderRadius: 10, border: `1px solid ${C.purple}`, background: C.purpleLight, color: C.purple, cursor: "pointer", fontFamily: "inherit", minWidth: 140 }}>
+                    🔁 נסה שוב
+                  </button>
+                  <button onClick={() => navigate("/self-test")}
+                    style={{ flex: 1, fontSize: 13, fontWeight: 600, padding: "9px 14px", borderRadius: 10, border: `1px solid ${C.border}`, background: C.white, color: C.text, cursor: "pointer", fontFamily: "inherit", minWidth: 140 }}>
+                    🆕 בחינה חדשה
+                  </button>
+                </>
+              )}
             </div>
             <TopicBreakdown answers={answers} questions={questions} />
             <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 20, boxShadow: "0 1px 8px rgba(83,74,183,0.06)", marginTop: 12 }}>
