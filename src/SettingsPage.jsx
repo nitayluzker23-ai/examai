@@ -156,10 +156,16 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        {/* Show current selection */}
+        {/* Show current selection with clear button */}
         {subject && (
-          <div style={{ marginTop: 10, fontSize: 12, color: C.teal, fontWeight: 600 }}>
-            ✓ נבחר: {subject}
+          <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: C.tealLight, border: `1px solid #9FD9C7`, borderRadius: 20, padding: "5px 8px 5px 14px" }}>
+              <span style={{ fontSize: 13, color: C.teal, fontWeight: 700 }}>✓ {subject}</span>
+              <button onClick={() => setSubject("")}
+                style={{ background: C.teal, border: "none", color: "white", width: 18, height: 18, borderRadius: "50%", fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1, padding: 0, fontFamily: "inherit" }}>
+                ×
+              </button>
+            </div>
           </div>
         )}
       </div>
