@@ -74,6 +74,7 @@ export default function ExamBuilder() {
   // Step 2 — inline question builder
   const [inlineTab,    setInlineTab]    = useState("ai");   // "ai" | "manual"
   const [inlineText,   setInlineText]   = useState("");
+  const [inlineFocus,  setInlineFocus]  = useState("");     // specific instructions / focus topics
   const [inlineQCount, setInlineQCount] = useState(5);
   const [generatingQ,  setGeneratingQ]  = useState(false);
   const [addedQs,      setAddedQs]      = useState([]);     // questions added so far
@@ -152,8 +153,12 @@ export default function ExamBuilder() {
     if (!savedExam || !inlineText.trim()) return;
     setGeneratingQ(true); setInlineError("");
     try {
+      // Prepend focus instructions so the AI emphasises what the teacher wants
+      const focusText = inlineFocus.trim()
+        ? `הנחיות ליצירת השאלות (התמקד בכך): ${inlineFocus.trim()}\n\n${inlineText.trim()}`
+        : inlineText.trim();
       const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
-        body: { text: inlineText.trim(), num_questions: inlineQCount },
+        body: { text: focusText, num_questions: inlineQCount },
         headers: { Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` },
       });
       if (fnErr) throw new Error(fnErr.message);
@@ -504,7 +509,19 @@ export default function ExamBuilder() {
                     </div>
                   )}
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, marginBottom: 8 }}>
+                  {/* Focus / specific instructions */}
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: C.text, marginBottom: 5 }}>על מה להתמקד? (אופציונלי)</div>
+                    <textarea
+                      value={inlineFocus}
+                      onChange={e => setInlineFocus(e.target.value)}
+                      placeholder='למשל: "התמקד בפרקים 3-4, דגש על חישובים ופחות על הגדרות"'
+                      rows={2}
+                      style={{ width: "100%", padding: "9px 12px", border: `1px solid ${C.border}`, borderRadius: 10, fontSize: 13, fontFamily: "inherit", resize: "vertical", outline: "none", background: C.bg, color: C.text, boxSizing: "border-box", lineHeight: 1.5 }}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, marginBottom: 8 }}>
                     <span style={{ fontSize: 12, color: C.muted }}>מספר שאלות:</span>
                     <select value={inlineQCount} onChange={e => setInlineQCount(Number(e.target.value))}
                       style={{ fontSize: 12, padding: "5px 8px", borderRadius: 8, border: `1px solid ${C.border}`, fontFamily: "inherit", background: C.white }}>
