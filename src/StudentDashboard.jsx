@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Rocket, FolderOpen, ClipboardList, BarChart3, Trophy } from "lucide-react";
 import { supabase, useAuth } from "./App";
 
 const C = {
@@ -84,8 +85,8 @@ export default function StudentDashboard() {
 
       {/* Greeting */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>
-          {firstName ? `שלום, ${firstName} 👋` : "לוח הבקרה שלי"}
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: C.text, margin: 0 }}>
+          {firstName ? `שלום, ${firstName}` : "לוח הבקרה שלי"}
         </h1>
         <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>בחן את עצמך ועקוב אחר ההתקדמות שלך</div>
       </div>
@@ -93,7 +94,7 @@ export default function StudentDashboard() {
       {/* BIG CTA */}
       <button onClick={() => navigate("/self-test")}
         style={{ width: "100%", padding: "20px 24px", background: `linear-gradient(135deg, ${C.purple} 0%, #211F1A 100%)`, color: "white", border: "none", borderRadius: 18, fontSize: 18, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", marginBottom: 10, boxShadow: "0 6px 24px rgba(43,41,37,0.20)", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-        <span style={{ fontSize: 28 }}>🚀</span>
+        <Rocket size={26} strokeWidth={1.75} />
         <div style={{ textAlign: "right" }}>
           <div>בחן את עצמי עכשיו</div>
           <div style={{ fontSize: 13, fontWeight: 400, opacity: 0.85, marginTop: 2 }}>העלה חומר לימוד וקבל בחינה מיד</div>
@@ -103,7 +104,7 @@ export default function StudentDashboard() {
       {/* Past exams CTA */}
       <button onClick={() => navigate("/past-exams")}
         style={{ width: "100%", padding: "14px 24px", background: `linear-gradient(135deg, ${C.amber} 0%, #6b3d08 100%)`, color: "white", border: "none", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-        <span style={{ fontSize: 22 }}>📂</span>
+        <FolderOpen size={22} strokeWidth={1.75} />
         <div style={{ textAlign: "right" }}>
           <div>מבחני עבר</div>
           <div style={{ fontSize: 12, fontWeight: 400, opacity: 0.85, marginTop: 1 }}>נתח מבחנים קודמים ·חזה נושאים · צור מבחן בסגנון</div>
@@ -114,12 +115,16 @@ export default function StudentDashboard() {
       {stats.total > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
           {[
-            { label: "בחינות", value: stats.total,        icon: "📋", color: C.purple, bg: C.purpleLight },
-            { label: "ממוצע",  value: stats.avg ?? "—",   icon: "📊", color: C.teal,   bg: C.tealLight  },
-            { label: "שיא",    value: stats.best ?? "—",  icon: "🏆", color: C.amber,  bg: C.amberLight },
+            { label: "בחינות", value: stats.total,        Icon: ClipboardList, color: C.purple, bg: C.purpleLight },
+            { label: "ממוצע",  value: stats.avg ?? "—",   Icon: BarChart3,     color: C.teal,   bg: C.tealLight  },
+            { label: "שיא",    value: stats.best ?? "—",  Icon: Trophy,        color: C.amber,  bg: C.amberLight },
           ].map((s, i) => (
             <div key={i} style={{ background: C.white, borderRadius: 14, padding: "14px 10px", border: `1px solid ${C.border}`, textAlign: "center" }}>
-              <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 7 }}>
+                <div style={{ width: 34, height: 34, borderRadius: 9, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <s.Icon size={18} color={s.color} strokeWidth={1.75} />
+                </div>
+              </div>
               <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
               <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{s.label}</div>
             </div>
@@ -175,12 +180,14 @@ export default function StudentDashboard() {
         </div>
       ) : (
         <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: "36px 24px", textAlign: "center" }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📖</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+            <FolderOpen size={40} color={C.purpleMid} strokeWidth={1.5} />
+          </div>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 6 }}>עדיין אין בחינות</div>
           <div style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>לחץ על "בחן את עצמי" כדי להתחיל</div>
           <button onClick={() => navigate("/self-test")}
-            style={{ padding: "11px 28px", background: C.purple, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
-            🚀 בחן את עצמי
+            style={{ padding: "11px 28px", background: C.purple, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <Rocket size={16} strokeWidth={1.75} /> בחן את עצמי
           </button>
         </div>
       )}
