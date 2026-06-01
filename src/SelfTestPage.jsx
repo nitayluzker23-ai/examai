@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { GraduationCap, FolderOpen, Rocket, BookOpen, RotateCw, Play, Target, MessageSquare, FileText, Shapes } from "lucide-react";
 import { supabase, useAuth } from "./App";
+import GenerationProgress from "./GenerationProgress";
 import * as pdfjsLib from "pdfjs-dist";
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -211,14 +212,15 @@ export default function SelfTestPage() {
 
   // ── GENERATING SCREEN ──────────────────────────────────────
   if (phase === "generating") return (
-    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Noto Sans Hebrew',sans-serif", direction: "rtl" }}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}`}</style>
-      <div style={{ textAlign: "center", padding: 32 }}>
-        <div style={{ width: 56, height: 56, border: `4px solid ${C.purpleLight}`, borderTopColor: C.purple, borderRadius: "50%", animation: "spin 0.9s linear infinite", margin: "0 auto 20px" }} />
-        <div style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 8 }}>מייצר שאלות...</div>
-        <div style={{ fontSize: 14, color: C.muted, animation: "pulse 2s ease-in-out infinite" }}>
-          AI קורא את החומר ובונה {qCount} שאלות בשבילך
-        </div>
+    <div style={{ minHeight: "100vh", background: C.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, direction: "rtl" }}>
+      <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.border}`, width: "100%", maxWidth: 460 }}>
+        <GenerationProgress estSeconds={Math.max(20, qCount * 3)} stages={[
+          "קורא את החומר שהעלית",
+          "מזהה את הנושאים המרכזיים",
+          `בונה ${qCount} שאלות`,
+          "מנסח הסברים לכל תשובה",
+          "כמעט מוכן...",
+        ]} />
       </div>
     </div>
   );

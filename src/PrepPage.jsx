@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FolderOpen, Image as ImageIcon, FileText, X, Rocket, Lock } from "lucide-react";
 import { supabase, useAuth } from "./App";
+import GenerationProgress from "./GenerationProgress";
 import * as pdfjsLib from "pdfjs-dist";
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url
@@ -191,10 +192,14 @@ export default function PrepPage() {
 
       <div style={{ maxWidth: 620, margin: "0 auto", padding: mobile ? "20px 16px" : "28px 20px" }}>
         {busy ? (
-          <div style={{ textAlign: "center", padding: 50 }}>
-            <div style={{ width: 48, height: 48, border: `4px solid ${C.purpleLight}`, borderTopColor: C.accent, borderRadius: "50%", animation: "spin 0.9s linear infinite", margin: "0 auto 18px" }} />
-            <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>בונה מבחן תרגול...</div>
-            <div style={{ fontSize: 13, color: C.muted, marginTop: 6 }}>ה-AI קורא את כל החומר שהעלית</div>
+          <div style={{ background: C.white, borderRadius: 18, border: `1px solid ${C.border}` }}>
+            <GenerationProgress estSeconds={Math.max(25, numQ * 3)} stages={[
+              "קורא את התמונות והקבצים שהעלית",
+              "מזהה את הנושאים בחומר",
+              `בונה ${numQ} שאלות תרגול`,
+              "מנסח הסברים",
+              "כמעט מוכן...",
+            ]} />
           </div>
         ) : (
           <>

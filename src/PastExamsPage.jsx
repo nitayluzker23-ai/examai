@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FolderOpen, Search, BarChart3, Lightbulb, Rocket, RotateCw } from "lucide-react";
 import { supabase, useAuth } from "./App";
+import GenerationProgress from "./GenerationProgress";
 import * as pdfjsLib from "pdfjs-dist";
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url
@@ -161,6 +162,21 @@ export default function PastExamsPage() {
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: mobile ? "20px 16px" : "28px 20px" }}>
 
+        {analyzing && !analysis && (
+          <div style={{ background: C.white, borderRadius: 18, border: `1px solid ${C.border}` }}>
+            <GenerationProgress estSeconds={45} stages={[
+              "קורא את מבחני העבר שהעלית",
+              "מזהה נושאים חוזרים בין השנים",
+              "מנתח את מבנה המבחן ורמות הקושי",
+              "חוזה נושאים צפויים לשנה זו",
+              "יוצר שאלות בסגנון המבחנים",
+              "כמעט מוכן...",
+            ]} />
+          </div>
+        )}
+
+      {!analyzing && (<>
+
         {/* Upload zone */}
         <div style={{ background: C.white, borderRadius: 18, border: `1px solid ${C.border}`, padding: mobile ? 20 : 28, marginBottom: 16 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>שלב 1 — העלה מבחני עבר</div>
@@ -239,6 +255,8 @@ export default function PastExamsPage() {
             ) : <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Search size={18} strokeWidth={1.75} /> נתח {readyCount > 0 ? readyCount : ""} מבחנים וצור שאלות</span>}
           </button>
         )}
+
+      </>)}
 
         {/* Analysis results */}
         {analysis && (
