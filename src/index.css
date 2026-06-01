@@ -16,9 +16,9 @@ html, body {
   color-scheme: light;
 }
 
-/* Serif display font for headings (editorial, warm-minimal look) */
-h1, h2, h3, .serif {
-  font-family: 'Frank Ruhl Libre', Georgia, serif;
+/* Single unified font — Assistant — across the whole app */
+h1, h2, h3, h4, button, input, textarea, select {
+  font-family: 'Assistant', system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
