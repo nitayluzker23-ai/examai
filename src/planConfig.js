@@ -7,7 +7,7 @@ export const PLANS = {
     labelEn:       "free",
     color:         "#6b7280",
     bg:            "#f3f4f6",
-    exams_per_day: 3,
+    exams_per_day: 1,
     text_chars:    4500,   // 3 pages
     max_students:  1,
     features: {

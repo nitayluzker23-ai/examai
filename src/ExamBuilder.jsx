@@ -54,7 +54,7 @@ function generateCode() {
 }
 
 export default function ExamBuilder() {
-  const { user } = useAuth();
+  const { user, planLimit } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ name: "", subject: "", group: "" });
@@ -101,6 +101,22 @@ export default function ExamBuilder() {
     (async () => {
       setSaving(true); setSaveError("");
       try {
+        // ── Plan limit: exams per day ──────────────────────────
+        const today = new Date().toISOString().slice(0, 10);
+        const { count } = await supabase
+          .from("exams")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace_id", user.id)
+          .gte("created_at", `${today}T00:00:00Z`);
+        const maxPerDay = planLimit("exams_per_day");
+        if (maxPerDay !== Infinity && (count ?? 0) >= maxPerDay) {
+          setSaveError(maxPerDay === 1
+            ? "תוכנית ההתנסות מאפשרת מבחן אחד. שדרג תוכנית כדי ליצור עוד מבחנים."
+            : `הגעת למגבלת ${maxPerDay} מבחנים ליום. נסה שוב מחר או שדרג תוכנית.`);
+          setSaving(false);
+          return;
+        }
+
         const code = generateCode();
         const { data, error } = await supabase.from("exams").insert({
           workspace_id: user.id,
