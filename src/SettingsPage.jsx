@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Settings, Palette } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
 
@@ -87,7 +88,7 @@ export default function SettingsPage() {
     <div style={{ padding: "28px 20px", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl", maxWidth: 520, margin: "0 auto" }}>
 
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>⚙️ הגדרות</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: C.text, margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Settings size={21} strokeWidth={1.75} /> הגדרות</h1>
         <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>עדכן את הפרופיל שלך</div>
       </div>
 
@@ -204,7 +205,7 @@ export default function SettingsPage() {
       {/* Branding link */}
       <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>🎨 מיתוג</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.text, display: "flex", alignItems: "center", gap: 6 }}><Palette size={15} color={C.purple} /> מיתוג</div>
           <div style={{ fontSize: 11, color: C.muted }}>לוגו, שם וצבע ראשי למבחנים</div>
         </div>
         <button onClick={() => navigate("/dashboard/branding")}
