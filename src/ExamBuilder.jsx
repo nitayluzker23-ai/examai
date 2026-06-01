@@ -100,51 +100,52 @@ export default function ExamBuilder() {
   const totalTime = sessions.reduce((a, s) => a + s.mins, 0) + breakMins * (sessions.length - 1);
   const canNext = step === 0 ? (form.name.trim() && form.subject.trim()) : step === 1 ? mode !== null : true;
 
-  // Auto-save exam when user reaches step 2
-  useEffect(() => {
-    if (step !== 2 || savedExamRef.current) return;
-    (async () => {
-      setSaving(true); setSaveError("");
-      try {
-        // ── Plan limit: exams per month ────────────────────────
-        const now = new Date();
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-        const { count } = await supabase
-          .from("exams")
-          .select("id", { count: "exact", head: true })
-          .eq("workspace_id", user.id)
-          .gte("created_at", monthStart);
-        const maxPerMonth = planLimit("exams_per_month");
-        if (maxPerMonth !== Infinity && (count ?? 0) >= maxPerMonth) {
-          setSaveError(maxPerMonth === 1
-            ? "תוכנית ההתנסות מאפשרת מבחן אחד. שדרג תוכנית כדי ליצור עוד מבחנים."
-            : `הגעת למגבלת ${maxPerMonth} מבחנים החודש. שדרג תוכנית או נסה שוב בחודש הבא.`);
-          setSaving(false);
-          return;
-        }
-
-        const code = generateCode();
-        const { data, error } = await supabase.from("exams").insert({
-          workspace_id: user.id,
-          title:        form.name,
-          subject:      form.subject,
-          group_name:   form.group || null,
-          config:       buildConfig(),
-          status:       "draft",
-          access_code:  code,
-          opens_at:     dtToISO(opensAt),
-          closes_at:    dtToISO(closesAt),
-        }).select().single();
-        if (error) throw error;
-        savedExamRef.current = data;
-        setSavedExam(data);
-      } catch (e) {
-        setSaveError(e.message);
-      } finally {
+  // Create the exam lazily — only when actually needed (first question / finishing).
+  // Avoids leaving empty "orphan" draft exams when a user abandons the builder.
+  const ensureExam = async () => {
+    if (savedExamRef.current) return savedExamRef.current;
+    setSaving(true); setSaveError("");
+    try {
+      // ── Plan limit: exams per month ────────────────────────
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { count } = await supabase
+        .from("exams")
+        .select("id", { count: "exact", head: true })
+        .eq("workspace_id", user.id)
+        .gte("created_at", monthStart);
+      const maxPerMonth = planLimit("exams_per_month");
+      if (maxPerMonth !== Infinity && (count ?? 0) >= maxPerMonth) {
+        setSaveError(maxPerMonth === 1
+          ? "תוכנית ההתנסות מאפשרת מבחן אחד. שדרג תוכנית כדי ליצור עוד מבחנים."
+          : `הגעת למגבלת ${maxPerMonth} מבחנים החודש. שדרג תוכנית או נסה שוב בחודש הבא.`);
         setSaving(false);
+        return null;
       }
-    })();
-  }, [step]); // eslint-disable-line
+
+      const code = generateCode();
+      const { data, error } = await supabase.from("exams").insert({
+        workspace_id: user.id,
+        title:        form.name,
+        subject:      form.subject,
+        group_name:   form.group || null,
+        config:       buildConfig(),
+        status:       "draft",
+        access_code:  code,
+        opens_at:     dtToISO(opensAt),
+        closes_at:    dtToISO(closesAt),
+      }).select().single();
+      if (error) throw error;
+      savedExamRef.current = data;
+      setSavedExam(data);
+      return data;
+    } catch (e) {
+      setSaveError(e.message);
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const buildConfig = () => {
     if (mode === "flexible") return { mode: "flexible", total_minutes: flexTime, can_go_back: canGoBack };
@@ -154,7 +155,9 @@ export default function ExamBuilder() {
 
   // Generate questions inline via AI
   const generateInline = async () => {
-    if (!savedExam || !inlineText.trim()) return;
+    if (!inlineText.trim()) return;
+    const exam = await ensureExam();
+    if (!exam) return;
     setGeneratingQ(true); setInlineError("");
     try {
       // Prepend focus instructions so the AI emphasises what the teacher wants
@@ -177,7 +180,7 @@ export default function ExamBuilder() {
       if (!newQs.length) throw new Error("ה-AI לא החזיר שאלות, נסה טקסט ארוך יותר");
 
       const rows = newQs.map((q, i) => ({
-        exam_id:    savedExam.id,
+        exam_id:    exam.id,
         sort_order: addedQs.length + i,
         difficulty: "Medium",
         content: {
@@ -204,9 +207,10 @@ export default function ExamBuilder() {
 
   // Add a single manual question
   const addManualQ = async ({ questionText, options, correctIndex, difficulty }) => {
-    if (!savedExam) return;
+    const exam = await ensureExam();
+    if (!exam) return;
     const { data, error } = await supabase.from("questions").insert({
-      exam_id:    savedExam.id,
+      exam_id:    exam.id,
       sort_order: addedQs.length,
       difficulty: difficulty ?? "Medium",
       content: { question_text: questionText, options, correct_answer_index: correctIndex },
@@ -575,9 +579,9 @@ export default function ExamBuilder() {
                     </select>
                   </div>
                   {inlineError && <div style={{ fontSize: 12, color: C.red, marginBottom: 8 }}>{inlineError}</div>}
-                  <button onClick={generateInline} disabled={!savedExam || !inlineText.trim() || generatingQ}
-                    style={{ width: "100%", padding: 11, background: savedExam && inlineText.trim() && !generatingQ ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                    {generatingQ ? (
+                  <button onClick={generateInline} disabled={!inlineText.trim() || generatingQ || saving}
+                    style={{ width: "100%", padding: 11, background: inlineText.trim() && !generatingQ && !saving ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    {(generatingQ || saving) ? (
                       <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                         <span style={{ width: 13, height: 13, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.8s linear infinite", display: "inline-block" }} />
                         מייצר שאלות...
@@ -589,9 +593,7 @@ export default function ExamBuilder() {
 
               {/* Manual Tab */}
               {inlineTab === "manual" && (
-                savedExam
-                  ? <InlineManualForm onSave={addManualQ} />
-                  : <div style={{ fontSize: 12, color: C.muted, textAlign: "center", padding: 20 }}>ממתין ליצירת המבחן...</div>
+                <InlineManualForm onSave={addManualQ} />
               )}
 
               {/* ── Question List ── */}
@@ -782,10 +784,10 @@ export default function ExamBuilder() {
               )}
               {step === 2 && (
                 <button
-                  onClick={() => setStep(3)}
-                  disabled={!savedExam}
-                  style={{ flex: 1, padding: 12, background: savedExam ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: savedExam ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
-                  {addedQs.length > 0 ? `סיום ושליחה (${addedQs.length} שאלות)` : "דלג →"}
+                  onClick={async () => { const ex = await ensureExam(); if (ex) setStep(3); }}
+                  disabled={saving}
+                  style={{ flex: 1, padding: 12, background: !saving ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: !saving ? "pointer" : "not-allowed", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                  {saving ? "יוצר מבחן..." : addedQs.length > 0 ? `סיום ושליחה (${addedQs.length} שאלות)` : "דלג →"}
                   <ChevronLeft size={15} />
                 </button>
               )}
