@@ -54,7 +54,9 @@ function generateCode() {
 }
 
 export default function ExamBuilder() {
-  const { user, planLimit } = useAuth();
+  const { user, planLimit, profile } = useAuth();
+  // Self-testers (student) and parents don't need a scheduled time window
+  const hideSchedule = profile?.school_type === "student" || profile?.school_type === "parent";
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ name: "", subject: "", group: "" });
@@ -322,26 +324,28 @@ export default function ExamBuilder() {
               <Field label="מקצוע / נושא" placeholder="ביולוגיה, בטיחות, שיווק..." value={form.subject} onChange={v => setForm({ ...form, subject: v })} />
               <Field label="כיתה / קבוצה (אופציונלי)" placeholder="י׳2, מחזור 2025, קבוצת מתקדמים..." value={form.group} onChange={v => setForm({ ...form, group: v })} />
 
-              {/* Schedule */}
-              <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16, marginTop: 4 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 12 }}>
-                  🗓 חלון זמן (אופציונלי)
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  <DateTimePicker label="פתיחה" value={opensAt} onChange={setOpensAt} />
-                  <DateTimePicker label="סגירה" value={closesAt} onChange={setClosesAt} />
-                </div>
-                {(dtToISO(opensAt) || dtToISO(closesAt)) && (
-                  <div style={{ fontSize: 11, color: C.muted, marginTop: 8, background: C.purpleLight, borderRadius: 8, padding: "7px 10px" }}>
-                    {(() => {
-                      const o = fmtDT(opensAt), cl = fmtDT(closesAt);
-                      if (o && !cl)  return `המבחן נפתח ${o}`;
-                      if (!o && cl)  return `המבחן נסגר ${cl}`;
-                      if (o && cl)   return `פתוח ${o} — ${cl}`;
-                    })()}
+              {/* Schedule — hidden for self-test / parent flows */}
+              {!hideSchedule && (
+                <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16, marginTop: 4 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 12 }}>
+                    🗓 חלון זמן (אופציונלי)
                   </div>
-                )}
-              </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <DateTimePicker label="פתיחה" value={opensAt} onChange={setOpensAt} />
+                    <DateTimePicker label="סגירה" value={closesAt} onChange={setClosesAt} />
+                  </div>
+                  {(dtToISO(opensAt) || dtToISO(closesAt)) && (
+                    <div style={{ fontSize: 11, color: C.muted, marginTop: 8, background: C.purpleLight, borderRadius: 8, padding: "7px 10px" }}>
+                      {(() => {
+                        const o = fmtDT(opensAt), cl = fmtDT(closesAt);
+                        if (o && !cl)  return `המבחן נפתח ${o}`;
+                        if (!o && cl)  return `המבחן נסגר ${cl}`;
+                        if (o && cl)   return `פתוח ${o} — ${cl}`;
+                      })()}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -466,10 +470,10 @@ export default function ExamBuilder() {
                             const { text, totalPages, textPages } = await extractTextFromPDF(buf);
                             setPdfInfo({ totalPages, textPages });
                             if (!text) throw new Error(`הקובץ מכיל ${totalPages} עמודים אך ללא טקסט ניתן לחילוץ — ייתכן שמדובר ב-PDF סרוק (תמונות בלבד)`);
-                            setInlineText(text);
+                            setInlineText(prev => prev.trim() ? `${prev.trim()}\n\n--- ${file.name} ---\n${text}` : text);
                           } else {
                             const text = await file.text();
-                            setInlineText(text);
+                            setInlineText(prev => prev.trim() ? `${prev.trim()}\n\n--- ${file.name} ---\n${text}` : text);
                           }
                         } catch (err) {
                           setInlineError("שגיאה בקריאת הקובץ: " + err.message);
