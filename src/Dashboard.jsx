@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ClipboardList, PenLine, Users } from "lucide-react";
 import { supabase, useAuth } from "./App";
 import StudentDashboard from "./StudentDashboard";
 import ParentDashboard  from "./ParentDashboard";
@@ -162,12 +163,16 @@ function TeacherDashboard() {
       {/* ── Stats ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
         {[
-          { label: "מבחנים",  value: showDemo ? 3  : stats.exams,       icon: "📋", color: C.purple, bg: C.purpleLight },
-          { label: "הגשות",   value: showDemo ? 42 : stats.submissions,  icon: "✍️", color: C.teal,   bg: C.tealLight  },
-          { label: "תלמידים", value: showDemo ? 6  : stats.students,     icon: "👥", color: C.amber,  bg: C.amberLight },
+          { label: "מבחנים",  value: showDemo ? 3  : stats.exams,       Icon: ClipboardList, color: C.purple, bg: C.purpleLight },
+          { label: "הגשות",   value: showDemo ? 42 : stats.submissions,  Icon: PenLine,       color: C.teal,   bg: C.tealLight  },
+          { label: "תלמידים", value: showDemo ? 6  : stats.students,     Icon: Users,         color: C.amber,  bg: C.amberLight },
         ].map((s, i) => (
           <div key={i} style={{ background: C.white, borderRadius: 14, padding: "16px 14px", border: `1px solid ${C.border}`, textAlign: "center" }}>
-            <div style={{ fontSize: 22, marginBottom: 6 }}>{s.icon}</div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <s.Icon size={20} color={s.color} strokeWidth={1.75} />
+              </div>
+            </div>
             <div style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{s.label}</div>
           </div>

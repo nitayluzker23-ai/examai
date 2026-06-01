@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Sparkles, X, ArrowUp } from "lucide-react";
 import { supabase, useAuth } from "./App";
 
 const C = {
@@ -64,8 +65,8 @@ export default function AssistantWidget() {
     setOpen(true);
     if (messages.length === 0) {
       const greeting = lang === "he"
-        ? `שלום! אני העוזר של ExamAI 🤖\nכיצד אוכל לסייע לך ב${PAGE_LABELS[location.pathname] ?? "האפליקציה"}?`
-        : `Hello! I'm ExamAI's assistant 🤖\nHow can I help you with ${PAGE_LABELS[location.pathname] ?? "the app"}?`;
+        ? `שלום! אני העוזר של ExamAI.\nכיצד אוכל לסייע לך ב${PAGE_LABELS[location.pathname] ?? "האפליקציה"}?`
+        : `Hello! I'm ExamAI's assistant.\nHow can I help you with ${PAGE_LABELS[location.pathname] ?? "the app"}?`;
       setMessages([{ role: "assistant", text: greeting, action: null }]);
     }
   };
@@ -144,16 +145,16 @@ export default function AssistantWidget() {
             animation: "pulse 3s ease-in-out infinite",
             transition: "transform 0.2s",
           }}>
-          <span style={{ fontSize: 28 }}>🤖</span>
+          <Sparkles size={26} color="white" strokeWidth={1.75} />
           <span style={{
             fontSize: 11, fontWeight: 700,
             color: "white",
-            fontFamily: "'Noto Sans Hebrew',sans-serif",
+            fontFamily: "'Assistant',sans-serif",
             writingMode: "vertical-rl",
             textOrientation: "mixed",
             letterSpacing: 2,
             opacity: 0.95,
-          }}>עוזר AI</span>
+          }}>עוזר חכם</span>
         </button>
       )}
 
@@ -172,7 +173,7 @@ export default function AssistantWidget() {
 
           {/* Header */}
           <div style={{ background: `linear-gradient(135deg, ${C.purple} 0%, #211F1A 100%)`, padding: "14px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 22 }}>🤖</span>
+            <Sparkles size={20} color="white" strokeWidth={1.75} />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "white" }}>עוזר ExamAI</div>
               <div style={{ fontSize: 11, color: "rgba(255,255,255,0.75)" }}>{currentPageLabel || "מוכן לעזור"}</div>
@@ -182,9 +183,9 @@ export default function AssistantWidget() {
               style={{ background: "rgba(255,255,255,0.15)", border: "none", color: "white", borderRadius: 8, padding: "4px 9px", fontSize: 11, cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>
               {lang === "he" ? "EN" : "עב"}
             </button>
-            <button onClick={() => setOpen(false)}
-              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.8)", cursor: "pointer", fontSize: 20, lineHeight: 1, padding: 0 }}>
-              ×
+            <button onClick={() => setOpen(false)} aria-label="סגור"
+              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.8)", cursor: "pointer", lineHeight: 1, padding: 0, display: "flex" }}>
+              <X size={18} />
             </button>
           </div>
 
@@ -262,7 +263,7 @@ export default function AssistantWidget() {
             />
             <button onClick={sendMessage} disabled={!input.trim() || loading}
               style={{ width: 38, height: 38, borderRadius: 10, background: input.trim() && !loading ? C.purple : C.purpleMid, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "background 0.2s" }}>
-              <span style={{ color: "white", fontSize: 16 }}>↑</span>
+              <ArrowUp size={16} color="white" />
             </button>
           </div>
         </div>
