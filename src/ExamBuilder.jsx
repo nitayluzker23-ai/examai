@@ -92,6 +92,8 @@ export default function ExamBuilder() {
   const [editing,      setEditing]      = useState(null);   // question id being edited
   const [editDraft,    setEditDraft]    = useState(null);   // { question_text, options, correct_answer_index }
   const [editSaving,   setEditSaving]   = useState(false);
+  const [replacingId,  setReplacingId]  = useState(null);   // question id being regenerated
+  const [genSource,    setGenSource]    = useState("");     // source material used, for "replace question"
   const savedExamRef = useRef(null);  // stable ref for useEffect
 
   const fmtSec = (s) => s < 60 ? `${s} שנ׳` : s % 60 ? `${Math.floor(s / 60)}′${s % 60}″` : `${Math.floor(s / 60)} דק׳`;
@@ -190,6 +192,7 @@ export default function ExamBuilder() {
       const { data: inserted, error: insErr } = await supabase.from("questions").insert(rows).select();
       if (insErr) throw insErr;
       setAddedQs(prev => [...prev, ...(inserted ?? [])]);
+      setGenSource(focusText); // keep source so questions can be replaced individually
       setInlineText("");
     } catch (e) {
       setInlineError(e.message);
@@ -210,6 +213,45 @@ export default function ExamBuilder() {
     }).select().single();
     if (error) { setInlineError(error.message); return; }
     setAddedQs(prev => [...prev, data]);
+  };
+
+  // Replace a single AI question with a fresh alternative from the same source
+  const replaceQuestion = async (q) => {
+    const source = (genSource || inlineText).trim();
+    if (!source) { setInlineError("אין חומר מקור להחלפה — ערוך את השאלה ידנית."); setTimeout(() => setInlineError(""), 5000); return; }
+    setReplacingId(q.id); setInlineError("");
+    try {
+      const existing = addedQs.map(x => x.content?.question_text).filter(Boolean).join(" | ");
+      const prompt = `${source}\n\nצור שאלה אחת חדשה ושונה מאלו הקיימות: ${existing}`;
+      const { data, error: fnErr } = await supabase.functions.invoke("smart-handler", {
+        body: { text: prompt, num_questions: 1 },
+        headers: { Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` },
+      });
+      if (fnErr) throw new Error(fnErr.message);
+      if (data?.error) throw new Error(data.error);
+
+      const cand = [];
+      (data?.content_structure ?? []).forEach(t => t.sub_topics?.forEach(s => s.questions?.forEach(x => cand.push(x))));
+      const nq = cand.find(x => !addedQs.some(e => e.content?.question_text === x.question_text)) || cand[0];
+      if (!nq) throw new Error("לא הצלחנו לייצר חלופה, נסה שוב");
+
+      const newContent = {
+        question_text: nq.question_text,
+        question_type: nq.question_type ?? "multiple_choice",
+        options: nq.options ?? [],
+        correct_answer_index: nq.correct_answer_index,
+        ai_explanation: nq.ai_explanation,
+        model_answer: nq.model_answer ?? null,
+        image_url: q.content?.image_url ?? undefined,
+      };
+      const { error: upErr } = await supabase.from("questions").update({ content: newContent }).eq("id", q.id);
+      if (upErr) throw upErr;
+      setAddedQs(prev => prev.map(x => x.id === q.id ? { ...x, content: newContent } : x));
+    } catch (e) {
+      setInlineError(e.message); setTimeout(() => setInlineError(""), 6000);
+    } finally {
+      setReplacingId(null);
+    }
   };
 
   const startEdit = (q) => {
@@ -609,6 +651,10 @@ export default function ExamBuilder() {
                                     </div>
                                   )}
                                   <div style={{ marginTop: 10, display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                                    <button onClick={e => { e.stopPropagation(); replaceQuestion(q); }} disabled={replacingId === q.id}
+                                      style={{ padding: "5px 14px", background: "#F3E5DB", color: "#9A4D29", border: `1px solid #C2683D`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
+                                      {replacingId === q.id ? "מחליף..." : "🔄 החלף"}
+                                    </button>
                                     <button onClick={e => { e.stopPropagation(); startEdit(q); }}
                                       style={{ padding: "5px 14px", background: C.purpleLight, color: C.purple, border: `1px solid ${C.purpleMid}`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
                                       ✏️ ערוך
