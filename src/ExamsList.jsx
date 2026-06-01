@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Link2, Share2, Mail, QrCode, Pencil, Trash2, Printer } from "lucide-react";
 import { supabase } from "./App";
 import QRCode from "qrcode";
 
@@ -122,20 +123,20 @@ export default function ExamsList() {
               {exam.access_code && (
                 <>
                   <button onClick={() => copyLink(exam.access_code)}
-                    style={{ padding: "7px 14px", background: copied === exam.access_code ? C.tealLight : C.purpleLight, color: copied === exam.access_code ? C.teal : C.purple, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
-                    {copied === exam.access_code ? "✓ הועתק!" : "🔗 העתק לינק"}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 14px", background: copied === exam.access_code ? C.tealLight : C.purpleLight, color: copied === exam.access_code ? C.teal : C.purple, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                    <Link2 size={14} />{copied === exam.access_code ? "הועתק!" : "העתק לינק"}
                   </button>
                   <button onClick={() => shareWhatsApp(exam)}
-                    style={{ padding: "7px 14px", background: "#E7F9EF", color: "#128C7E", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
-                    📲 שלח בוואטסאפ
+                    style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 14px", background: "#E7F9EF", color: "#128C7E", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                    <Share2 size={14} />שלח בוואטסאפ
                   </button>
                   <button onClick={() => setEmailExam(exam)}
-                    style={{ padding: "7px 14px", background: "#FEF3E2", color: "#9A7B3F", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
-                    ✉️ שלח במייל
+                    style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 14px", background: "#FEF3E2", color: "#9A7B3F", border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                    <Mail size={14} />שלח במייל
                   </button>
                   <button onClick={() => setQrExam(exam)}
-                    style={{ padding: "7px 14px", background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
-                    📱 QR
+                    style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 14px", background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                    <QrCode size={14} />QR
                   </button>
                 </>
               )}
@@ -144,16 +145,16 @@ export default function ExamsList() {
                 {isPublished ? "העבר לטיוטה" : "פרסם"}
               </button>
               <button onClick={() => window.location.href=`/dashboard/exam/${exam.id}/questions`}
-                style={{ padding: "7px 14px", background: C.purpleLight, color: C.purple, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
-                ✏️ עריכת שאלות
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 14px", background: C.purpleLight, color: C.purple, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}>
+                <Pencil size={14} />עריכת שאלות
               </button>
               <button onClick={() => window.open(`/exam/${exam.access_code}`, "_blank")}
                 style={{ padding: "7px 14px", background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>
                 תצוגת תלמיד
               </button>
               <button onClick={() => deleteExam(exam.id)}
-                style={{ padding: "7px 14px", background: C.redLight, color: C.red, border: "none", borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit", marginRight: "auto" }}>
-                מחק
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "7px 14px", background: C.redLight, color: C.red, border: "none", borderRadius: 8, fontSize: 12, cursor: "pointer", fontFamily: "inherit", marginRight: "auto" }}>
+                <Trash2 size={14} />מחק
               </button>
             </div>
           </div>
@@ -200,7 +201,7 @@ function EmailModal({ exam, onClose }) {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: C.white, borderRadius: 18, padding: 24, width: "100%", maxWidth: 420, fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif", direction: "rtl" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-          <div style={{ fontSize: 17, fontWeight: 800, color: C.text }}>✉️ שליחת המבחן במייל</div>
+          <div style={{ fontSize: 17, fontWeight: 800, color: C.text, display: "flex", alignItems: "center", gap: 7 }}><Mail size={18} /> שליחת המבחן במייל</div>
           <button onClick={onClose} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", color: C.muted }}>×</button>
         </div>
         <div style={{ fontSize: 13, color: C.muted, marginBottom: 16 }}>{exam.title} · קוד {exam.access_code}</div>
@@ -281,7 +282,7 @@ function QRModal({ exam, onClose, examUrl }) {
           {exam.access_code}
         </div>
         <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-          <button onClick={print} style={{ padding: "8px 16px", background: C.purpleLight, color: C.purple, border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>🖨 הדפס</button>
+          <button onClick={print} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", background: C.purpleLight, color: C.purple, border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}><Printer size={15} /> הדפס</button>
           <button onClick={download} style={{ padding: "8px 16px", background: C.purple, color: "white", border: "none", borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>⬇ הורד PNG</button>
           <button onClick={onClose} style={{ padding: "8px 14px", background: "transparent", color: C.muted, border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>סגור</button>
         </div>
