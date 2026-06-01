@@ -101,18 +101,19 @@ export default function ExamBuilder() {
     (async () => {
       setSaving(true); setSaveError("");
       try {
-        // ── Plan limit: exams per day ──────────────────────────
-        const today = new Date().toISOString().slice(0, 10);
+        // ── Plan limit: exams per month ────────────────────────
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
         const { count } = await supabase
           .from("exams")
           .select("id", { count: "exact", head: true })
           .eq("workspace_id", user.id)
-          .gte("created_at", `${today}T00:00:00Z`);
-        const maxPerDay = planLimit("exams_per_day");
-        if (maxPerDay !== Infinity && (count ?? 0) >= maxPerDay) {
-          setSaveError(maxPerDay === 1
+          .gte("created_at", monthStart);
+        const maxPerMonth = planLimit("exams_per_month");
+        if (maxPerMonth !== Infinity && (count ?? 0) >= maxPerMonth) {
+          setSaveError(maxPerMonth === 1
             ? "תוכנית ההתנסות מאפשרת מבחן אחד. שדרג תוכנית כדי ליצור עוד מבחנים."
-            : `הגעת למגבלת ${maxPerDay} מבחנים ליום. נסה שוב מחר או שדרג תוכנית.`);
+            : `הגעת למגבלת ${maxPerMonth} מבחנים החודש. שדרג תוכנית או נסה שוב בחודש הבא.`);
           setSaving(false);
           return;
         }

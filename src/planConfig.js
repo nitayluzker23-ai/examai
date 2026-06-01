@@ -3,13 +3,14 @@
 
 export const PLANS = {
   free: {
-    label:         "חינם",
-    labelEn:       "free",
-    color:         "#6b7280",
-    bg:            "#f3f4f6",
-    exams_per_day: 1,
-    text_chars:    4500,   // 3 pages
-    max_students:  1,
+    label:           "חינם",
+    labelEn:         "free",
+    color:           "#6b7280",
+    bg:              "#f3f4f6",
+    price_month:     0,
+    exams_per_month: 1,
+    text_chars:      4500,   // 3 pages
+    max_students:    1,
     features: {
       ai_text:           true,
       ai_image:          false,
@@ -24,13 +25,14 @@ export const PLANS = {
   },
 
   teacher: {
-    label:         "מורה",
-    labelEn:       "teacher",
-    color:         "#854F0B",
-    bg:            "#FAEEDA",
-    exams_per_day: 5,
-    text_chars:    9000,   // 6 pages
-    max_students:  20,
+    label:           "מורה",
+    labelEn:         "teacher",
+    color:           "#854F0B",
+    bg:              "#FAEEDA",
+    price_month:     49,
+    exams_per_month: 10,
+    text_chars:      9000,   // 6 pages
+    max_students:    20,
     features: {
       ai_text:           true,
       ai_image:          false,
@@ -45,13 +47,14 @@ export const PLANS = {
   },
 
   pro: {
-    label:         "פרו",
-    labelEn:       "pro",
-    color:         "#534AB7",
-    bg:            "#EEEDFE",
-    exams_per_day: Infinity,
-    text_chars:    Infinity,
-    max_students:  Infinity,
+    label:           "פרו",
+    labelEn:         "pro",
+    color:           "#534AB7",
+    bg:              "#EEEDFE",
+    price_month:     99,
+    exams_per_month: 20,
+    text_chars:      Infinity,
+    max_students:    Infinity,
     features: {
       ai_text:           true,
       ai_image:          true,

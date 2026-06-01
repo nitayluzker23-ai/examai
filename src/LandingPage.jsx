@@ -28,28 +28,30 @@ const PLANS = [
   {
     name: "חינם",
     price: "₪0",
-    period: "לתמיד",
-    desc: "להתנסות ולשימוש קל",
+    period: "",
+    desc: "להתנסות ראשונית",
     features: ["מבחן אחד להתנסות", "יצירת שאלות מטקסט (AI)", "תלמיד אחד", "עד 3 עמודי חומר"],
     cta: "התחל בחינם",
     highlight: false,
   },
   {
     name: "מורה",
-    price: "₪39",
+    price: "₪49",
     period: "לחודש",
     desc: "למורים ומורים פרטיים",
-    features: ["5 מבחנים ביום", "עד 20 תלמידים", "ייצוא PDF + מפתח תשובות", "מבחן חזרה אוטומטי", "תזמון מבחנים", "עד 6 עמודי חומר"],
-    cta: "התחל 14 ימי ניסיון",
+    intro: "כל מה שבחינם, ובנוסף:",
+    features: ["10 מבחנים בחודש", "עד 20 תלמידים", "ייצוא PDF + מפתח תשובות", "מבחן חזרה אוטומטי", "תזמון מבחנים", "עד 6 עמודי חומר"],
+    cta: "בחר מורה",
     highlight: true,
   },
   {
     name: "פרו",
-    price: "₪89",
+    price: "₪99",
     period: "לחודש",
     desc: "לשימוש מקצועי וארגונים",
-    features: ["מבחנים ללא הגבלה", "תלמידים ללא הגבלה", "יצירה מתמונה", "ניתוח מבחני עבר", "מיתוג אישי (לוגו + צבעים)", "עוזר AI חכם", "חומר ללא הגבלה"],
-    cta: "התחל עם פרו",
+    intro: "כל מה שבמורה, ובנוסף:",
+    features: ["20 מבחנים בחודש", "תלמידים ללא הגבלה", "יצירת שאלות מתמונה", "ניתוח מבחני עבר + חיזוי", "מיתוג אישי (לוגו + צבעים)", "עוזר AI חכם", "חומר ללא הגבלה"],
+    cta: "בחר פרו",
     highlight: false,
   },
 ];
@@ -235,6 +237,9 @@ export default function LandingPage() {
                   style={{ width: "100%", padding: "11px 0", borderRadius: 12, border: p.highlight ? "none" : `1.5px solid ${C.border}`, background: p.highlight ? "#C2683D" : "transparent", color: p.highlight ? "white" : C.text, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 18 }}>
                   {p.cta}
                 </button>
+                {p.intro && (
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 10 }}>{p.intro}</div>
+                )}
                 <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                   {p.features.map((f, j) => (
                     <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: C.text }}>

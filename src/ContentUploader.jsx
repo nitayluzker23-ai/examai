@@ -287,16 +287,17 @@ export default function ContentUploader({ onDone }) {
         return;
       }
     }
-    // Exams per day check
-    const today = new Date().toISOString().slice(0, 10);
+    // Exams per month check
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const { count } = await supabase
       .from("exams")
       .select("id", { count: "exact", head: true })
       .eq("workspace_id", user.id)
-      .gte("created_at", `${today}T00:00:00Z`);
-    const maxPerDay = planLimit("exams_per_day");
-    if (maxPerDay !== Infinity && (count ?? 0) >= maxPerDay) {
-      setError(`הגעת למגבלת ${maxPerDay} מבחנים ליום בתוכנית שלך. נסה שוב מחר או שדרג תוכנית.`);
+      .gte("created_at", monthStart);
+    const maxPerMonth = planLimit("exams_per_month");
+    if (maxPerMonth !== Infinity && (count ?? 0) >= maxPerMonth) {
+      setError(`הגעת למגבלת ${maxPerMonth} מבחנים החודש בתוכנית שלך. שדרג תוכנית או נסה שוב בחודש הבא.`);
       return;
     }
 
