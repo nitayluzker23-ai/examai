@@ -8,7 +8,7 @@ export const PLANS = {
     color:           "#6b7280",
     bg:              "#f3f4f6",
     price_month:     0,
-    exams_per_month: 1,
+    exams_per_month: 3,
     text_chars:      4500,   // 3 pages
     max_students:    1,
     features: {
