@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { FolderOpen, Search, BarChart3, Lightbulb, Rocket, RotateCw } from "lucide-react";
 import { supabase, useAuth } from "./App";
 import * as pdfjsLib from "pdfjs-dist";
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -153,7 +154,7 @@ export default function PastExamsPage() {
         <button onClick={() => navigate(-1)}
           style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 20, padding: 0 }}>←</button>
         <div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: C.purple }}>📂 מבחני עבר</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: C.purple, display: "flex", alignItems: "center", gap: 7 }}><FolderOpen size={19} strokeWidth={1.75} /> מבחני עבר</div>
           <div style={{ fontSize: 11, color: C.muted }}>העלה מבחנים מכמה שנים — AI ינתח ויצור מבחן בסגנון</div>
         </div>
       </div>
@@ -168,7 +169,7 @@ export default function PastExamsPage() {
           <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, padding: "28px 20px", border: `2px dashed ${C.purpleMid}`, borderRadius: 14, cursor: "pointer", background: C.purpleLight, marginBottom: 14 }}>
             <input type="file" accept=".pdf,.txt,.md" multiple style={{ display: "none" }}
               onChange={e => { addFiles(e.target.files); e.target.value = ""; }} />
-            <span style={{ fontSize: 36 }}>📂</span>
+            <FolderOpen size={36} color={C.purpleMid} strokeWidth={1.5} />
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: C.purple }}>גרור קבצים לכאן או לחץ לבחירה</div>
               <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>PDF, TXT, MD — אפשר להעלות כמה קבצים ביחד</div>
@@ -235,7 +236,7 @@ export default function PastExamsPage() {
                 <span style={{ width: 18, height: 18, border: "3px solid rgba(255,255,255,0.3)", borderTopColor: "white", borderRadius: "50%", animation: "spin 0.8s linear infinite", display: "inline-block" }} />
                 מנתח {readyCount} מבחנים...
               </span>
-            ) : `🔍 נתח ${readyCount > 0 ? readyCount : ""} מבחנים וצור שאלות`}
+            ) : <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Search size={18} strokeWidth={1.75} /> נתח {readyCount > 0 ? readyCount : ""} מבחנים וצור שאלות</span>}
           </button>
         )}
 
@@ -247,7 +248,7 @@ export default function PastExamsPage() {
             {analysis.analysis?.recurring_topics?.length > 0 && (
               <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
                 <div style={{ background: C.purpleLight, padding: "12px 18px", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 18 }}>🔍</span>
+                  <Search size={17} color={C.purple} strokeWidth={1.75} />
                   <div style={{ fontSize: 14, fontWeight: 700, color: C.purple }}>נושאים חוזרים</div>
                 </div>
                 <div style={{ padding: "10px 0" }}>
@@ -274,7 +275,7 @@ export default function PastExamsPage() {
             {analysis.analysis?.structure && (
               <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
                 <div style={{ background: C.tealLight, padding: "12px 18px", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 18 }}>📊</span>
+                  <BarChart3 size={17} color={C.teal} strokeWidth={1.75} />
                   <div style={{ fontSize: 14, fontWeight: 700, color: C.teal }}>ניתוח מבנה</div>
                 </div>
                 <div style={{ padding: "14px 18px", display: "flex", gap: 16, flexWrap: "wrap" }}>
@@ -321,7 +322,7 @@ export default function PastExamsPage() {
             {analysis.analysis?.predictions?.length > 0 && (
               <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
                 <div style={{ background: C.amberLight, padding: "12px 18px", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 18 }}>💡</span>
+                  <Lightbulb size={17} color={C.amber} strokeWidth={1.75} />
                   <div style={{ fontSize: 14, fontWeight: 700, color: C.amber }}>חיזוי נושאים לשנה זו</div>
                 </div>
                 <div style={{ padding: "8px 0" }}>
@@ -357,11 +358,11 @@ export default function PastExamsPage() {
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button onClick={createExam} disabled={creating}
                 style={{ flex: 2, padding: "13px 0", background: creating ? C.purpleMid : C.purple, color: "white", border: "none", borderRadius: 12, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", boxShadow: "0 4px 18px rgba(43,41,37,0.18)", minWidth: 180 }}>
-                {creating ? "יוצר..." : "🚀 התחל מבחן בסגנון זה"}
+                {creating ? "יוצר..." : <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Rocket size={17} strokeWidth={1.75} /> התחל מבחן בסגנון זה</span>}
               </button>
               <button onClick={() => { setAnalysis(null); setError(""); }}
                 style={{ flex: 1, padding: "13px 0", background: C.white, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 12, fontSize: 14, cursor: "pointer", fontFamily: "inherit", minWidth: 120 }}>
-                🔄 נתח שוב
+<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><RotateCw size={15} /> נתח שוב</span>
               </button>
             </div>
           </div>
