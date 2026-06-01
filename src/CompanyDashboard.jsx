@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Building2, ClipboardList, PenLine, BarChart3, CircleDot } from "lucide-react";
+import AccountSummary from "./AccountSummary";
 import { useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
 
@@ -91,6 +92,12 @@ export default function CompanyDashboard() {
         <h1 style={{ fontSize: 24, fontWeight: 800, color: C.text, margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Building2 size={22} color={C.purple} strokeWidth={1.75} /> מרכז הבחינות</h1>
         <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>{orgName} · {industry}</div>
       </div>
+
+      <AccountSummary stats={[
+        { label: "בחינות", value: stats.total },
+        { label: "הגשות", value: stats.submissions },
+        { label: "ממוצע", value: stats.avgScore != null ? `${stats.avgScore}%` : "—" },
+      ]} />
 
       {/* CTA */}
       <button onClick={() => navigate("/dashboard/new")}

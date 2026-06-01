@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, ClipboardList, Users, BarChart3 } from "lucide-react";
 import { supabase, useAuth } from "./App";
+import AccountSummary from "./AccountSummary";
 
 const C = {
   purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
@@ -111,6 +112,12 @@ export default function TutorDashboard() {
         </h1>
         <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>מורה פרטי · {subject}</div>
       </div>
+
+      <AccountSummary stats={[
+        { label: "מבחנים", value: stats.exams },
+        { label: "תלמידים", value: stats.students },
+        { label: "ממוצע", value: stats.avgScore ?? "—" },
+      ]} />
 
       {/* CTA */}
       <button onClick={() => navigate("/dashboard/new")}

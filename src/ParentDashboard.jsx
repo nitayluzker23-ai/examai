@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PenLine, ClipboardList, BarChart3, Trophy, Users } from "lucide-react";
 import { supabase, useAuth } from "./App";
+import AccountSummary from "./AccountSummary";
 
 const C = {
   purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
@@ -86,6 +87,12 @@ export default function ParentDashboard() {
         </h1>
         <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>מבחנים לילדך ב{childSubject}</div>
       </div>
+
+      <AccountSummary stats={[
+        { label: "מבחנים", value: stats.total },
+        { label: "ממוצע", value: stats.avg ?? "—" },
+        { label: "שיא", value: stats.best ?? "—" },
+      ]} />
 
       {/* CTA */}
       <button onClick={() => navigate("/dashboard/new")}

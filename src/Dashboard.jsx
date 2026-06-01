@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipboardList, PenLine, Users } from "lucide-react";
 import { supabase, useAuth } from "./App";
+import AccountSummary from "./AccountSummary";
 import StudentDashboard from "./StudentDashboard";
 import ParentDashboard  from "./ParentDashboard";
 import CompanyDashboard from "./CompanyDashboard";
@@ -153,12 +154,19 @@ function TeacherDashboard() {
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* ── Header ── */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>
-          {firstName ? `שלום, ${firstName} 👋` : "לוח בקרה"}
+      <div style={{ marginBottom: 18 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: C.text, margin: 0 }}>
+          {firstName ? `שלום, ${firstName}` : "לוח בקרה"}
         </h1>
         <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>ניהול מבחנים ותלמידים</div>
       </div>
+
+      {/* ── My account ── */}
+      <AccountSummary stats={[
+        { label: "מבחנים", value: stats.exams },
+        { label: "הגשות", value: stats.submissions },
+        { label: "תלמידים", value: stats.students },
+      ]} />
 
       {/* ── Stats ── */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
