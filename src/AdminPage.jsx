@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase, useAuth } from "./App";
 import { Navigate } from "react-router-dom";
 import { PLANS } from "./planConfig";
+import AdminOverview from "./AdminOverview";
 
 const C = {
   purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
@@ -101,21 +102,10 @@ export default function AdminPage() {
         <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>נתוני מאקרו לכלל המשתמשים</div>
       </div>
 
-      {/* Macro cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
-        {[
-          { label: "מורים רשומים", value: totals.teachers, icon: "👩‍🏫", color: C.purple, bg: C.purpleLight },
-          { label: "מבחנים נוצרו",  value: totals.exams,    icon: "📝", color: C.teal,   bg: C.tealLight },
-          { label: "שאלות בבנק",    value: totals.questions, icon: "❓", color: C.amber,  bg: C.amberLight },
-          { label: "הגשות תלמידים", value: totals.submissions, icon: "✍", color: C.red,   bg: C.redLight },
-        ].map(card => (
-          <div key={card.label} style={{ background: card.bg, borderRadius: 14, padding: "16px 18px", border: `1px solid ${C.border}` }}>
-            <div style={{ fontSize: 24 }}>{card.icon}</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: card.color, lineHeight: 1.2, marginTop: 6 }}>{loading ? "…" : card.value.toLocaleString()}</div>
-            <div style={{ fontSize: 12, color: card.color, opacity: 0.8, marginTop: 2 }}>{card.label}</div>
-          </div>
-        ))}
-      </div>
+      {/* ── Macro overview (KPIs, growth, activity chart, distributions) ── */}
+      <AdminOverview />
+
+      <div style={{ fontSize: 16, fontWeight: 700, color: C.text, margin: "8px 0 14px" }}>פירוט וניהול</div>
 
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
 
