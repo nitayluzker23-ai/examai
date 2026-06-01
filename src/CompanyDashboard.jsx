@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Building2, ClipboardList, PenLine, BarChart3, CircleDot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
 
@@ -87,14 +88,14 @@ export default function CompanyDashboard() {
 
       {/* Header */}
       <div style={{ marginBottom: 22 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>🏢 מרכז הבחינות</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: C.text, margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Building2 size={22} color={C.purple} strokeWidth={1.75} /> מרכז הבחינות</h1>
         <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>{orgName} · {industry}</div>
       </div>
 
       {/* CTA */}
       <button onClick={() => navigate("/dashboard/new")}
         style={{ width: "100%", padding: "18px 24px", background: `linear-gradient(135deg, ${C.purple} 0%, #211F1A 100%)`, color: "white", border: "none", borderRadius: 18, fontSize: 17, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", marginBottom: 20, boxShadow: "0 6px 24px rgba(43,41,37,0.18)", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-        <span style={{ fontSize: 26 }}>📋</span>
+        <ClipboardList size={24} strokeWidth={1.75} />
         <div style={{ textAlign: "right" }}>
           <div>צור בחינת הכשרה חדשה</div>
           <div style={{ fontSize: 13, fontWeight: 400, opacity: 0.85, marginTop: 2 }}>העלה חומר הכשרה וצור מבחן לעובדים</div>
@@ -104,13 +105,17 @@ export default function CompanyDashboard() {
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: mobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
         {[
-          { label: "בחינות", value: stats.total, icon: "📋", color: C.purple, bg: C.purpleLight },
-          { label: "הגשות",  value: stats.submissions, icon: "✍️", color: C.teal, bg: C.tealLight },
-          { label: "ממוצע",  value: stats.avgScore != null ? `${stats.avgScore}%` : "—", icon: "📊", color: C.amber, bg: C.amberLight },
-          { label: "פעילות", value: exams.filter(e => e.status === "published").length, icon: "🟢", color: C.teal, bg: C.tealLight },
+          { label: "בחינות", value: stats.total, Icon: ClipboardList, color: C.purple, bg: C.purpleLight },
+          { label: "הגשות",  value: stats.submissions, Icon: PenLine, color: C.teal, bg: C.tealLight },
+          { label: "ממוצע",  value: stats.avgScore != null ? `${stats.avgScore}%` : "—", Icon: BarChart3, color: C.amber, bg: C.amberLight },
+          { label: "פעילות", value: exams.filter(e => e.status === "published").length, Icon: CircleDot, color: C.teal, bg: C.tealLight },
         ].map((s, i) => (
           <div key={i} style={{ background: C.white, borderRadius: 14, padding: "14px 10px", border: `1px solid ${C.border}`, textAlign: "center" }}>
-            <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 7 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <s.Icon size={18} color={s.color} strokeWidth={1.75} />
+              </div>
+            </div>
             <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{s.label}</div>
           </div>
@@ -120,7 +125,7 @@ export default function CompanyDashboard() {
       {/* Exams table */}
       {exams.length === 0 ? (
         <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 36, textAlign: "center" }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🏢</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}><Building2 size={40} color={C.purpleMid} strokeWidth={1.5} /></div>
           <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginBottom: 8 }}>אין בחינות עדיין</div>
           <div style={{ fontSize: 13, color: C.muted, marginBottom: 20 }}>צור בחינת הכשרה ראשונה לעובדים שלך</div>
           <button onClick={() => navigate("/dashboard/new")}
@@ -131,7 +136,7 @@ export default function CompanyDashboard() {
       ) : (
         <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
           <div style={{ padding: "12px 18px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>📋 בחינות הכשרה ({exams.length})</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text, display: "flex", alignItems: "center", gap: 6 }}><ClipboardList size={15} color={C.muted} /> בחינות הכשרה ({exams.length})</div>
           </div>
           {exams.map(e => {
             const completionRate = e.subs.length;

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Sparkles, ClipboardList, Users, BarChart3 } from "lucide-react";
 import { supabase, useAuth } from "./App";
 
 const C = {
@@ -105,8 +106,8 @@ export default function TutorDashboard() {
 
       {/* Header */}
       <div style={{ marginBottom: 22 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text, margin: 0 }}>
-          {firstName ? `שלום, ${firstName} 👤` : "לוח הבקרה"}
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: C.text, margin: 0 }}>
+          {firstName ? `שלום, ${firstName}` : "לוח הבקרה"}
         </h1>
         <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>מורה פרטי · {subject}</div>
       </div>
@@ -114,7 +115,7 @@ export default function TutorDashboard() {
       {/* CTA */}
       <button onClick={() => navigate("/dashboard/new")}
         style={{ width: "100%", padding: "18px 24px", background: `linear-gradient(135deg, ${C.purple} 0%, #211F1A 100%)`, color: "white", border: "none", borderRadius: 18, fontSize: 17, fontWeight: 800, cursor: "pointer", fontFamily: "inherit", marginBottom: 20, boxShadow: "0 6px 24px rgba(43,41,37,0.18)", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
-        <span style={{ fontSize: 26 }}>✨</span>
+        <Sparkles size={24} strokeWidth={1.75} />
         <div style={{ textAlign: "right" }}>
           <div>צור מבחן לתלמיד</div>
           <div style={{ fontSize: 13, fontWeight: 400, opacity: 0.85, marginTop: 2 }}>מחומר לימוד — ב-AI, תוך שניות</div>
@@ -124,12 +125,16 @@ export default function TutorDashboard() {
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 20 }}>
         {[
-          { label: "מבחנים",  value: stats.exams, icon: "📋", color: C.purple, bg: C.purpleLight },
-          { label: "תלמידים", value: stats.students, icon: "👤", color: C.teal, bg: C.tealLight },
-          { label: "ממוצע",   value: stats.avgScore != null ? `${stats.avgScore}` : "—", icon: "📊", color: C.amber, bg: C.amberLight },
+          { label: "מבחנים",  value: stats.exams, Icon: ClipboardList, color: C.purple, bg: C.purpleLight },
+          { label: "תלמידים", value: stats.students, Icon: Users, color: C.teal, bg: C.tealLight },
+          { label: "ממוצע",   value: stats.avgScore != null ? `${stats.avgScore}` : "—", Icon: BarChart3, color: C.amber, bg: C.amberLight },
         ].map((s, i) => (
           <div key={i} style={{ background: C.white, borderRadius: 14, padding: "14px 10px", border: `1px solid ${C.border}`, textAlign: "center" }}>
-            <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 7 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <s.Icon size={18} color={s.color} strokeWidth={1.75} />
+              </div>
+            </div>
             <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
             <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{s.label}</div>
           </div>
@@ -139,7 +144,7 @@ export default function TutorDashboard() {
       {/* Students */}
       <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden", marginBottom: 16 }}>
         <div style={{ padding: "12px 18px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>👤 תלמידים ({students.length})</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, display: "flex", alignItems: "center", gap: 6 }}><Users size={15} color={C.muted} /> תלמידים ({students.length})</div>
           <button onClick={() => setShowAddStu(v => !v)}
             style={{ padding: "6px 14px", background: showAddStu ? C.bg : C.teal, color: showAddStu ? C.muted : "white", border: showAddStu ? `1px solid ${C.border}` : "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
             {showAddStu ? "ביטול" : "+ הוסף"}
@@ -174,7 +179,7 @@ export default function TutorDashboard() {
       {/* Recent exams */}
       <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
         <div style={{ padding: "12px 18px", borderBottom: `1px solid ${C.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>📋 מבחנים אחרונים</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, display: "flex", alignItems: "center", gap: 6 }}><ClipboardList size={15} color={C.muted} /> מבחנים אחרונים</div>
           <button onClick={() => navigate("/dashboard/exams")}
             style={{ padding: "5px 12px", background: C.purpleLight, color: C.purple, border: "none", borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
             כולם →
