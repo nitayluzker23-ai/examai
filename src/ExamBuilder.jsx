@@ -529,7 +529,7 @@ export default function ExamBuilder() {
                     <span style={{ fontSize: 12, color: C.muted }}>מספר שאלות:</span>
                     <select value={inlineQCount} onChange={e => setInlineQCount(Number(e.target.value))}
                       style={{ fontSize: 12, padding: "5px 8px", borderRadius: 8, border: `1px solid ${C.border}`, fontFamily: "inherit", background: C.white }}>
-                      {[3,5,8,10,15].map(n => <option key={n} value={n}>{n}</option>)}
+                      {[3,5,8,10,15,20,25].map(n => <option key={n} value={n}>{n}</option>)}
                     </select>
                   </div>
                   {inlineError && <div style={{ fontSize: 12, color: C.red, marginBottom: 8 }}>{inlineError}</div>}
@@ -692,6 +692,19 @@ export default function ExamBuilder() {
                   <Copy size={13} />{copied ? "הועתק!" : "העתק קישור"}
                 </button>
               </div>
+
+              {/* Share buttons */}
+              {!hideSchedule && (
+                <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                  <button onClick={() => {
+                    const url = `${window.location.origin}/exam/${savedExam.access_code}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(`הוזמנת למבחן "${savedExam.title}" 📝\n${url}`)}`, "_blank");
+                  }}
+                    style={{ flex: 1, padding: "9px 0", background: "#E7F9EF", color: "#128C7E", border: "none", borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+                    שלח בוואטסאפ
+                  </button>
+                </div>
+              )}
 
               <button onClick={() => navigate(`/dashboard/exam/${savedExam.id}/questions`)}
                 style={{ width: "100%", padding: 12, background: C.purple, color: "white", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", marginTop: 8 }}>
