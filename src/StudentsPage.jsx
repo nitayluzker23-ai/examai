@@ -72,6 +72,28 @@ export default function StudentsPage() {
 
   const classCount = (classId) => assignments.filter(a => a.class_id === classId).length;
 
+  // Export the student roster to Excel-compatible CSV
+  const exportStudents = () => {
+    const esc = (v) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const list = visibleStudents.length ? visibleStudents : students;
+    const header = ["שם", "טלפון", "כתובת", "הערות", "כיתות / מגמות"];
+    const rows = list.map(s => [
+      s.name,
+      s.phone || "",
+      s.address || "",
+      s.notes || "",
+      studentClasses(s.id).map(c => c.name).join(" · "),
+    ]);
+    const csv = "﻿" + [header, ...rows].map(r => r.map(esc).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `תלמידים${selectedClass ? "-" + (classes.find(c => c.id === selectedClass)?.name || "") : ""}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   // ── CRUD ──────────────────────────────────────────────────
   async function saveStudent({ id, name, notes, phone, address, classIds }) {
     setError("");
@@ -164,7 +186,10 @@ export default function StudentsPage() {
           <div style={{ fontSize: 22, fontWeight: 700, color: C.purple }}>תלמידים</div>
           <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{students.length} תלמידים · {classes.length} כיתות/מגמות</div>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {students.length > 0 && (
+            <button style={btn({ background: "#E8EDE6", color: C.teal })} onClick={exportStudents}>⬇ ייצוא לאקסל</button>
+          )}
           <button style={btn({ background: C.purpleLight, color: C.purple })} onClick={() => setShowAddClass(true)}>+ כיתה/מגמה</button>
           <button style={btn({ background: C.purple, color: C.white })} onClick={() => setShowAddStudent(true)}>+ תלמיד</button>
         </div>
