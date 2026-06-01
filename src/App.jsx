@@ -10,6 +10,7 @@ import OnboardingFlow from "./OnboardingFlow";
 import Dashboard from "./Dashboard";
 import SelfTestPage      from "./SelfTestPage";
 import PastExamsPage     from "./PastExamsPage";
+import PrepPage          from "./PrepPage";
 import SettingsPage      from "./SettingsPage";
 import AssistantWidget   from "./AssistantWidget";
 import AccessibilityWidget from "./AccessibilityWidget";
@@ -461,6 +462,9 @@ export default function App() {
           } />
           <Route path="/past-exams" element={
             <ProtectedRoute><PastExamsPage /></ProtectedRoute>
+          } />
+          <Route path="/prep" element={
+            <ProtectedRoute><PrepPage /></ProtectedRoute>
           } />
           <Route path="/onboarding" element={
             <ProtectedRoute skipOnboarding><OnboardingFlow /></ProtectedRoute>

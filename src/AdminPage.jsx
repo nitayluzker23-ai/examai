@@ -26,6 +26,10 @@ export default function AdminPage() {
   const [teachers,        setTeachers]        = useState([]);
   const [features,        setFeatures]        = useState([]);
   const [featureRequests, setFeatureRequests] = useState([]);
+  const [prepList,        setPrepList]        = useState([]);
+  const [prepEmail,       setPrepEmail]       = useState("");
+  const [prepNote,        setPrepNote]        = useState("");
+  const [prepBusy,        setPrepBusy]        = useState(false);
   const [totals,          setTotals]          = useState({ teachers: 0, exams: 0, questions: 0, submissions: 0 });
   const [loading,         setLoading]         = useState(true);
   const [search,          setSearch]          = useState("");
@@ -35,12 +39,14 @@ export default function AdminPage() {
 
   async function load() {
     setLoading(true);
-    const [{ data: teachers }, { data: features }, { data: requests }] = await Promise.all([
+    const [{ data: teachers }, { data: features }, { data: requests }, { data: prep }] = await Promise.all([
       supabase.from("admin_teacher_stats").select("*").order(sortBy, { ascending: false }),
       supabase.from("admin_feature_stats").select("*").order("total_uses", { ascending: false }),
       supabase.from("feature_requests").select("*").order("created_at", { ascending: false }),
+      supabase.from("prep_allowlist").select("*").order("created_at", { ascending: false }),
     ]);
     setFeatureRequests(requests ?? []);
+    setPrepList(prep ?? []);
 
     const t = teachers ?? [];
     setTeachers(t);
@@ -52,6 +58,20 @@ export default function AdminPage() {
       submissions: t.reduce((a, x) => a + Number(x.submission_count), 0),
     });
     setLoading(false);
+  }
+
+  async function addPrepEmail() {
+    const email = prepEmail.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return;
+    setPrepBusy(true);
+    const { error } = await supabase.from("prep_allowlist").insert({ email, note: prepNote.trim() || null, added_by: user.id });
+    if (!error) { setPrepEmail(""); setPrepNote(""); await load(); }
+    setPrepBusy(false);
+  }
+
+  async function removePrepEmail(id) {
+    await supabase.from("prep_allowlist").delete().eq("id", id);
+    setPrepList(prev => prev.filter(x => x.id !== id));
   }
 
   async function toggleAdmin(teacher) {
@@ -194,6 +214,54 @@ export default function AdminPage() {
               </table>
             </div>
           </div>
+        </div>
+
+        {/* ── Prep access allowlist ── */}
+        <div style={{ marginTop: 28 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 6 }}>
+            🎓 גישת "הכנה למבחן" — מיילים מאושרים
+          </div>
+          <div style={{ fontSize: 13, color: C.muted, marginBottom: 14 }}>
+            רק המיילים ברשימה (וכן אדמינים) יכולים להעלות תמונות/קבצים ב-<code style={{ background: C.bg, padding: "1px 6px", borderRadius: 4 }}>/prep</code> ולקבל מבחן תרגול.
+          </div>
+
+          {/* Add form */}
+          <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, padding: "14px 16px", marginBottom: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
+            <div style={{ flex: 2, minWidth: 180 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 4 }}>אימייל לאישור</div>
+              <input value={prepEmail} onChange={e => setPrepEmail(e.target.value)} onKeyDown={e => e.key === "Enter" && addPrepEmail()}
+                placeholder="student@example.com" type="email"
+                style={{ width: "100%", padding: "8px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontFamily: "inherit", outline: "none", background: C.bg, boxSizing: "border-box", direction: "ltr", textAlign: "left" }} />
+            </div>
+            <div style={{ flex: 1, minWidth: 120 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: C.muted, marginBottom: 4 }}>הערה (אופציונלי)</div>
+              <input value={prepNote} onChange={e => setPrepNote(e.target.value)}
+                placeholder="שם / כיתה"
+                style={{ width: "100%", padding: "8px 12px", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 13, fontFamily: "inherit", outline: "none", background: C.bg, boxSizing: "border-box" }} />
+            </div>
+            <button onClick={addPrepEmail} disabled={prepBusy || !prepEmail.trim()}
+              style={{ padding: "9px 18px", background: prepEmail.trim() ? "#C2683D" : C.purpleMid, color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>
+              {prepBusy ? "..." : "+ אשר"}
+            </button>
+          </div>
+
+          {/* List */}
+          {prepList.length === 0 ? (
+            <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, padding: 18, textAlign: "center", color: C.muted, fontSize: 13 }}>
+              אין מיילים מאושרים עדיין
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+              {prepList.map(p => (
+                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 8, background: C.white, border: `1px solid ${C.border}`, borderRadius: 20, padding: "5px 6px 5px 14px", fontSize: 13 }}>
+                  <span style={{ color: C.text, direction: "ltr" }}>{p.email}</span>
+                  {p.note && <span style={{ fontSize: 11, color: C.muted }}>· {p.note}</span>}
+                  <button onClick={() => removePrepEmail(p.id)}
+                    style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "0 2px" }}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── Feature Requests ── */}
