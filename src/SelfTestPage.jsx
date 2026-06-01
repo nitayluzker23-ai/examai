@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { GraduationCap, FolderOpen, Rocket, BookOpen, RotateCw, Play, Target, MessageSquare, FileText, Shapes } from "lucide-react";
 import { supabase, useAuth } from "./App";
 import * as pdfjsLib from "pdfjs-dist";
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -232,12 +233,12 @@ export default function SelfTestPage() {
         <button onClick={() => navigate("/dashboard")}
           style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: 20, padding: 0, lineHeight: 1 }}>←</button>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: C.purple }}>🎓 בחן את עצמי</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: C.purple, display: "flex", alignItems: "center", gap: 7 }}><GraduationCap size={19} strokeWidth={1.75} /> בחן את עצמי</div>
           <div style={{ fontSize: 11, color: C.muted }}>העלה חומר לימוד וקבל בחינה מיד</div>
         </div>
         <button onClick={() => navigate("/past-exams")}
-          style={{ padding: "7px 14px", background: C.amberLight, color: C.amber, border: `1px solid ${C.amber}`, borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
-          📂 מבחני עבר
+          style={{ padding: "7px 14px", background: C.amberLight, color: C.amber, border: `1px solid ${C.amber}`, borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <FolderOpen size={14} strokeWidth={1.75} /> מבחני עבר
         </button>
       </div>
 
@@ -306,7 +307,7 @@ export default function SelfTestPage() {
 
               {/* Important topics */}
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6 }}>🎯 נושאים חשובים</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}><Target size={14} color={C.purple} /> נושאים חשובים</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 7 }}>
                   {topicTags.map(t => (
                     <div key={t} style={{ display: "flex", alignItems: "center", gap: 4, background: C.purpleLight, border: `1px solid ${C.purpleMid}`, borderRadius: 20, padding: "4px 8px 4px 12px" }}>
@@ -328,7 +329,7 @@ export default function SelfTestPage() {
 
               {/* Lecturer hint */}
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6 }}>🗣️ המרצה / המורה אמר...</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}><MessageSquare size={14} color={C.purple} /> המרצה / המורה אמר...</div>
                 <textarea value={lecturerHint} onChange={e => setLecturerHint(e.target.value)}
                   placeholder='למשל: "הבחינה תתמקד בפרקים 3-5, עם דגש על חישובים"'
                   rows={2}
@@ -337,7 +338,7 @@ export default function SelfTestPage() {
 
               {/* Homework upload */}
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6 }}>📝 שיעורי בית (אופציונלי)</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}><FileText size={14} color={C.purple} /> שיעורי בית (אופציונלי)</div>
                 <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "9px 12px", border: `1px dashed ${C.purpleMid}`, borderRadius: 9, cursor: hwLoading ? "wait" : "pointer", background: hwFileName ? C.tealLight : C.purpleLight }}>
                   <input type="file" accept=".txt,.md,.pdf" style={{ display: "none" }}
                     onChange={async e => {
@@ -357,7 +358,7 @@ export default function SelfTestPage() {
 
               {/* Question types */}
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6 }}>🧩 סוגי שאלות</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 6, display: "flex", alignItems: "center", gap: 6 }}><Shapes size={14} color={C.purple} /> סוגי שאלות</div>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {[["multiple_choice","רב-ברירה"],["true_false","נכון / לא נכון"],["open","שאלה פתוחה"]].map(([k, label]) => {
                     const active = qTypes.includes(k);
@@ -384,7 +385,7 @@ export default function SelfTestPage() {
           {/* CTA */}
           <button onClick={createAndStart} disabled={!text.trim() || generating}
             style={{ width: "100%", marginTop: 14, padding: "14px 0", background: text.trim() && !generating ? C.purple : C.purpleMid, color: "white", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 800, cursor: text.trim() ? "pointer" : "not-allowed", fontFamily: "inherit", boxShadow: text.trim() ? "0 4px 18px rgba(43,41,37,0.18)" : "none", transition: "all 0.2s" }}>
-            {generating ? "מייצר..." : `🚀 צור ובחן עכשיו (${qCount} שאלות)`}
+            {generating ? "מייצר..." : <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Rocket size={18} strokeWidth={1.75} /> צור ובחן עכשיו ({qCount} שאלות)</span>}
           </button>
         </div>
 
@@ -392,7 +393,7 @@ export default function SelfTestPage() {
         {history.length > 0 && (
           <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, overflow: "hidden" }}>
             <div style={{ padding: "12px 18px", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: C.text }}>
-              📚 בחינות קודמות
+<span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><BookOpen size={15} color={C.muted} /> בחינות קודמות</span>
             </div>
             {history.map(h => {
               const sub = h.submission;
@@ -413,7 +414,7 @@ export default function SelfTestPage() {
                   )}
                   <button onClick={() => navigate(`/exam/${h.access_code}?selftest=1&name=${encodeURIComponent(profile?.full_name || "")}`)}
                     style={{ padding: "6px 12px", background: C.purpleLight, color: C.purple, border: "none", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
-                    {sub ? "🔁 שוב" : "▶ המשך"}
+                    {sub ? <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><RotateCw size={12} /> שוב</span> : <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Play size={12} /> המשך</span>}
                   </button>
                 </div>
               );
