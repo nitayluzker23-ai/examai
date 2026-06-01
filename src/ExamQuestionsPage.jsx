@@ -232,6 +232,46 @@ export default function ExamQuestionsPage() {
     setShowManualForm(false);
   };
 
+  // Export submissions to Excel-compatible CSV (who answered, how many correct, score, per-question)
+  const exportResults = () => {
+    const csvEscape = (v) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    // Header: name, score, correct, total, completed, then one column per question
+    const header = ["שם הנבחן", "ציון (%)", "תשובות נכונות", "מתוך", "שעת סיום",
+      ...questions.map((_, i) => `שאלה ${i + 1}`)];
+    const rows = submissions.map(sub => {
+      const ans = sub.answers ?? [];
+      let correct = 0;
+      const perQ = questions.map(q => {
+        const a = ans.find(x => x.question_id === q.id);
+        if (!a || a.selected_index == null) return "—";          // not answered
+        if (q.content?.question_type === "open") return "פתוחה";  // open = not auto-graded
+        const ok = a.selected_index === q.content?.correct_answer_index;
+        if (ok) correct++;
+        return ok ? "✓" : "✗";
+      });
+      const gradable = questions.filter(q => q.content?.question_type !== "open" && q.content?.options?.length).length;
+      return [
+        sub.student_name ?? "—",
+        sub.score ?? "",
+        correct,
+        gradable,
+        sub.completed_at ? new Date(sub.completed_at).toLocaleString("he-IL") : "—",
+        ...perQ,
+      ];
+    });
+    const csv = "﻿" + [header, ...rows].map(r => r.map(csvEscape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `תוצאות-${(exam?.title || "מבחן").replace(/[^\w֐-׿ -]/g, "")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const deleteQuestion = async (id) => {
     if (!confirm("למחוק שאלה זו?")) return;
     setDeleting(id);
@@ -377,6 +417,12 @@ export default function ExamQuestionsPage() {
                   <button onClick={() => printClassReport(exam, questions, submissions)}
                     style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.teal}`, background: C.tealLight, color: C.teal, cursor: "pointer", fontFamily: "inherit" }}>
                     📊 דוח כיתתי
+                  </button>
+                )}
+                {submissions.length > 0 && (
+                  <button onClick={exportResults}
+                    style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.teal}`, background: "#E8EDE6", color: C.teal, cursor: "pointer", fontFamily: "inherit" }}>
+                    ⬇ ייצוא לאקסל
                   </button>
                 )}
                 <button onClick={() => setShowManualForm(v => !v)}
