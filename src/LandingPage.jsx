@@ -23,6 +23,37 @@ const FEATURES = [
   { icon: "🔒", title: "פשוט ובטוח",              desc: "הנבחן מזין קוד בלבד, ללא הרשמה. הנתונים שלכם מאובטחים" },
 ];
 
+// ── Pricing plans (edit prices here) ──────────────────────
+const PLANS = [
+  {
+    name: "חינם",
+    price: "₪0",
+    period: "לתמיד",
+    desc: "להתנסות ולשימוש קל",
+    features: ["3 מבחנים ביום", "יצירת שאלות מטקסט (AI)", "תלמיד אחד", "עד 3 עמודי חומר"],
+    cta: "התחל בחינם",
+    highlight: false,
+  },
+  {
+    name: "מורה",
+    price: "₪39",
+    period: "לחודש",
+    desc: "למורים ומורים פרטיים",
+    features: ["5 מבחנים ביום", "עד 20 תלמידים", "ייצוא PDF + מפתח תשובות", "מבחן חזרה אוטומטי", "תזמון מבחנים", "עד 6 עמודי חומר"],
+    cta: "התחל 14 ימי ניסיון",
+    highlight: true,
+  },
+  {
+    name: "פרו",
+    price: "₪89",
+    period: "לחודש",
+    desc: "לשימוש מקצועי וארגונים",
+    features: ["מבחנים ללא הגבלה", "תלמידים ללא הגבלה", "יצירה מתמונה", "ניתוח מבחני עבר", "מיתוג אישי (לוגו + צבעים)", "עוזר AI חכם", "חומר ללא הגבלה"],
+    cta: "התחל עם פרו",
+    highlight: false,
+  },
+];
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const [mobile, setMobile] = useState(window.innerWidth < 640);
@@ -42,7 +73,13 @@ export default function LandingPage() {
           <div style={{ fontSize: mobile ? 18 : 20, fontWeight: 800, color: C.purple, letterSpacing: -0.5 }}>
             Exam<span style={{ color: C.teal }}>AI</span>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {!mobile && (
+              <button onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+                style={{ padding: "7px 12px", borderRadius: 10, border: "none", background: "transparent", color: C.text, fontSize: 14, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>
+                מחירים
+              </button>
+            )}
             {!mobile && (
               <button onClick={() => navigate("/login")}
                 style={{ padding: "7px 16px", borderRadius: 10, border: `1.5px solid ${C.border}`, background: "transparent", color: C.text, fontSize: 14, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>
@@ -160,6 +197,51 @@ export default function LandingPage() {
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 5 }}>{f.title}</div>
                   <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.6 }}>{f.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ── */}
+      <section id="pricing" style={{ padding: mobile ? "48px 20px" : "64px 24px", background: C.white }}>
+        <div style={{ maxWidth: 980, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#C2683D", marginBottom: 8 }}>תמחור</div>
+            <h2 style={{ fontSize: mobile ? 22 : 32, fontWeight: 800, margin: 0 }}>תוכנית לכל צורך</h2>
+            <p style={{ fontSize: 14, color: C.muted, marginTop: 8 }}>התחילו בחינם · ללא כרטיס אשראי · ביטול בכל עת</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: mobile ? "1fr" : "repeat(3, 1fr)", gap: 16, alignItems: "start", marginTop: 32 }}>
+            {PLANS.map((p, i) => (
+              <div key={i} style={{
+                background: p.highlight ? C.bg : C.white,
+                border: `${p.highlight ? 2 : 1}px solid ${p.highlight ? "#C2683D" : C.border}`,
+                borderRadius: 18, padding: "26px 22px", position: "relative",
+                boxShadow: p.highlight ? "0 12px 32px rgba(194,104,61,0.12)" : "none",
+              }}>
+                {p.highlight && (
+                  <div style={{ position: "absolute", top: -12, right: 22, background: "#C2683D", color: "white", fontSize: 12, fontWeight: 700, padding: "3px 12px", borderRadius: 20 }}>
+                    הכי פופולרי
+                  </div>
+                )}
+                <div style={{ fontSize: 17, fontWeight: 800, color: C.text }}>{p.name}</div>
+                <div style={{ fontSize: 12, color: C.muted, marginTop: 2, marginBottom: 14 }}>{p.desc}</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 18 }}>
+                  <span style={{ fontSize: 38, fontWeight: 800, color: p.highlight ? "#C2683D" : C.text }}>{p.price}</span>
+                  <span style={{ fontSize: 13, color: C.muted }}>{p.period}</span>
+                </div>
+                <button onClick={() => navigate("/login?signup=1")}
+                  style={{ width: "100%", padding: "11px 0", borderRadius: 12, border: p.highlight ? "none" : `1.5px solid ${C.border}`, background: p.highlight ? "#C2683D" : "transparent", color: p.highlight ? "white" : C.text, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", marginBottom: 18 }}>
+                  {p.cta}
+                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                  {p.features.map((f, j) => (
+                    <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: C.text }}>
+                      <span style={{ color: "#4F6F52", fontWeight: 800, flexShrink: 0 }}>✓</span>
+                      <span>{f}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
