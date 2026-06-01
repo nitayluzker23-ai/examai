@@ -205,9 +205,10 @@ export default function AdminPage() {
             </div>
           </div>
         </div>
+      </div>{/* /flex container — details & management */}
 
-        {/* ── Prep access allowlist ── */}
-        <div style={{ marginTop: 28 }}>
+      {/* ── Prep access allowlist ── */}
+      <div style={{ marginTop: 28 }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 6 }}>
             🎓 גישת "הכנה למבחן" — מיילים מאושרים
           </div>
@@ -294,7 +295,6 @@ export default function AdminPage() {
             </div>
           )}
         </div>
-      </div>
     </div>
   );
 }
