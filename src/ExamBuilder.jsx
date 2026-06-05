@@ -593,7 +593,7 @@ export default function ExamBuilder() {
 
               {/* Manual Tab */}
               {inlineTab === "manual" && (
-                <InlineManualForm onSave={addManualQ} />
+                <InlineManualForm onSave={addManualQ} context={genSource || inlineText} />
               )}
 
               {/* ── Question List ── */}
@@ -849,13 +849,39 @@ function ToggleRow({ label, value, onChange }) {
   );
 }
 
-function InlineManualForm({ onSave }) {
+function InlineManualForm({ onSave, context = "" }) {
   const [qText,   setQText]   = useState("");
   const [opts,    setOpts]    = useState(["","","",""]);
   const [correct, setCorrect] = useState(null);
   const [saving,  setSaving]  = useState(false);
+  const [genDist, setGenDist] = useState(false);
+  const [distErr, setDistErr] = useState("");
   const LETTERS = ["א","ב","ג","ד"];
   const ready = qText.trim() && opts.every(o => o.trim()) && correct !== null;
+
+  // Can generate distractors once there's a question + a marked correct answer with text
+  const canGenDist = qText.trim() && correct !== null && opts[correct]?.trim();
+
+  const generateDistractors = async () => {
+    if (!canGenDist) return;
+    setGenDist(true); setDistErr("");
+    try {
+      const { data, error } = await supabase.functions.invoke("distractor-handler", {
+        body: { question_text: qText.trim(), correct_answer: opts[correct].trim(), context: (context || "").slice(0, 4000), count: 3 },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      const dist = data?.distractors ?? [];
+      if (!dist.length) throw new Error("לא הצלחנו לייצר מסיחים, נסה שוב");
+      // Fill the non-correct slots with the generated distractors
+      let di = 0;
+      setOpts(prev => prev.map((v, i) => i === correct ? v : (dist[di++] ?? v)));
+    } catch (e) {
+      setDistErr(e.message); setTimeout(() => setDistErr(""), 6000);
+    } finally {
+      setGenDist(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!ready) return;
@@ -871,14 +897,22 @@ function InlineManualForm({ onSave }) {
         style={{ width:"100%", padding:"9px 12px", border:`1px solid rgba(55,53,47,0.10)`, borderRadius:10, fontSize:13, fontFamily:"inherit", resize:"vertical", outline:"none", background:"#FAF9F6", boxSizing:"border-box", marginBottom:8 }} />
       {opts.map((o, i) => (
         <div key={i} style={{ display:"flex", alignItems:"center", gap:7, marginBottom:6 }}>
-          <div onClick={()=>setCorrect(i)} style={{ width:26, height:26, borderRadius:"50%", background: correct===i ? "#37352F" : "#F4F2EC", color: correct===i ? "white" : "#37352F", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0 }}>{LETTERS[i]}</div>
-          <input value={o} onChange={e=>setOpts(opts.map((v,j)=>j===i?e.target.value:v))} placeholder={`תשובה ${LETTERS[i]}`}
-            style={{ flex:1, padding:"7px 10px", border:`1px solid rgba(55,53,47,0.10)`, borderRadius:8, fontSize:13, fontFamily:"inherit", outline:"none", background:"#FAF9F6" }} />
+          <div onClick={()=>setCorrect(i)} style={{ width:26, height:26, borderRadius:"50%", background: correct===i ? "#4F6F52" : "#F4F2EC", color: correct===i ? "white" : "#37352F", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700, fontSize:12, cursor:"pointer", flexShrink:0 }}>{LETTERS[i]}</div>
+          <input value={o} onChange={e=>setOpts(opts.map((v,j)=>j===i?e.target.value:v))} placeholder={correct===i ? `התשובה הנכונה` : `תשובה ${LETTERS[i]}`}
+            style={{ flex:1, padding:"7px 10px", border:`1px solid ${correct===i ? "#A9C3A0" : "rgba(55,53,47,0.10)"}`, borderRadius:8, fontSize:13, fontFamily:"inherit", outline:"none", background: correct===i ? "#E8EDE6" : "#FAF9F6" }} />
         </div>
       ))}
-      {correct === null && <div style={{fontSize:11,color:"#6B655C",marginBottom:8}}>לחץ על אות לסמן תשובה נכונה</div>}
+      {correct === null && <div style={{fontSize:11,color:"#6B655C",marginBottom:8}}>1. כתוב את השאלה והתשובה הנכונה · 2. לחץ על האות לסמן אותה כנכונה</div>}
+
+      {/* AI distractors */}
+      <button onClick={generateDistractors} disabled={!canGenDist || genDist}
+        style={{ width:"100%", padding:9, background: canGenDist && !genDist ? "#F3E5DB" : "#F4F2EC", color:"#9A4D29", border:`1px solid ${canGenDist ? "#C2683D" : "rgba(55,53,47,0.10)"}`, borderRadius:10, fontSize:12, fontWeight:700, cursor: canGenDist ? "pointer" : "not-allowed", fontFamily:"inherit", marginTop:4, marginBottom: 6 }}>
+        {genDist ? "מייצר מסיחים..." : "✨ צור תשובות מטעות (מסיחים) אוטומטית"}
+      </button>
+      {distErr && <div style={{ fontSize:11, color:"#A6493B", marginBottom:6 }}>{distErr}</div>}
+
       <button onClick={handleSave} disabled={!ready||saving}
-        style={{ width:"100%", padding:10, background: ready&&!saving ? "#37352F":"#9B958A", color:"white", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor: ready&&!saving?"pointer":"not-allowed", fontFamily:"inherit", marginTop:4 }}>
+        style={{ width:"100%", padding:10, background: ready&&!saving ? "#37352F":"#9B958A", color:"white", border:"none", borderRadius:10, fontSize:13, fontWeight:600, cursor: ready&&!saving?"pointer":"not-allowed", fontFamily:"inherit" }}>
         {saving ? "שומר..." : "+ הוסף שאלה"}
       </button>
     </div>
