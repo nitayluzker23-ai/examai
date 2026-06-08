@@ -5,8 +5,8 @@ import { printStudentReport } from "./printUtils";
 import { useAuth } from "./App";
 import { buildBrandTheme } from "./brandUtils";
 
-// ── Demo data (כשאין Supabase אמיתי) ────────────────────
-const DEMO_EXAMS = {
+// ── Demo data (dev only) ─────────────────────────────────
+const DEMO_EXAMS = import.meta.env.DEV ? {
   "AB3K7P": {
     id: "exam-001", title: "מבחן סוף שנה — ביולוגיה", subject: "ביולוגיה",
     status: "published",
@@ -22,14 +22,14 @@ const DEMO_EXAMS = {
     status: "published",
     config: { mode: "sessions", break_minutes: 3, sessions: [{ mins: 5, questions: 2 }, { mins: 5, questions: 2 }] },
   },
-};
+} : {};
 
-const DEMO_QUESTIONS = [
+const DEMO_QUESTIONS = import.meta.env.DEV ? [
   { id: "q1", sort_order: 0, difficulty: "Medium", source_topic_id: "t1", content: { question_text: "מהי הפונקציה העיקרית של המיטוכונדריה בתא?", options: ["ייצור אנרגיה (ATP)", "עיבוד חלבונים", "אחסון DNA", "פירוק פסולת"], correct_answer_index: 0, ai_explanation: "המיטוכונדריה מייצרת ATP דרך נשימה תאית. ייצור האנרגיה הוא תפקידה המרכזי — לכן היא נקראת 'תחנת הכוח' של התא. עיבוד חלבונים הוא תפקיד הריבוזום, ופירוק פסולת — הליזוזום." }},
   { id: "q2", sort_order: 1, difficulty: "Easy",   source_topic_id: "t2", content: { question_text: "מהו עיקרון הדומיננטיות של מנדל?", options: ["אלל דומיננטי מסתיר רצסיבי", "כל האללים שווים בחוזקם", "גנים תמיד מועברים ביחד", "מוטציה היא תוצר של סביבה"], correct_answer_index: 0, ai_explanation: "עיקרון הדומיננטיות קובע שכאשר יש שני אללים שונים, הדומיננטי מסתיר את הרצסיבי. האלל הרצסיבי לא נעלם — הוא פשוט לא מתבטא בפנוטיפ." }},
   { id: "q3", sort_order: 2, difficulty: "Hard",   source_topic_id: "t3", content: { question_text: "מה מניע את תהליך הברירה הטבעית?", options: ["שינוי סביבתי בלבד", "הבדלים בהישרדות ורבייה", "מוטציות מכוונות לסביבה", "רצון הפרט להסתגל"], correct_answer_index: 1, ai_explanation: "ברירה טבעית פועלת על הבדלים תורשתיים בין פרטים. פרטים עם תכונות שמשפרות הישרדות ורבייה מעבירים אותן לדור הבא בסיכוי גבוה יותר. מוטציות אינן 'מכוונות' — הן אקראיות." }},
   { id: "q4", sort_order: 3, difficulty: "Medium", source_topic_id: "t1", content: { question_text: "איזה אברון תאי מכיל את המידע הגנטי (DNA) של התא?", options: ["המיטוכונדריה", "הגרעין", "הריבוזום", "ממברנת התא"], correct_answer_index: 1, ai_explanation: "הגרעין מכיל את ה-DNA הגנומי של התא האוקריוטי. מעניין לציין שגם למיטוכונדריה יש DNA משלה (מיטוכונדריאלי), אך המידע הגנטי הראשי נמצא בגרעין." }},
-];
+] : [];
 
 // ── Colors ───────────────────────────────────────────────
 const C = {
@@ -100,7 +100,7 @@ export default function StudentExamView({ initialCode } = {}) {
   const [breakLeft, setBreakLeft] = useState(0);
   const [brand,    setBrand]      = useState(null); // { primary, primaryLight, primaryMid, primaryDark, name, logoUrl }
   // Unique token per student session — required by DB NOT NULL constraint
-  const studentToken = useRef(`st-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const studentToken = useRef(`st-${Date.now()}-${Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, "0")).join("")}`);
   const qStartRef = useRef(Date.now());
   const timerRef  = useRef(null);
 

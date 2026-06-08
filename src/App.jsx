@@ -26,8 +26,8 @@ import LiveDashboard from "./LiveDashboard";
 import { getPlan } from "./planConfig";
 import { extractDominantColor, buildBrandTheme, lightenColor } from "./brandUtils";
 
-const SUPABASE_URL      = "https://npksscocijjmgzgrolnq.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
+const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const C = {

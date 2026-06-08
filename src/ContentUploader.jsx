@@ -6,11 +6,7 @@ import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
-
-// Defensive helper: ensures the apikey header is always present on
-// Edge Function calls, even if the SDK's auto-attach misbehaves.
-const fnHeaders = { apikey: SUPABASE_ANON_KEY };
+const fnHeaders = { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY };
 
 const C = {
   purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",

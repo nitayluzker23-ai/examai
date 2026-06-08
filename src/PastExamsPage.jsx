@@ -45,7 +45,10 @@ async function extractText(file) {
 }
 
 function generateCode() {
-  return Math.random().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6).padEnd(6, "0");
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const arr = new Uint8Array(8);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => chars[b % chars.length]).join("").slice(0, 6);
 }
 
 const CONFIDENCE_COLOR = { "גבוה": C.teal, "בינוני": C.amber, "נמוך": C.muted };

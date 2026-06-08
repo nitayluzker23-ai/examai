@@ -3,8 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
 import { printExam, printAnswerSheet, printAnswerKey, printClassReport } from "./printUtils";
 
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
-const fnHeaders = { apikey: SUPABASE_ANON_KEY };
+const fnHeaders = { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY };
 
 const C = {
   purple: "#37352F", purpleLight: "#F4F2EC", purpleMid: "#9B958A",
