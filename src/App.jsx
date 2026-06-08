@@ -130,7 +130,7 @@ function TeacherLayout({ children }) {
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: C.bg, direction: "rtl", fontFamily: "'Assistant',system-ui,'Segoe UI',sans-serif" }}>
       {!mobile && (
-        <aside style={{ width: 220, background: C.white, borderLeft: `1px solid ${C.border}`, display: "flex", flexDirection: "column", flexShrink: 0 }}>
+        <aside style={{ width: 220, background: C.white, borderLeft: `1px solid ${C.border}`, display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh", alignSelf: "flex-start", overflowY: "auto" }}>
           <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.border}` }}>
             <div style={{ fontSize: 18, fontWeight: 800, color: C.purple }}>ExamAI</div>
             <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{profile?.full_name ?? "מורה"}</div>
