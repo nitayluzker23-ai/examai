@@ -50,6 +50,13 @@ function fileToBase64(file) {
   });
 }
 
+function stripInjectionPatterns(text) {
+  return text.replace(
+    /\b(ignore\s+(all\s+)?(previous|prior)\s+instructions?|disregard\s+.{0,40}instructions?|you\s+are\s+now\s+an?\s+|act\s+as\s+an?\s+(?:ai|assistant|expert|gpt)|new\s+system\s+prompt:?|<\/?system>|\[system\])/gi,
+    "[removed]"
+  );
+}
+
 function generateCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const arr = new Uint8Array(8);
@@ -120,7 +127,7 @@ export default function PrepPage() {
     if (!ready || !user) return;
     setBusy(true); setError("");
     try {
-      const texts  = items.filter(x => x.kind === "text" && x.text?.trim()).map(x => x.text);
+      const texts  = items.filter(x => x.kind === "text" && x.text?.trim()).map(x => stripInjectionPatterns(x.text));
       const images = items.filter(x => x.kind === "image" && x.base64).map(x => ({ base64: x.base64, type: x.type }));
 
       const { data, error: fnErr } = await supabase.functions.invoke("prep-handler", {

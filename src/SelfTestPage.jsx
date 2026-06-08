@@ -50,6 +50,13 @@ async function extractTextFromPDF(arrayBuffer) {
   return { text: pages.join("\n\n").trim(), totalPages: pdf.numPages, textPages: pages.length };
 }
 
+function stripInjectionPatterns(text) {
+  return text.replace(
+    /\b(ignore\s+(all\s+)?(previous|prior)\s+instructions?|disregard\s+.{0,40}instructions?|you\s+are\s+now\s+an?\s+|act\s+as\s+an?\s+(?:ai|assistant|expert|gpt)|new\s+system\s+prompt:?|<\/?system>|\[system\])/gi,
+    "[removed]"
+  );
+}
+
 function generateCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const arr = new Uint8Array(8);
@@ -159,7 +166,7 @@ export default function SelfTestPage() {
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
       // Build enriched text with advanced options
-      let enrichedText = text.trim();
+      let enrichedText = stripInjectionPatterns(text.trim());
       if (topicTags.length > 0) {
         enrichedText = `נושאים חשובים שיש להתמקד בהם: ${topicTags.join(", ")}.\n\n${enrichedText}`;
       }

@@ -300,9 +300,18 @@ function BrandingPage() {
 
   const handleLogoUpload = async (file) => {
     if (!file || !user) return;
+    const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"];
+    if (!ALLOWED_MIME.includes(file.type)) {
+      setError("סוג קובץ לא נתמך. אנא העלה JPG, PNG או WebP בלבד.");
+      return;
+    }
+    if (file.size > 3 * 1024 * 1024) {
+      setError("הקובץ גדול מ-3MB. אנא הקטן את התמונה ונסה שוב.");
+      return;
+    }
     setUploading(true); setError("");
     try {
-      const ext  = file.name.split(".").pop();
+      const ext  = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
       const path = `${user.id}/logo.${ext}`;
       const { error: upErr } = await supabase.storage.from("brand-logos").upload(path, file, { upsert: true });
       if (upErr) throw upErr;
@@ -387,10 +396,10 @@ function BrandingPage() {
           <div>
             <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, padding: "8px 14px", border: `1px solid ${C.purple}`, borderRadius: 9, cursor: "pointer", color: C.purple, background: C.purpleLight, fontWeight: 600 }}>
               {uploading ? "מעלה..." : logoPreview ? "החלף לוגו" : "העלה לוגו"}
-              <input ref={logoRef} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" style={{ display: "none" }}
+              <input ref={logoRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }}
                 onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); e.target.value = ""; }} />
             </label>
-            <div style={{ fontSize: 11, color: C.muted, marginTop: 5 }}>PNG, JPG, SVG עד 3MB</div>
+            <div style={{ fontSize: 11, color: C.muted, marginTop: 5 }}>PNG, JPG, WebP עד 3MB</div>
           </div>
         </div>
 

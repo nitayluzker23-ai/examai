@@ -58,6 +58,25 @@ async function extractTextFromPDF(file) {
   return { text: cleanText(pageTexts.join("\n\n")), numPages: pdf.numPages };
 }
 
+const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB hard limit
+
+const ALLOWED_TEXT_MIME = new Set([
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain", "text/markdown",
+]);
+
+// Strip the most common prompt-injection openers before sending to the AI.
+// This is a client-side best-effort layer; the Edge Function system prompt
+// is the authoritative defense.
+function stripInjectionPatterns(text) {
+  return text.replace(
+    /\b(ignore\s+(all\s+)?(previous|prior)\s+instructions?|disregard\s+.{0,40}instructions?|you\s+are\s+now\s+an?\s+|act\s+as\s+an?\s+(?:ai|assistant|expert|gpt)|new\s+system\s+prompt:?|<\/?system>|\[system\])/gi,
+    "[removed]"
+  );
+}
+
 // ── clean noisy PDF text before sending ─────────────────
 function cleanText(raw) {
   return raw
@@ -176,6 +195,10 @@ export default function ContentUploader({ onDone }) {
   const handleFile = async (file) => {
     if (!file) return;
     setError("");
+    if (file.size > MAX_FILE_BYTES) {
+      setError("הקובץ גדול מ-20MB. אנא קצר את החומר ונסה שוב.");
+      return;
+    }
     setFileName(file.name);
     const isPPTX = file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation" || file.name.endsWith(".pptx");
     const isPPT  = file.name.endsWith(".ppt") && !isPPTX;
@@ -189,16 +212,16 @@ export default function ContentUploader({ onDone }) {
     try {
       if (file.type === "application/pdf") {
         const { text: extracted, numPages } = await extractTextFromPDF(file);
-        setText(extracted);
+        setText(stripInjectionPatterns(extracted));
         setPageCount(numPages);
       } else if (isPPTX) {
         const extracted = await extractTextFromPPTX(file);
-        setText(extracted);
+        setText(stripInjectionPatterns(extracted));
       } else if (isDOCX) {
         const extracted = await extractTextFromDOCX(file);
-        setText(extracted);
+        setText(stripInjectionPatterns(extracted));
       } else {
-        setText(cleanText(await file.text()));
+        setText(stripInjectionPatterns(cleanText(await file.text())));
       }
       setInputMode("text");
     } catch (e) {
@@ -209,6 +232,14 @@ export default function ContentUploader({ onDone }) {
   const handleImage = async (file) => {
     if (!file) return;
     setError("");
+    if (file.size > MAX_FILE_BYTES) {
+      setError("הקובץ גדול מ-20MB. אנא הקטן את התמונה ונסה שוב.");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setError("סוג קובץ לא נתמך. אנא העלה קובץ תמונה.");
+      return;
+    }
     setFileName(file.name);
     const base64 = await fileToBase64(file);
     const preview = URL.createObjectURL(file);
@@ -229,6 +260,7 @@ export default function ContentUploader({ onDone }) {
     setPastLoading(true);
     const loaded = [];
     for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_BYTES) continue;
       try {
         let t;
         const isPPTX = file.type === "application/vnd.openxmlformats-officedocument.presentationml.presentation" || file.name.endsWith(".pptx");
