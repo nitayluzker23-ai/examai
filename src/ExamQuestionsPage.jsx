@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase, useAuth } from "./App";
-import { printExam, printAnswerKey, printClassReport } from "./printUtils";
+import { printExam, printAnswerSheet, printAnswerKey, printClassReport } from "./printUtils";
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wa3NzY29jaWpqbWd6Z3JvbG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0NTI1NjgsImV4cCI6MjA5MzAyODU2OH0.0tHABuRUriHiwA42DHM7S_MmgJ54NaqrcefPP5YorMk";
 const fnHeaders = { apikey: SUPABASE_ANON_KEY };
@@ -408,6 +408,10 @@ export default function ExamQuestionsPage() {
                 <button onClick={() => printExam(exam, questions)}
                   style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.border}`, background: C.white, color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>
                   🖨 הדפס שאלון
+                </button>
+                <button onClick={() => printAnswerSheet(exam, questions)}
+                  style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.border}`, background: C.white, color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>
+                  📝 דף תשובות
                 </button>
                 <button onClick={() => printAnswerKey(exam, questions)}
                   style={{ fontSize: 12, fontWeight: 600, padding: "7px 13px", borderRadius: 9, border: `1px solid ${C.purple}`, background: C.purpleLight, color: C.purple, cursor: "pointer", fontFamily: "inherit" }}>

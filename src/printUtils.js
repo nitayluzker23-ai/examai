@@ -28,7 +28,18 @@ const BASE_CSS = `
   .score-sub { font-size: 13px; color: #6b7280; margin-top: 4px; }
   .tip-box { border-radius: 10px; padding: 10px 14px; margin: 6px 0; font-size: 12px; }
   .explanation { background: #FCEBEB; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #791F1F; margin-top: 8px; }
-  @media print { body { padding: 10px 18px; } }
+  /* Answer sheet */
+  .as-fields { display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; margin: 14px 0 4px; }
+  .as-fill { display: inline-block; min-width: 140px; border-bottom: 1px solid #9ca3af; height: 16px; }
+  .as-instr { font-size: 11px; color: #6b7280; margin-bottom: 14px; }
+  .as-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px; }
+  .as-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; page-break-inside: avoid; }
+  .as-num { font-size: 13px; font-weight: 700; min-width: 26px; text-align: left; flex-shrink: 0; }
+  .as-opts { display: flex; align-items: center; gap: 12px; flex: 1; }
+  .as-bubble { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #374151; }
+  .as-circle { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid #6b7280; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #6b7280; flex-shrink: 0; }
+  .as-write { flex: 1; border-bottom: 1px solid #d1d5db; height: 18px; min-width: 120px; }
+  @media print { body { padding: 10px 18px; } .as-grid { gap: 5px 28px; } }
 `;
 
 function openPrint(html) {
@@ -79,6 +90,54 @@ export function printExam(exam, questions) {
     ${qs}
     <hr class="divider">
     <div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px">הופק על ידי ExamAI</div>
+  `;
+  openPrint(html);
+}
+
+// ── Export blank answer sheet (student fills in) ───────────
+export function printAnswerSheet(exam, questions) {
+  const LETTERS = "אבגדהו";
+  const now = new Date().toLocaleDateString("he-IL");
+
+  const rows = questions.map((q, idx) => {
+    const c = q.content ?? {};
+    const type = c.question_type ?? (c.options?.length ? "multiple_choice" : "open");
+    const num = idx + 1;
+
+    let bubbles;
+    if (type === "open" || !(c.options?.length)) {
+      // Open question → write line
+      bubbles = `<span class="as-write"></span>`;
+    } else if (type === "true_false") {
+      bubbles = `
+        <span class="as-bubble"><span class="as-circle"></span>נכון</span>
+        <span class="as-bubble"><span class="as-circle"></span>לא נכון</span>`;
+    } else {
+      bubbles = (c.options ?? []).map((_, i) =>
+        `<span class="as-bubble"><span class="as-circle">${LETTERS[i] ?? ""}</span></span>`
+      ).join("");
+    }
+
+    return `
+      <div class="as-row">
+        <span class="as-num">${num}.</span>
+        <span class="as-opts">${bubbles}</span>
+      </div>`;
+  }).join("");
+
+  const html = `
+    <h1>${exam.title ?? "מבחן"} — דף תשובות</h1>
+    <div class="meta">${exam.subject ?? ""}${exam.access_code ? ` · קוד: ${exam.access_code}` : ""}</div>
+    <div class="as-fields">
+      <span>שם: <span class="as-fill"></span></span>
+      <span>כיתה: <span class="as-fill" style="min-width:90px"></span></span>
+      <span>תאריך: <span class="as-fill" style="min-width:90px"></span></span>
+    </div>
+    <hr class="divider">
+    <div class="as-instr">סמן/י תשובה אחת לכל שאלה ע"י מילוי העיגול. בשאלות פתוחות — כתוב/כתבי על השורה.</div>
+    <div class="as-grid">${rows}</div>
+    <hr class="divider">
+    <div style="font-size:11px;color:#9ca3af;text-align:center;margin-top:12px">הופק על ידי ExamAI · הודפס ${now}</div>
   `;
   openPrint(html);
 }
