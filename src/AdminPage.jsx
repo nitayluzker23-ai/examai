@@ -85,7 +85,7 @@ export default function AdminPage() {
     setTeachers(prev => prev.map(t => t.user_id === teacher.user_id ? { ...t, plan } : t));
   }
 
-  if (authLoading) return <Spinner />;
+  if (authLoading || (user && !profile)) return <Spinner />;
   if (!user || !profile?.is_admin) return <Navigate to="/dashboard" replace />;
 
   const maxFeature = Math.max(...features.map(f => f.total_uses), 1);
