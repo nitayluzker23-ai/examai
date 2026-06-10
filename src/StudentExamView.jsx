@@ -51,7 +51,7 @@ const shuffle = (arr) => {
   return a;
 };
 
-// ── shuffle answer options while tracking correct index ───
+// ── shuffle answer options while tracking correct index (DEMO only) ───
 function shuffleAnswers(questions) {
   return questions.map(q => {
     const opts = q.content.options;
@@ -67,6 +67,24 @@ function shuffleAnswers(questions) {
         options: shuffled.map(item => item.opt),
         correct_answer_index: shuffled.findIndex(item => item.isCorrect),
       },
+    };
+  });
+}
+
+// ── shuffle options for REAL exams (answers unknown to the client) ───
+// Tracks `_orig`: _orig[shuffledPos] = original stored index, so we can
+// submit the original index to the server for grading.
+function shuffleAnswersSecure(questions) {
+  return questions.map(q => {
+    const opts = q.content?.options;
+    if (!Array.isArray(opts) || opts.length === 0) {
+      return { ...q, content: { ...q.content, _orig: [] } };
+    }
+    const indexed = opts.map((opt, i) => ({ opt, orig: i }));
+    const sh = shuffle(indexed);
+    return {
+      ...q,
+      content: { ...q.content, options: sh.map(s => s.opt), _orig: sh.map(s => s.orig) },
     };
   });
 }
@@ -96,6 +114,7 @@ export default function StudentExamView({ initialCode } = {}) {
   const [tabWarning, setTabWarning] = useState(false);
   const [tabCount, setTabCount]   = useState(0);
   const [sessionIdx, setSessionIdx] = useState(0);       // for sessions mode
+  const [isDemo, setIsDemo]       = useState(false);     // demo exam → grade locally
   const [onBreak, setOnBreak]     = useState(false);
   const [breakLeft, setBreakLeft] = useState(0);
   const [brand,    setBrand]      = useState(null); // { primary, primaryLight, primaryMid, primaryDark, name, logoUrl }
@@ -214,17 +233,17 @@ export default function StudentExamView({ initialCode } = {}) {
     setLoading(true);
     try {
       let qs;
-      if (DEMO_EXAMS[exam.access_code ?? Object.keys(DEMO_EXAMS).find(k => DEMO_EXAMS[k].id === exam.id)]) {
+      const demo = !!DEMO_EXAMS[exam.access_code ?? Object.keys(DEMO_EXAMS).find(k => DEMO_EXAMS[k].id === exam.id)];
+      setIsDemo(demo);
+      if (demo) {
         await new Promise(r => setTimeout(r, 400));
         qs = shuffleAnswers(shuffle(DEMO_QUESTIONS));
       } else {
+        // Server returns sanitized questions (no answer key) via SECURITY DEFINER RPC.
         const { data, error: e } = await supabase
-          .from("questions")
-          .select("*")
-          .eq("exam_id", exam.id)
-          .order("sort_order");
+          .rpc("get_exam_questions", { p_exam_id: exam.id });
         if (e) throw e;
-        qs = shuffleAnswers(shuffle(data));
+        qs = shuffleAnswersSecure(shuffle(data ?? []));
       }
       setQuestions(qs);
       setQIndex(0);
@@ -297,29 +316,52 @@ export default function StudentExamView({ initialCode } = {}) {
   // ── Finish exam ─────────────────────────────────────────
   const finishExam = async (finalAnswers) => {
     clearInterval(timerRef.current);
-    // Auto-grade only closed questions (MC / true-false). Open questions are excluded from the score.
-    const gradable = questions.filter(q => {
-      const t = q.content?.question_type;
-      return t !== "open" && (q.content?.options?.length > 0);
+
+    // ── DEMO: grade locally (fake data, no server) ──────────
+    if (isDemo) {
+      setAnswers(finalAnswers);
+      setPhase("done");
+      return;
+    }
+
+    // ── REAL: grade on the server. The client never sees the
+    // answer key, so we send the ORIGINAL option indices (mapped
+    // back from the shuffled display via _orig) and let the RPC
+    // compute the score and return the review data.
+    const payload = finalAnswers.map(a => {
+      const q = questions.find(qq => qq.id === a.question_id);
+      const orig = (a.selected_index == null || a.selected_index < 0 || !q?.content?._orig?.length)
+        ? a.selected_index
+        : q.content._orig[a.selected_index];
+      return { ...a, selected_index: orig };
     });
-    const score = finalAnswers.reduce((acc, a) => {
-      const q = questions.find(q => q.id === a.question_id);
-      if (!q || q.content?.question_type === "open" || !q.content?.options?.length) return acc;
-      return acc + (a.selected_index === q.content.correct_answer_index ? 1 : 0);
-    }, 0);
-    const scorePct = gradable.length ? Math.round((score / gradable.length) * 100) : 0;
 
     try {
-      await supabase.from("submissions").insert({
-        exam_id:       exam.id,
-        student_name:  name,
-        student_token: studentToken.current,
-        answers:       finalAnswers,
-        score:         scorePct,
-        completed_at:  new Date().toISOString(),
-        ...(user?.id ? { user_id: user.id } : {}),
+      const { data, error: e } = await supabase.rpc("grade_submission", {
+        p_exam_id:       exam.id,
+        p_student_name:  name,
+        p_student_token: studentToken.current,
+        p_answers:       payload,
+        p_user_id:       user?.id ?? null,
       });
-    } catch (_) { /* silent — demo mode */ }
+      if (e) throw e;
+
+      // Merge the server's review back into the questions, converting the
+      // correct index into shuffled-display terms so the review UI works.
+      const byId = {};
+      (data?.results ?? []).forEach(r => { byId[r.question_id] = r; });
+      setQuestions(prev => prev.map(q => {
+        const r = byId[q.id];
+        if (!r) return q;
+        const correctOrig = r.correct_answer_index == null ? -1 : Number(r.correct_answer_index);
+        const correctShuffled = (q.content?._orig?.length && correctOrig >= 0)
+          ? q.content._orig.indexOf(correctOrig)
+          : correctOrig;
+        return { ...q, content: { ...q.content, correct_answer_index: correctShuffled, ai_explanation: r.ai_explanation } };
+      }));
+    } catch (_) {
+      /* grading failed — still show the done screen (without review) */
+    }
 
     setAnswers(finalAnswers);
     setPhase("done");
